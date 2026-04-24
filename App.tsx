@@ -288,45 +288,36 @@ const App: React.FC = () => {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
         fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto glass-card text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
         md:translate-x-0 md:static md:inset-auto print:hidden flex flex-col shrink-0
-        border-r border-white/20 dark:border-white/5 
-        bg-white/90 dark:bg-zinc-950/95 md:bg-inherit
-        ${!isSidebarCollapsed ? 'md:w-72' : 'md:w-24'}
+        border-none
+        bg-zinc-50 dark:bg-black
+        ${!isSidebarCollapsed ? 'md:w-80' : 'md:w-20'}
       `}>
-        <div className={`p-6 md:p-8 h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
-          <div className={`mb-8 md:mb-10 ${isSidebarCollapsed ? 'text-center' : ''}`}>
-            <div className={`inline-block bg-blue-600/10 dark:bg-blue-400/10 p-4 rounded-[1.5rem] border border-blue-600/20 transition-all ${isSidebarCollapsed ? 'p-3' : 'md:p-5'}`}>
-               <Logo size={isSidebarCollapsed ? 28 : 36} className="text-blue-600 dark:text-blue-400" />
+        <div className={`p-10 md:p-12 h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
+          <div className={`mb-16 ${isSidebarCollapsed ? 'text-center' : ''}`}>
+            <div className={`inline-block transition-all ${isSidebarCollapsed ? '' : ''}`}>
+               <Logo size={isSidebarCollapsed ? 32 : 44} className="text-zinc-900 dark:text-white" />
             </div>
             {!isSidebarCollapsed && (
-              <div className="mt-4">
-                <h1 className="text-xl md:text-2xl font-bold tracking-tighter text-zinc-900 dark:text-white truncate">SPACEYA</h1>
-                <div className="flex items-center gap-2 mt-1">
-                   <p className="text-[9px] md:text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.3em] font-black opacity-60">Property Manager</p>
-                   <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                        user.role === UserRole.AGENT ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-                        user.role === UserRole.ADMIN ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
-                        'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                      }`}>
-                        {user.role}
-                   </span>
-                </div>
+              <div className="mt-8">
+                <h1 className="text-3xl font-black tracking-[-0.05em] text-zinc-900 dark:text-white uppercase">Spaceya</h1>
+                <p className="text-[9px] text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">Executive Access</p>
               </div>
             )}
           </div>
 
-          <nav className="space-y-1 flex-1 overflow-y-auto custom-scrollbar pr-1">
+          <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1">
             {navItems.filter(item => item.roles.includes(user?.role || UserRole.TENANT)).map(item => (
               <button
                 key={item.id}
                 title={isSidebarCollapsed ? item.label : ''}
                 onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
                 className={`
-                  w-full flex items-center font-bold rounded-2xl transition-all relative group
-                  ${isSidebarCollapsed ? 'justify-center p-3.5 md:p-4 mb-2' : 'px-4 py-3.5 md:px-5 md:py-4 text-[13px] md:text-xs'}
-                  ${view === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 scale-[1.02]' : 'text-zinc-500 dark:text-zinc-400 hover:bg-white/10 dark:hover:bg-black/30 hover:text-blue-600 dark:hover:text-blue-400'}
+                  w-full flex items-center font-black rounded-full transition-all relative group
+                  ${isSidebarCollapsed ? 'justify-center p-4 mb-2' : 'px-8 py-5 text-[10px] uppercase tracking-widest'}
+                  ${view === item.id ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}
                 `}
               >
-                <item.icon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5 shrink-0 ${view === item.id ? 'text-white' : 'text-zinc-400 group-hover:text-blue-600'}`} /> 
+                <item.icon className={`${isSidebarCollapsed ? '' : 'mr-6'} h-4 w-4 shrink-0`} /> 
                 {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                 
                 {item.badge && item.badge > 0 ? (

@@ -733,101 +733,63 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             <div 
               key={property.id} 
               onClick={() => handleOpenDetail(property)}
-              className="glass-card rounded-[3.2rem] overflow-hidden group hover:scale-[1.01] transition-all duration-700 cursor-pointer flex flex-col md:flex-row shadow-2xl border-white/20 dark:border-white/5"
+              className="group bg-white dark:bg-zinc-900 overflow-hidden transition-all duration-700 cursor-pointer flex flex-col md:flex-row border-b border-zinc-100 dark:border-zinc-800 pb-12"
             >
-              <div className="w-full md:w-5/12 h-80 md:h-auto bg-offwhite dark:bg-black relative overflow-hidden shrink-0">
+              <div className="w-full md:w-5/12 h-80 md:h-[350px] bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden shrink-0">
                 <img 
                   src={thumbnail} 
                   alt={property.name} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                 />
-                <div className="absolute top-6 left-6 flex flex-col gap-2">
-                  <span className={`px-4 py-2 rounded-2xl text-[9px] font-black uppercase shadow-xl border backdrop-blur-md ${getStatusStyle(property.status)}`}>
+                <div className="absolute top-4 left-4 flex flex-col gap-1">
+                  <span className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest ${getStatusStyle(property.status)}`}>
                     {property.status}
                   </span>
-                  <span className="px-4 py-2 rounded-2xl text-[9px] font-black uppercase border border-white/20 bg-white/30 backdrop-blur-md text-zinc-900 dark:text-white shadow-xl">
-                    {property.category}
-                  </span>
-                  {activeTickets.length > 0 && (
-                    <span className="px-4 py-2 rounded-2xl text-[9px] font-black uppercase border border-rose-500/30 bg-rose-500/20 backdrop-blur-md text-rose-500 shadow-xl flex items-center gap-2 animate-pulse">
-                       <AlertTriangle size={12} /> {activeTickets.length} Faults Active
-                    </span>
-                  )}
                 </div>
-                {/* Image Count Badge */}
-                {property.images && property.images.length > 1 && (
-                    <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-2">
-                        <ImageIcon size={12} /> {property.images.length}
-                    </div>
-                )}
               </div>
 
-              <div className="p-10 flex-1 flex flex-col justify-between space-y-8">
+              <div className="pt-8 md:pt-0 md:pl-10 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-black text-zinc-900 dark:text-white leading-tight tracking-tighter">{property.name}</h3>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-3xl font-black text-zinc-900 dark:text-white leading-tight tracking-[-0.03em] uppercase">{property.name}</h3>
                     {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && (
                       <button 
                         onClick={(e) => handleStartEdit(e, property)}
-                        className="p-3 bg-white/10 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-white/10"
+                        className="p-2 text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
                       >
                         <Edit size={16} />
                       </button>
                     )}
                   </div>
                   
-                  <div className="flex items-center text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-10">
-                    <MapPin className="w-3.5 h-3.5 mr-2 text-blue-600" />
+                  <div className="flex items-center text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+                    <MapPin className="w-3 h-3 mr-2" />
                     <span className="truncate">{property.location}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                      <p className="text-[8px] font-black text-zinc-500 uppercase mb-1">Type</p>
-                      <p className="text-xs font-black text-zinc-900 dark:text-white truncate">{property.type}</p>
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                    <div>
+                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Asset Type</p>
+                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{property.type}</p>
                     </div>
-                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                      <p className="text-[8px] font-black text-zinc-500 uppercase mb-1 flex items-center gap-1">Start</p>
-                      <p className="text-xs font-black text-zinc-900 dark:text-white">{formatDate(property.rentStartDate || '---', settings)}</p>
+                    <div>
+                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Lifecycle Stage</p>
+                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{property.status}</p>
                     </div>
-                    <div className={`p-4 rounded-2xl border backdrop-blur-sm ${isExpiringSoon ? 'bg-amber-500/10 border-amber-500/30' : isExpired ? 'bg-rose-500/10 border-rose-500/30' : 'border-white/10 bg-white/5'}`}>
-                      <p className={`text-[8px] font-black uppercase mb-1 flex items-center gap-1 ${isExpiringSoon ? 'text-amber-500' : isExpired ? 'text-rose-500' : 'text-zinc-500'}`}>
-                        {isExpiringSoon && <AlertTriangle size={10} />}
-                        {isExpired && <AlertCircle size={10} />}
-                        Expiry
-                      </p>
-                      <p className={`text-xs font-black ${isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : isExpired ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                        {formatDate(property.rentExpiryDate || '---', settings)}
-                      </p>
+                    <div className={isExpiringSoon ? 'text-amber-600' : isExpired ? 'text-rose-600' : ''}>
+                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Termination</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest">{formatDate(property.rentExpiryDate || '---', settings)}</p>
                     </div>
-                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                      <p className="text-[8px] font-black text-zinc-500 uppercase mb-1">Term</p>
-                      <p className="text-xs font-black text-zinc-900 dark:text-white truncate">Annual</p>
+                    <div>
+                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Yield</p>
+                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{formatCurrency(property.rent, settings)}</p>
                     </div>
-                  </div>
-
-                  <div className="bg-white/5 p-6 rounded-[2rem] border border-white/10 backdrop-blur-sm">
-                    <p className="text-[8px] font-black text-zinc-500 uppercase mb-2 flex items-center gap-1 tracking-widest"><FileText size={10}/> Summary</p>
-                    <p className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-2 italic">
-                      {property.description || "Portfolio brief pending submission."}
-                    </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between pt-6 border-t border-white/10">
-                  <div className="flex flex-col">
-                    <p className="text-[8px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Agent Registry</p>
-                    <div className="flex items-center gap-2">
-                       <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center text-[10px] font-black text-blue-600 uppercase border border-blue-600/20">
-                          {propertyAgent?.name.charAt(0)}
-                       </div>
-                       <p className="text-[10px] font-black text-zinc-900 dark:text-white uppercase truncate">{propertyAgent?.name}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[8px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Yield</p>
-                    <p className="text-xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{formatCurrency(property.rent, settings)}</p>
-                  </div>
+                <div className="flex items-center justify-between pt-8 mt-auto group-hover:translate-x-2 transition-transform duration-500">
+                    <span className="text-[9px] font-black uppercase tracking-[0.5em] text-zinc-300">View Details</span>
+                    <ArrowRight className="w-4 h-4 text-zinc-300" />
                 </div>
               </div>
             </div>

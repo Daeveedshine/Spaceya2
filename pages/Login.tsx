@@ -84,129 +84,64 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-[100dvh] w-full relative overflow-y-auto bg-black custom-scrollbar">
-      {/* Fixed Background Elements */}
-      <video autoPlay muted loop playsInline className="fixed inset-0 w-full h-full object-cover z-0 opacity-40 grayscale blur-[2px]">
-        <source src="https://assets.mixkit.co/videos/preview/mixkit-drone-shot-of-a-small-modern-house-in-the-forest-4309-large.mp4" type="video/mp4" />
-      </video>
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-1"></div>
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-black overflow-hidden relative">
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.07] pointer-events-none select-none overflow-hidden flex flex-wrap items-center justify-center gap-12 rotate-12">
+        {Array.from({length: 40}).map((_, i) => (
+          <span key={i} className="text-9xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Spaceya</span>
+        ))}
+      </div>
 
-      {/* Scrollable Content Wrapper */}
-      <div className="relative z-10 min-h-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 pb-24 md:pb-32">
-        <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-12 duration-1000">
-          <div className="glass-card rounded-[3rem] md:rounded-[4.5rem] shadow-[0_32px_128px_rgba(0,0,0,0.5)] overflow-hidden border-white/20 dark:border-white/5">
-            <div className="bg-black/40 backdrop-blur-3xl p-8 md:p-14 text-center border-b border-white/10">
-              <div className="flex justify-center mb-6 md:mb-10">
-                <div className="bg-white/10 p-5 md:p-6 rounded-[1.8rem] md:rounded-[2.5rem] backdrop-blur-3xl border border-white/20 shadow-2xl animate-pulse-gentle">
-                  <Logo size={44} className="text-white" />
-                </div>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter text-white">SPACEYA</h2>
-              <p className="mt-2 text-blue-400 font-playfair italic text-base md:text-lg tracking-widest opacity-80">Your Space, Handled</p>
+      <div className="max-w-md w-full relative z-10 space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center mb-8">
+            <Logo size={80} className="text-zinc-900 dark:text-white" />
+          </div>
+          <h2 className="text-5xl font-black text-zinc-900 dark:text-white tracking-[-0.05em] uppercase">Executive Access</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-400">Identity Provisioning Layer</p>
+        </div>
+
+        <div className="space-y-10">
+          {error && (
+            <div className="bg-rose-50 border border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-6 rounded-[2rem] text-[9px] font-black uppercase tracking-widest flex items-center gap-4 animate-in shake">
+              <AlertCircle size={20} /> {error}
             </div>
-            
-            <div className="flex bg-black/20 backdrop-blur-md">
-              <button 
-                onClick={() => { setIsRegistering(false); setError(''); }} 
-                className={`flex-1 py-5 md:py-7 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all border-b-2 ${!isRegistering ? 'text-white bg-white/10 border-blue-600' : 'text-zinc-500 border-transparent hover:text-white'}`}
-              >
-                Sign In
-              </button>
-              <button 
-                onClick={() => { setIsRegistering(true); setError(''); }} 
-                className={`flex-1 py-5 md:py-7 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all border-b-2 ${isRegistering ? 'text-white bg-white/10 border-blue-600' : 'text-zinc-500 border-transparent hover:text-white'}`}
-              >
-                Register
-              </button>
+          )}
+
+          <div className="space-y-6">
+            <button 
+              disabled={isLoading} 
+              onClick={signInWithGoogle} 
+              className="w-full py-6 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:opacity-80 transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
+            >
+              <GoogleIcon /> {isLoading ? 'Verifying Protocol...' : 'Verify Identity via Google'}
+            </button>
+
+            <div className="flex items-center gap-4 text-zinc-300 dark:text-zinc-800">
+               <div className="flex-1 h-px bg-current"></div>
+               <span className="text-[8px] font-black uppercase tracking-widest whitespace-nowrap">Tier Selection</span>
+               <div className="flex-1 h-px bg-current"></div>
             </div>
 
-            <div className="p-8 md:p-14 bg-transparent space-y-8">
-              {error && (
-                <div className="bg-rose-500/20 text-rose-200 p-5 rounded-2xl text-[10px] font-black uppercase border border-rose-500/30 flex items-center gap-3 backdrop-blur-md animate-in shake duration-500">
-                  <AlertCircle size={16} /> {error}
-                </div>
-              )}
-              
-              <form className="space-y-6" onSubmit={isRegistering ? handleRegister : handleLogin}>
-                {isRegistering && (
-                  <div className="space-y-6 animate-in fade-in duration-500">
-                    <div className="space-y-4">
-                      <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2 ml-1 opacity-60">Identity Tier</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button type="button" onClick={() => setRole(UserRole.TENANT)} className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all ${role === UserRole.TENANT ? 'border-blue-600 bg-blue-600/20 text-white' : 'border-white/5 bg-white/5 text-zinc-500 opacity-60 hover:opacity-100'}`}>
-                          <Users size={24} className="mb-2" />
-                          <span className="text-[10px] font-black uppercase">Tenant</span>
-                        </button>
-                        <button type="button" onClick={() => setRole(UserRole.AGENT)} className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all ${role === UserRole.AGENT ? 'border-blue-600 bg-blue-600/20 text-white' : 'border-white/5 bg-white/5 text-zinc-500 opacity-60 hover:opacity-100'}`}>
-                          <UserCheck size={24} className="mb-2" />
-                          <span className="text-[10px] font-black uppercase">Agent</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 ml-1 opacity-60">Legal Name</label>
-                      <input required className="glass-input w-full p-5 rounded-2xl text-white text-sm font-bold outline-none" value={name} onChange={e => setName(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 ml-1 opacity-60">Phone Number</label>
-                      <div className="relative">
-                        <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                        <input type="tel" className="glass-input w-full pl-14 pr-5 py-5 rounded-2xl text-white text-sm font-bold outline-none" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+234" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 ml-1 opacity-60">Email Protocol</label>
-                    <div className="relative">
-                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                      <input required type="email" className="glass-input w-full pl-14 pr-5 py-5 rounded-2xl text-white text-sm font-bold outline-none" value={email} onChange={e => setEmail(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 ml-1 opacity-60">Security Key</label>
-                    <div className="relative">
-                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                      <input required type="password" title="Password" className="glass-input w-full pl-14 pr-5 py-5 rounded-2xl text-white text-sm font-bold outline-none" value={password} onChange={e => setPassword(e.target.value)} />
-                    </div>
-                  </div>
-
-                  {isRegistering && (
-                    <div className="animate-in fade-in duration-500">
-                      <label className="block text-[9px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 ml-1 opacity-60">Confirm Key</label>
-                      <div className="relative">
-                        <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                        <input required type="password" title="Confirm Password" className="glass-input w-full pl-14 pr-5 py-5 rounded-2xl text-white text-sm font-bold outline-none" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-3xl shadow-2xl shadow-blue-600/30 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center text-[10px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] mt-4">
-                  {isRegistering ? 'Register Lifecycle' : 'Access Vault'} <ArrowRight className="ml-3 w-5 h-5" />
-                </button>
-              </form>
-
-              <div className="flex items-center gap-4 py-4">
-                <div className="flex-1 h-px bg-white/10"></div>
-                <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">or bridge via</span>
-                <div className="flex-1 h-px bg-white/10"></div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button type="button" onClick={() => alert('Apple auth not supported in prototype.')} className="flex-1 py-5 glass-input text-white rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 transition-all active:scale-95">
-                  <Apple size={20} /> Apple
-                </button>
-                <button type="button" disabled={isLoading} onClick={signInWithGoogle} className="flex-1 py-5 glass-input text-white rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50">
-                  <GoogleIcon /> {isLoading ? 'Authenticating...' : 'Google'}
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+               <button 
+                 onClick={() => setRole(UserRole.TENANT)}
+                 className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all ${role === UserRole.TENANT ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white opacity-40'}`}
+               >
+                 Tenant Entry
+               </button>
+               <button 
+                 onClick={() => setRole(UserRole.AGENT)}
+                 className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all ${role === UserRole.AGENT ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white opacity-40'}`}
+               >
+                 Agent Gateway
+               </button>
             </div>
           </div>
         </div>
+
+        <footer className="pt-12 text-center">
+            <p className="text-[8px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-40">Secured via Quantum Infrastructure</p>
+        </footer>
       </div>
     </div>
   );

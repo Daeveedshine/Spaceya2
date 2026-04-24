@@ -18,7 +18,7 @@ export const isConfigured = true;
 async function verifyBackendConnection() {
   try {
     // Try to reach the backend, but don't fail the whole app if it's just slow
-    const connectionRef = doc(db, 'system', 'connection_check');
+    const connectionRef = doc(db, 'test', 'connection');
     await getDocFromServer(connectionRef);
   } catch (error: any) {
     // Suppress connectivity errors as many environments are slow or start offline

@@ -5,6 +5,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>SPACEYA</title>
+    <script>
+      // Early suppression of common browser extension errors (like MetaMask) that interfere with the preview
+      (function() {
+        const suppressedKeywords = ['MetaMask', 'ethereum', 'web3', 'provider'];
+        const isSuppressed = (msg) => {
+          if (!msg || typeof msg !== 'string') return false;
+          return suppressedKeywords.some(kw => msg.includes(kw));
+        };
+
+        const silence = (original, type) => {
+          return function(...args) {
+            if (args.some(a => isSuppressed(a?.message || a))) return;
+            return original.apply(this, args);
+          };
+        };
+
+        console.error = silence(console.error, 'error');
+        console.warn = silence(console.warn, 'warn');
+        console.log = silence(console.log, 'log');
+
+        window.addEventListener('error', (e) => {
+          if (isSuppressed(e.message)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', (e) => {
+          const reason = e.reason?.message || e.reason;
+          if (isSuppressed(reason)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+      })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {

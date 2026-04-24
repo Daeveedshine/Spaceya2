@@ -21,7 +21,7 @@ export function handleFirestoreError(error: any, operationType: FirestoreErrorIn
         userId: authUser?.uid || 'unauthenticated',
         email: authUser?.email || '',
         emailVerified: authUser?.emailVerified || false,
-        isAnonymous: authUser?.isAnonymous || true,
+        isAnonymous: authUser ? !!authUser.isAnonymous : true,
         providerInfo: authUser?.providerData?.map((p: any) => ({
           providerId: p.providerId,
           displayName: p.displayName,
