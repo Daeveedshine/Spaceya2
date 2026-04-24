@@ -1,0 +1,187 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isAdmin() {
+      // Example of an admin bootstrap
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isRole(roleStr) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == roleStr;
+    }
+
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['id', 'name', 'email', 'role'])
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128 && data.id == userId
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+          && data.email is string && data.email.size() > 0 && data.email.size() <= 150
+          && data.role is string && data.role.size() > 0 && data.role.size() <= 20 && data.role in ['ADMIN', 'AGENT', 'TENANT'];
+      }
+      
+      // Let any signed in user create their profile.
+      allow create: if isSignedIn() 
+                    && isValidId(userId)
+                    && isValidUser(incoming())
+                    && incoming().id == request.auth.uid;
+
+      allow get: if isSignedIn() && (request.auth.uid == userId || isRole('ADMIN'));
+      allow list: if isSignedIn() && (resource.data.id == request.auth.uid || isRole('ADMIN') || isRole('AGENT'));
+
+      allow update: if isSignedIn() 
+                    && isValidId(userId)
+                    && request.auth.uid == userId
+                    && isValidUser(incoming())
+                    && incoming().role == existing().role
+                    && incoming().id == existing().id;
+      
+      allow delete: if false;
+    }
+
+    match /properties/{propertyId} {
+      function isValidProperty(data) {
+        return data.keys().hasAll(['id', 'name', 'location', 'rent', 'status', 'agentId'])
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128 && data.id == propertyId
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+          && data.location is string && data.location.size() > 0 && data.location.size() <= 250
+          && data.rent is number
+          && data.status is string && data.status.size() > 0 && data.status.size() <= 20 && data.status in ['DRAFT', 'LISTED', 'OCCUPIED', 'VACANT', 'ARCHIVED']
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128;
+      }
+
+      allow create: if isSignedIn()
+                    && isRole('AGENT')
+                    && isValidId(propertyId)
+                    && isValidProperty(incoming())
+                    && incoming().agentId == request.auth.uid;
+
+      allow update: if isSignedIn()
+                    && isValidId(propertyId)
+                    && isValidProperty(incoming())
+                    && existing().agentId == request.auth.uid
+                    && incoming().agentId == existing().agentId
+                    && incoming().id == existing().id;
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow delete: if isSignedIn() && existing().agentId == request.auth.uid;
+    }
+
+    match /applications/{applicationId} {
+      function isValidApplication(data) {
+        return data.keys().hasAll(['id', 'userId', 'propertyId', 'agentId', 'status', 'submissionDate'])
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128 && data.id == applicationId
+          && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128
+          && data.propertyId is string && data.propertyId.size() > 0 && data.propertyId.size() <= 128
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128
+          && data.status is string && data.status.size() > 0 && data.status.size() <= 20 && data.status in ['PENDING', 'REVIEWING', 'APPROVED', 'REJECTED', 'MORE_INFO_REQUIRED']
+          && data.submissionDate is string && data.submissionDate.size() > 0 && data.submissionDate.size() <= 100;
+      }
+
+      allow create: if isSignedIn()
+                    && isValidId(applicationId)
+                    && isValidApplication(incoming())
+                    && incoming().userId == request.auth.uid
+                    && incoming().status == 'PENDING';
+
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || existing().agentId == request.auth.uid || isRole('ADMIN'));
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isRole('ADMIN'));
+
+      allow update: if isSignedIn()
+                    && isValidId(applicationId)
+                    && existing().agentId == request.auth.uid
+                    && incoming().agentId == existing().agentId
+                    && incoming().userId == existing().userId
+                    && incoming().id == existing().id
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+
+      allow delete: if false;
+    }
+
+    match /agreements/{agreementId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('ADMIN') || 
+                  get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      allow create, update, delete: if false; 
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false; 
+    }
+
+    match /tickets/{ticketId} {
+      function isValidTicket(data) {
+        return data.keys().hasAll(['id', 'tenantId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128 && data.id == ticketId
+          && data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() <= 128
+          && data.propertyId is string && data.propertyId.size() > 0 && data.propertyId.size() <= 128
+          && data.issue is string && data.issue.size() > 0 && data.issue.size() <= 2000
+          && data.status is string && data.status.size() > 0 && data.status.size() <= 20
+          && data.priority is string && data.priority.size() > 0 && data.priority.size() <= 20
+          && data.createdAt is string && data.createdAt.size() > 0 && data.createdAt.size() <= 100;
+      }
+      
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || 
+        get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      
+      allow create: if isSignedIn() 
+                    && isValidId(ticketId)
+                    && isValidTicket(incoming())
+                    && incoming().tenantId == request.auth.uid;
+
+      allow update: if isSignedIn() 
+                    && isValidId(ticketId)
+                    && existing().tenantId == request.auth.uid
+                    && incoming().tenantId == existing().tenantId
+                    && incoming().id == existing().id;
+
+      allow delete: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || 
+        get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      allow write: if false; 
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if false;
+    }
+
+    match /formTemplates/{templateId} {
+      function isValidTemplate(data) {
+        return data.keys().hasAll(['agentId', 'lastUpdated', 'sections'])
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128 && data.agentId == templateId
+          && data.lastUpdated is string && data.lastUpdated.size() > 0 && data.lastUpdated.size() <= 100
+          && data.sections is list && data.sections.size() <= 50;
+      }
+
+      allow create, update: if isSignedIn() 
+                            && isValidId(templateId)
+                            && request.auth.uid == templateId
+                            && isValidTemplate(incoming())
+                            && incoming().agentId == existing().agentId;
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow delete: if false;
+    }
+  }
+}

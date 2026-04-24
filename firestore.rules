@@ -1,0 +1,250 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isAdmin() {
+      return isSignedIn() && isRole('ADMIN');
+    }
+
+    function isRole(roleStr) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == roleStr;
+    }
+
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['id', 'name', 'email', 'role'])
+          && data.size() >= 4 && data.size() <= 12
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+          && data.email is string && data.email.size() > 0 && data.email.size() <= 150
+          && data.role is string && data.role in ['ADMIN', 'AGENT', 'TENANT'];
+      }
+      
+      allow create: if isSignedIn() 
+                    && isValidId(userId)
+                    && isValidUser(incoming())
+                    && incoming().id == userId
+                    && incoming().id == request.auth.uid;
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (
+        resource.data.id == request.auth.uid 
+        || (resource.data.role == 'AGENT')
+        || isRole('ADMIN') 
+        || isRole('AGENT')
+      );
+
+      allow update: if isSignedIn() 
+                    && isValidUser(incoming())
+                    && incoming().id == existing().id // Identity immutable
+                    && incoming().role == existing().role // Privilege immutable
+                    && incoming().email == existing().email // Security immutable
+                    && (
+                      isAdmin()
+                      ||
+                      (
+                        request.auth.uid == userId
+                        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl'])
+                      )
+                      ||
+                      (
+                        isRole('AGENT')
+                        && existing().role == 'TENANT'
+                        && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds', 'walletBalance']) // Agent can charge assignment fees/commission
+                      )
+                    );
+                    
+      allow delete: if false;
+    }
+
+    match /properties/{propertyId} {
+      function isValidProperty(data) {
+        return data.keys().hasAll(['id', 'name', 'location', 'rent', 'status', 'agentId', 'category', 'type'])
+          && data.size() >= 8 && data.size() <= 13
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+          && data.location is string && data.location.size() > 0 && data.location.size() <= 250
+          && data.rent is number
+          && data.status is string && data.status in ['DRAFT', 'LISTED', 'OCCUPIED', 'VACANT', 'ARCHIVED']
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128
+          && data.category is string && data.category.size() > 0 && data.category.size() <= 50
+          && data.type is string && data.type.size() > 0 && data.type.size() <= 100
+          && (!('tenantId' in data) || (data.tenantId is string && data.tenantId.size() <= 128))
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && (!('rentStartDate' in data) || (data.rentStartDate is string && data.rentStartDate.size() <= 100))
+          && (!('rentExpiryDate' in data) || (data.rentExpiryDate is string && data.rentExpiryDate.size() <= 100))
+          && (!('images' in data) || (data.images is list && data.images.size() <= 20)); // Bounded image array
+      }
+
+      allow create: if isSignedIn()
+                    && isRole('AGENT')
+                    && isValidId(propertyId)
+                    && isValidProperty(incoming())
+                    && incoming().id == propertyId
+                    && incoming().agentId == request.auth.uid;
+
+      allow update: if isSignedIn()
+                    && isValidProperty(incoming())
+                    && existing().agentId == request.auth.uid
+                    && incoming().agentId == existing().agentId // Immutable agent ownership
+                    && incoming().id == existing().id // Immutable ID
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'location', 'rent', 'status', 'description', 'category', 'type', 'images', 'tenantId', 'rentStartDate', 'rentExpiryDate']);
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (resource.data.status in ['LISTED', 'VACANT'] || resource.data.agentId == request.auth.uid || isRole('ADMIN'));
+      allow delete: if isSignedIn() && existing().agentId == request.auth.uid;
+    }
+
+    match /applications/{applicationId} {
+      function isValidApplication(data) {
+        return data.keys().hasAll(['id', 'userId', 'propertyId', 'agentId', 'status', 'submissionDate', 'firstName', 'surname'])
+          && data.size() >= 8 && data.size() <= 50 // Accommodate many form fields
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+          && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128
+          && data.propertyId is string && data.propertyId.size() > 0 && data.propertyId.size() <= 128
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128
+          && data.status is string && data.status in ['PENDING', 'REVIEWING', 'APPROVED', 'REJECTED', 'MORE_INFO_REQUIRED']
+          && data.submissionDate is string && data.submissionDate.size() > 0 && data.submissionDate.size() <= 100
+          && data.firstName is string && data.firstName.size() > 0 && data.firstName.size() <= 100
+          && data.surname is string && data.surname.size() > 0 && data.surname.size() <= 100;
+          // Note: Ignoring specific checks for dynamic custom fields for this prototype to allow flexibility,
+          // but relying on data.size() <= 50 bound.
+      }
+
+      allow create: if isSignedIn()
+                    && isValidId(applicationId)
+                    && isValidApplication(incoming())
+                    && incoming().id == applicationId
+                    && incoming().userId == request.auth.uid
+                    && incoming().status == 'PENDING'
+                    // Ensure the property being applied to actually exists
+                    && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
+
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || existing().agentId == request.auth.uid || isRole('ADMIN'));
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isRole('ADMIN'));
+
+      allow update: if (
+                      isSignedIn()
+                      && isValidApplication(incoming())
+                      && incoming().id == existing().id // Immutable ID
+                      && incoming().userId == existing().userId // Immutable tenant
+                      && incoming().agentId == existing().agentId // Immutable agent routing
+                      && incoming().propertyId == existing().propertyId // Immutable initial property assignment
+                      && (
+                        isAdmin() ||
+                        // Action: Agent updates status
+                        (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+                        // Action: Tenant updates answers if status was PENDING or MORE_INFO_REQUIRED
+                        (request.auth.uid == existing().userId && incoming().diff(existing()).affectedKeys().hasAny(['customResponses', 'passportPhotoUrl', 'verificationUrl', 'phoneNumber']) && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED'))
+                      )
+                    );
+
+      allow delete: if false;
+    }
+
+    match /agreements/{agreementId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('ADMIN') || 
+                  get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().id == agreementId && (get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId == request.auth.uid || isRole('ADMIN'));
+      allow update, delete: if false; 
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only backend writes money
+    }
+
+    match /tickets/{ticketId} {
+      function isValidTicket(data) {
+        return data.keys().hasAll(['id', 'tenantId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
+          && data.size() >= 7 && data.size() <= 10
+          && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+          && data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() <= 128
+          && data.propertyId is string && data.propertyId.size() > 0 && data.propertyId.size() <= 128
+          && data.issue is string && data.issue.size() > 0 && data.issue.size() <= 2000
+          && data.status is string && data.status in ['OPEN', 'IN_PROGRESS', 'RESOLVED']
+          && data.priority is string && data.priority in ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY']
+          && data.createdAt is string && data.createdAt.size() > 0 && data.createdAt.size() <= 100
+          && (!('aiAssessment' in data) || (data.aiAssessment is string && data.aiAssessment.size() <= 2000))
+          && (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1000));
+      }
+      
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || 
+        get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      
+      allow create: if isSignedIn() 
+                    && isValidId(ticketId)
+                    && isValidTicket(incoming())
+                    && incoming().id == ticketId
+                    && incoming().tenantId == request.auth.uid
+                    && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
+
+      allow update: if isSignedIn() 
+                    && isValidTicket(incoming())
+                    && incoming().id == existing().id // Immutable
+                    && incoming().tenantId == existing().tenantId // Immutable
+                    && incoming().propertyId == existing().propertyId // Immutable
+                    && (
+                      isAdmin() ||
+                      // Action: Tenant updates description
+                      (request.auth.uid == existing().tenantId && incoming().diff(existing()).affectedKeys().hasOnly(['issue', 'imageUrl'])) ||
+                      // Action: Agent updates status
+                      (request.auth.uid == get(/databases/$(database)/documents/properties/$(existing().propertyId)).data.agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'priority', 'aiAssessment']))
+                    );
+
+      allow delete: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || 
+        get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid);
+      allow write: if false; 
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if false;
+    }
+
+    match /formTemplates/{templateId} {
+      function isValidTemplate(data) {
+        return data.keys().hasAll(['agentId', 'lastUpdated', 'sections'])
+          && data.size() == 3
+          && data.agentId is string && data.agentId.size() > 0 && data.agentId.size() <= 128
+          && data.lastUpdated is string && data.lastUpdated.size() > 0 && data.lastUpdated.size() <= 100
+          && data.sections is list && data.sections.size() <= 50;
+      }
+
+      allow create: if isSignedIn() 
+                    && isValidId(templateId)
+                    && isValidTemplate(incoming())
+                    && request.auth.uid == templateId // Only agent can create their own template, ID must be their UID
+                    && incoming().agentId == templateId;
+
+      allow update: if isSignedIn() 
+                    && isValidTemplate(incoming())
+                    && request.auth.uid == templateId
+                    && incoming().agentId == existing().agentId
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['sections', 'lastUpdated']);
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (resource.data.agentId == request.auth.uid || isRole('ADMIN'));
+      allow delete: if false;
+    }
+  }
+}

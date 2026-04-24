@@ -1,0 +1,205 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access",
+      "type": "object",
+      "required": ["id", "name", "email", "role"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "AGENT", "TENANT"] },
+        "phone": { "type": "string" },
+        "profilePictureUrl": { "type": "string" },
+        "walletBalance": { "type": "number" },
+        "assignedPropertyIds": { "type": "array" }
+      }
+    },
+    "Property": {
+      "title": "Property",
+      "description": "A real estate property",
+      "type": "object",
+      "required": ["id", "name", "location", "rent", "status", "agentId", "category", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "rent": { "type": "number" },
+        "status": { "type": "string", "enum": ["DRAFT", "LISTED", "OCCUPIED", "VACANT", "ARCHIVED"] },
+        "agentId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "type": { "type": "string" },
+        "rentStartDate": { "type": "string" },
+        "rentExpiryDate": { "type": "string" },
+        "images": { "type": "array" }
+      }
+    },
+    "TenantApplication": {
+      "title": "TenantApplication",
+      "description": "Dossier submitted by a tenant for a property/agent",
+      "type": "object",
+      "required": ["id", "userId", "propertyId", "agentId", "status", "submissionDate", "firstName", "surname"],
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "agentId": { "type": "string" },
+        "status": { "type": "string" },
+        "submissionDate": { "type": "string" },
+        "firstName": { "type": "string" },
+        "surname": { "type": "string" },
+        "middleName": { "type": "string" },
+        "dob": { "type": "string" },
+        "maritalStatus": { "type": "string" },
+        "gender": { "type": "string" },
+        "currentHomeAddress": { "type": "string" },
+        "occupation": { "type": "string" },
+        "familySize": { "type": "number" },
+        "phoneNumber": { "type": "string" },
+        "reasonForRelocating": { "type": "string" },
+        "currentLandlordName": { "type": "string" },
+        "currentLandlordPhone": { "type": "string" },
+        "verificationType": { "type": "string" },
+        "verificationIdNumber": { "type": "string" },
+        "verificationUrl": { "type": "string" },
+        "passportPhotoUrl": { "type": "string" },
+        "agentIdCode": { "type": "string" },
+        "signature": { "type": "string" },
+        "applicationDate": { "type": "string" },
+        "riskScore": { "type": "number" },
+        "aiRecommendation": { "type": "string" }
+      }
+    },
+    "Agreement": {
+      "title": "Agreement",
+      "description": "Tenancy agreement between Agent and Tenant",
+      "type": "object",
+      "required": ["id", "propertyId", "tenantId", "startDate", "endDate", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "version": { "type": "number" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string" },
+        "documentUrl": { "type": "string" }
+      }
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Rent payment transaction record",
+      "type": "object",
+      "required": ["id", "tenantId", "propertyId", "amount", "date", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "MaintenanceTicket": {
+      "title": "MaintenanceTicket",
+      "description": "Maintenance requests raised by a tenant",
+      "type": "object",
+      "required": ["id", "tenantId", "propertyId", "issue", "status", "priority", "createdAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "issue": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "aiAssessment": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System or user notifications",
+      "type": "object",
+      "required": ["id", "userId", "title", "message", "type", "timestamp", "isRead"],
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "linkTo": { "type": "string" },
+        "attachmentUrl": { "type": "string" }
+      }
+    },
+    "FormTemplate": {
+      "title": "FormTemplate",
+      "description": "Dynamic form configuration for Agents",
+      "type": "object",
+      "required": ["agentId", "lastUpdated"],
+      "properties": {
+        "agentId": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "sections": { "type": "array" }
+      }
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Wallet transactions for agents",
+      "type": "object",
+      "required": ["id", "userId", "amount", "type", "purpose", "timestamp", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string" },
+        "purpose": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Registered users"
+    },
+    "/properties/{propertyId}": {
+      "schema": { "$ref": "#/entities/Property" },
+      "description": "Properties"
+    },
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/TenantApplication" },
+      "description": "Tenant applications"
+    },
+    "/agreements/{agreementId}": {
+      "schema": { "$ref": "#/entities/Agreement" },
+      "description": "Agreements"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/Payment" },
+      "description": "Payments"
+    },
+    "/tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/MaintenanceTicket" },
+      "description": "Maintenance tickets"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Notifications"
+    },
+    "/formTemplates/{templateId}": {
+      "schema": { "$ref": "#/entities/FormTemplate" },
+      "description": "Form configurations per agent"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Wallet transactions"
+    }
+  }
+}
