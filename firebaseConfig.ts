@@ -16,11 +16,18 @@ const envConfig = {
   firestoreDatabaseId: import.meta.env.VITE_FIRESTORE_DATABASE_ID,
 };
 
+const envVarNames: Record<string, string> = {
+  apiKey: 'VITE_FIREBASE_API_KEY',
+  authDomain: 'VITE_FIREBASE_AUTH_DOMAIN',
+  projectId: 'VITE_FIREBASE_PROJECT_ID',
+  appId: 'VITE_FIREBASE_APP_ID'
+};
+
 // We cannot rely on require in a Vite environment.
 let activeConfig = envConfig;
 
-// Attempt to load from window.FIREBASE_CONFIG if injected, else fall back to envConfig
-if (typeof window !== 'undefined' && (window as any).FIREBASE_CONFIG) {
+// Attempt to load from window.FIREBASE_CONFIG if injected and valid, else fall back to envConfig
+if (typeof window !== 'undefined' && (window as any).FIREBASE_CONFIG && (window as any).FIREBASE_CONFIG.apiKey) {
   activeConfig = (window as any).FIREBASE_CONFIG;
 }
 
@@ -29,7 +36,8 @@ let configurationError = null;
 
 for (const key of requiredKeys) {
   if (!activeConfig[key as keyof typeof activeConfig]) {
-    configurationError = `Missing required Firebase configuration environment variable: ${key}`;
+    const varName = envVarNames[key] || key;
+    configurationError = `Missing required environment variable: ${varName}`;
     break;
   }
 }

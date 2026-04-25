@@ -50,11 +50,14 @@ const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
         {isVercel && (
           <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
             <p className="text-sm font-bold text-zinc-900 dark:text-white">To fix this on Vercel:</p>
-            <ol className="text-xs text-zinc-500 dark:text-zinc-400 space-y-2 list-decimal list-inside text-left">
+            <ol className="text-xs text-zinc-500 dark:text-zinc-400 space-y-3 list-decimal list-inside text-left leading-relaxed">
               <li>Open your project dashboard on Vercel</li>
-              <li>Go to <span className="p-1 bg-zinc-200 dark:bg-zinc-800 rounded font-mono">Settings &gt; Environment Variables</span></li>
-              <li>Add all required <span className="font-mono">VITE_FIREBASE_*</span> variables</li>
-              <li>Redeploy your application</li>
+              <li>Go to <span className="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">Settings &gt; Environment Variables</span></li>
+              <li>Add all required <span className="font-mono text-brandblue">VITE_FIREBASE_*</span> variables</li>
+              <li>
+                <span className="font-bold text-rose-600 dark:text-rose-400">CRITICAL:</span> Go to the <span className="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">Deployments</span> tab and click <span className="font-bold">Redeploy</span> on your latest build.
+                <p className="mt-1 ml-4 text-[10px] opacity-70 italic">Variables are injected at build-time; updating them requires a new build.</p>
+              </li>
             </ol>
           </div>
         )}
