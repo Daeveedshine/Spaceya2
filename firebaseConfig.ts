@@ -1,15 +1,42 @@
 
+/// <reference types="vite/client" />
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import firebaseConfig from './firebase-applet-config.json';
+import { logger } from './lib/logger';
 
-const app = initializeApp(firebaseConfig);
+const envConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  firestoreDatabaseId: import.meta.env.VITE_FIRESTORE_DATABASE_ID,
+};
+
+// We cannot rely on require in a Vite environment.
+let activeConfig = envConfig;
+
+// Attempt to load from window.FIREBASE_CONFIG if injected, else fall back to envConfig
+if (typeof window !== 'undefined' && (window as any).FIREBASE_CONFIG) {
+  activeConfig = (window as any).FIREBASE_CONFIG;
+}
+
+const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'] as const;
+for (const key of requiredKeys) {
+  if (!activeConfig[key as keyof typeof activeConfig]) {
+    throw new Error(`Missing required Firebase configuration environment variable: ${key}`);
+  }
+}
+
+const app = initializeApp(activeConfig);
 
 // Using more compatible polling settings for restricted environments
 export const db = initializeFirestore(app, {
   experimentalAutoDetectLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+}, activeConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
 export const isConfigured = true;
@@ -23,9 +50,9 @@ async function verifyBackendConnection() {
   } catch (error: any) {
     // Suppress connectivity errors as many environments are slow or start offline
     if (error?.message?.includes('offline') || error?.message?.includes('deadline-exceeded')) {
-      console.warn("Firestore is taking longer than expected to connect. The app will sync when online.");
+      logger.warn("Firestore is taking longer than expected to connect. The app will sync when online.");
     } else {
-      console.error("Firebase Backend Error:", error?.message);
+      logger.error("Firebase Backend Error:", error?.message);
     }
   }
 }

@@ -5,6 +5,7 @@ import { auth, db } from '../firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { handleFirestoreError } from '../lib/firebaseErrors';
+import { logger } from '../lib/logger';
 import { Apple, Mail, Phone, ArrowRight, Home, Users, UserCheck, Smartphone, Lock, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Logo } from '../App';
 
@@ -23,11 +24,10 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+// Unused states for email/password auth
+  // const [email, setEmail] = useState('');
+  // const [name, setName] = useState('');
+  // const [phone, setPhone] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.TENANT);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +44,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const signInWithGoogle = async () => {
     setError('');
+
+    // Rate Limiting Logic (Client-Side implementation)
+    const RATELIMIT_KEY = 'spaceya_login_attempts';
+    const MAX_ATTEMPTS = 5;
+    const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+    
+    let attempts: number[] = [];
+    try {
+      const storedAttempts = localStorage.getItem(RATELIMIT_KEY);
+      if (storedAttempts) {
+        attempts = JSON.parse(storedAttempts);
+      }
+    } catch(e) {}
+
+    const now = Date.now();
+    // Filter out attempts older than the window
+    attempts = attempts.filter(time => now - time < WINDOW_MS);
+
+    if (attempts.length >= MAX_ATTEMPTS) {
+      const oldestAttempt = attempts[0];
+      const timeRemainingMs = WINDOW_MS - (now - oldestAttempt);
+      const minutesRemaining = Math.ceil(timeRemainingMs / 60000);
+      setError(`Rate limit exceeded. Please try again in ${minutesRemaining} minutes.`);
+      return;
+    }
+
+    // Record the attempt
+    attempts.push(now);
+    localStorage.setItem(RATELIMIT_KEY, JSON.stringify(attempts));
+
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
@@ -56,6 +86,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       if (userSnap.exists()) {
         currentUserProfile = userSnap.data() as User;
+        logger.action('user_login', { userId: currentUserProfile.id, email: currentUserProfile.email, role: currentUserProfile.role });
       } else {
         currentUserProfile = {
           id: result.user.uid,
@@ -69,6 +100,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         };
         try {
           await setDoc(userRef, currentUserProfile);
+          logger.action('user_registered', { userId: currentUserProfile.id, email: currentUserProfile.email, role: currentUserProfile.role });
         } catch (e: any) {
            handleFirestoreError(e, 'create', '/users/' + result.user.uid, result.user);
         }
@@ -76,7 +108,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       onLogin(currentUserProfile);
     } catch (err: any) {
-      console.error(err);
+      logger.error('Google Authentication failed', err);
       setError(err.message || 'Google Authentication failed');
     } finally {
       setIsLoading(false);

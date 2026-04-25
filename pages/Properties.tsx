@@ -3,6 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, UserRole, Property, PropertyStatus, PropertyCategory, PropertyType, ApplicationStatus, Agreement, NotificationType, MaintenanceTicket, TicketStatus, TicketPriority, Notification, Transaction } from '../types';
 import { getStore, saveStore, formatCurrency, formatDate, useAppStore } from '../store';
+import { logger } from '../lib/logger';
 import { 
   MapPin, Plus, Edit, X, Wrench, Info, ArrowRight, DollarSign, 
   UserPlus, Save, Loader2, Tag, Layout, Briefcase, UserCheck, 
@@ -316,6 +317,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
       saveStore(updatedStore);
       setStore(updatedStore);
+      logger.action('tenant_assigned_to_property', { propertyId: selectedProperty.id, tenantId: pendingTenant.id });
       setSelectedProperty(updatedProperties.find(p => p.id === selectedProperty.id) || null);
       setIsSaving(false);
       setShowTenantPicker(false);
@@ -429,6 +431,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
     saveStore(updatedStore);
     setStore(updatedStore);
+    logger.action('maintenance_ticket_created', { ticketId: newTicket.id, propertyId: selectedProperty.id });
     setIsSaving(false);
     setShowMaintenanceForm(false);
     setMaintenanceIssue('');
@@ -526,6 +529,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       saveStore(updatedStore);
       setStore(updatedStore);
       setSelectedProperty({ ...selectedProperty, ...editFormData } as Property);
+      logger.action('property_updated', { propertyId: selectedProperty.id });
       setIsEditing(false);
       setIsSaving(false);
     }, 800);
@@ -548,6 +552,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       const updatedStore = { ...store, properties: [...store.properties, newProperty] };
       saveStore(updatedStore);
       setStore(updatedStore);
+      logger.action('property_created', { propertyId: newId });
       handleOpenDetail(newProperty);
       setIsEditing(true);
   };

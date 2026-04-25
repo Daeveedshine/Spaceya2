@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>SPACEYA</title>
     <script>
+      // Load standard firebase config for AI studio preview environment
+      fetch('/firebase-applet-config.json')
+        .then(response => response.json())
+        .then(config => {
+           window.FIREBASE_CONFIG = config;
+        })
+        .catch(() => {
+           console.log('Using environment variables for Firebase configuration.');
+        });
+      
       // Early suppression of common browser extension errors (like MetaMask) that interfere with the preview
       (function() {
         const suppressedKeywords = ['MetaMask', 'ethereum', 'web3', 'provider'];

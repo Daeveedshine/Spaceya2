@@ -168,43 +168,46 @@ export const getStore = (): AppState => {
 export const saveStore = async (state: AppState) => {
   const oldState = getStore();
   
-  // 1. Local Persistence (Fast)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  import('./lib/sanitize').then(async ({ sanitizeObject }) => {
+     // Apply dynamic sanitization globally!
+     const sanitizedState = sanitizeObject(state);
+     localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
+     
+     // 2. Remote Persistence (Firebase securely mapped to individual collections)
+     if (isConfigured && db && auth.currentUser) {
+       const syncCollection = async <T extends { id: string }>(collectionName: string, newItems: T[], oldItems: T[]) => {
+         for (const item of newItems) {
+           const oldItem = oldItems.find(i => i.id === item.id);
+           if (!oldItem || JSON.stringify(item) !== JSON.stringify(oldItem)) {
+             try {
+               await setDoc(doc(db, collectionName, item.id), item, { merge: true });
+             } catch (err: any) {
+                handleFirestoreError(err, 'update' as any, `/${collectionName}/${item.id}`);
+             }
+           }
+         }
+       };
 
-  // 2. Remote Persistence (Firebase securely mapped to individual collections)
-  if (isConfigured && db && auth.currentUser) {
-    const syncCollection = async <T extends { id: string }>(collectionName: string, newItems: T[], oldItems: T[]) => {
-      for (const item of newItems) {
-        const oldItem = oldItems.find(i => i.id === item.id);
-        if (!oldItem || JSON.stringify(item) !== JSON.stringify(oldItem)) {
-          try {
-            await setDoc(doc(db, collectionName, item.id), item, { merge: true });
-          } catch (err: any) {
-             handleFirestoreError(err, 'update', `/${collectionName}/${item.id}`, auth.currentUser);
-          }
-        }
-      }
-    };
-
-    // Sequentially background sync to the ABAC-secured cloud collections
-    syncCollection('users', state.users, oldState.users);
-    syncCollection('properties', state.properties, oldState.properties);
-    syncCollection('applications', state.applications, oldState.applications);
-    syncCollection('agreements', state.agreements, oldState.agreements);
-    syncCollection('tickets', state.tickets, oldState.tickets);
-    
-    // Note: Some collections like formTemplates use agentId as docID
-    for (const template of state.formTemplates) {
-      const oldItem = oldState.formTemplates.find(i => i.agentId === template.agentId);
-      if (!oldItem || JSON.stringify(template) !== JSON.stringify(oldItem)) {
-        try {
-          await setDoc(doc(db, 'formTemplates', template.agentId), template, { merge: true });
-        } catch (err: any) {
-           handleFirestoreError(err, 'update', `/formTemplates/${template.agentId}`, auth.currentUser);
-        }
-      }
-    }
-  }
+       // Sequentially background sync to the ABAC-secured cloud collections
+       syncCollection('users', sanitizedState.users, oldState.users);
+       syncCollection('properties', sanitizedState.properties, oldState.properties);
+       syncCollection('applications', sanitizedState.applications, oldState.applications);
+       syncCollection('agreements', sanitizedState.agreements, oldState.agreements);
+       syncCollection('tickets', sanitizedState.tickets, oldState.tickets);
+       
+       // Note: Some collections like formTemplates use agentId as docID
+       for (const template of sanitizedState.formTemplates) {
+         const oldItem = oldState.formTemplates.find(i => i.agentId === template.agentId);
+         if (!oldItem || JSON.stringify(template) !== JSON.stringify(oldItem)) {
+           try {
+             await setDoc(doc(db, 'formTemplates', template.agentId), template, { merge: true });
+           } catch (err: any) {
+             handleFirestoreError(err, 'update' as any, `/formTemplates/${template.agentId}`);
+           }
+         }
+       }
+     }
+  });
 };
 
 // Subscribe to Firestore updates (Real-time Sync)

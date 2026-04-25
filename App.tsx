@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { User, UserRole, TicketStatus, ApplicationStatus } from './types';
 import { getStore, saveStore, initFirebaseSync } from './store';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -371,7 +372,20 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-auto p-4 md:p-8 lg:p-10 print:p-0 transition-all duration-300 relative z-10 bg-offwhite dark:bg-transparent">
-        <div className="max-w-7xl mx-auto h-full">{renderView()}</div>
+        <div className="max-w-7xl mx-auto h-full">
+          <ErrorBoundary>
+            <Suspense fallback={
+              <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-400">
+                 <div className="flex flex-col items-center gap-4 animate-pulse">
+                   <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-blue-600 rounded-full animate-spin"></div>
+                   <p className="tracking-widest font-bold uppercase text-xs">Loading Interface...</p>
+                 </div>
+              </div>
+            }>
+              {renderView()}
+            </Suspense>
+          </ErrorBoundary>
+        </div>
       </main>
     </div>
   );
