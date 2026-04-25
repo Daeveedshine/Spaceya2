@@ -25,24 +25,42 @@ if (typeof window !== 'undefined' && (window as any).FIREBASE_CONFIG) {
 }
 
 const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'] as const;
+let configurationError = null;
+
 for (const key of requiredKeys) {
   if (!activeConfig[key as keyof typeof activeConfig]) {
-    throw new Error(`Missing required Firebase configuration environment variable: ${key}`);
+    configurationError = `Missing required Firebase configuration environment variable: ${key}`;
+    break;
   }
 }
 
-const app = initializeApp(activeConfig);
+let app;
+let db: any = null;
+let auth: any = null;
+let isConfigured = false;
 
-// Using more compatible polling settings for restricted environments
-export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
-}, activeConfig.firestoreDatabaseId);
+if (configurationError) {
+  logger.warn(configurationError);
+} else {
+  try {
+    app = initializeApp(activeConfig);
+    // Using more compatible polling settings for restricted environments
+    db = initializeFirestore(app, {
+      forceLongPolling: true,
+    }, activeConfig.firestoreDatabaseId);
+    auth = getAuth(app);
+    isConfigured = true;
+  } catch (error: any) {
+    configurationError = `Firebase initialization failed: ${error.message}`;
+    logger.error(configurationError);
+  }
+}
 
-export const auth = getAuth(app);
-export const isConfigured = true;
+export { db, auth, isConfigured, configurationError };
 
 // Validate Connection to Firestore on boot with a more helpful message
 async function verifyBackendConnection() {
+  if (!isConfigured || !db) return;
   try {
     // Try to reach the backend, but don't fail the whole app if it's just slow
     const connectionRef = doc(db, 'test', 'connection');
@@ -57,5 +75,7 @@ async function verifyBackendConnection() {
   }
 }
 
-// Run connection check in the background
-verifyBackendConnection();
+// Run connection check in the background if configured
+if (isConfigured) {
+  verifyBackendConnection();
+}

@@ -225,9 +225,22 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
     cleanup();
     
     if (user) {
-      // 1. Fetch User Role cleanly instead of relying on local unsynced states
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userRole = userDoc.exists() ? userDoc.data()?.role : 'TENANT';
+      // 1. Fetch User Role cleanly – using a race to prevent hanging on poor connections
+      let userRole = 'TENANT';
+      try {
+        const userDocPromise = getDoc(doc(db, 'users', user.uid));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+        
+        const userDoc: any = await Promise.race([userDocPromise, timeoutPromise]);
+        userRole = userDoc.exists() ? userDoc.data()?.role : 'TENANT';
+      } catch (err) {
+        console.warn("User role fetch defaulted due to connection:", err);
+        // Fallback: check local storage for the last known role of this user
+        const local = getStore();
+        if (local.currentUser?.id === user.uid) {
+          userRole = local.currentUser.role;
+        }
+      }
 
       // 2. State Merger for collections
       const stateMergers: Record<string, any[]> = {

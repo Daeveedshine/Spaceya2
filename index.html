@@ -18,27 +18,47 @@
       
       // Early suppression of common browser extension errors (like MetaMask) that interfere with the preview
       (function() {
-        const suppressedKeywords = ['MetaMask', 'ethereum', 'web3', 'provider'];
+        const suppressedKeywords = [
+          'MetaMask', 'ethereum', 'web3', 'provider', 
+          'extension', 'plugin', 'Bitget', 'Phantom', 
+          'Coinbase Wallet', 'Trust Wallet'
+        ];
+        
         const isSuppressed = (msg) => {
-          if (!msg || typeof msg !== 'string') return false;
-          return suppressedKeywords.some(kw => msg.includes(kw));
+          if (!msg) return false;
+          const msgStr = typeof msg === 'string' ? msg : (msg.message || JSON.stringify(msg));
+          if (typeof msgStr !== 'string') return false;
+          return suppressedKeywords.some(kw => msgStr.toLowerCase().includes(kw.toLowerCase()));
         };
 
-        const silence = (original, type) => {
+        // Neutralize common extension injections that cause noise
+        try {
+          Object.defineProperty(window, 'ethereum', { value: null, writable: false, configurable: true });
+          Object.defineProperty(window, 'web3', { value: null, writable: false, configurable: true });
+        } catch(e) {}
+
+        const silence = (original) => {
           return function(...args) {
-            if (args.some(a => isSuppressed(a?.message || a))) return;
+            if (args.some(isSuppressed)) return;
             return original.apply(this, args);
           };
         };
 
-        console.error = silence(console.error, 'error');
-        console.warn = silence(console.warn, 'warn');
-        console.log = silence(console.log, 'log');
+        console.error = silence(console.error);
+        console.warn = silence(console.warn);
+        console.log = silence(console.log);
+
+        // Keep a copy of real console for debugging if needed (rare)
+        window._realConsole = { 
+          error: console.error, 
+          warn: console.warn, 
+          log: console.log 
+        };
 
         window.addEventListener('error', (e) => {
-          if (isSuppressed(e.message)) {
+          if (isSuppressed(e.message) || isSuppressed(e.filename) || isSuppressed(e.error)) {
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation();
           }
         }, true);
 
@@ -46,35 +66,15 @@
           const reason = e.reason?.message || e.reason;
           if (isSuppressed(reason)) {
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation();
           }
         }, true);
       })();
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              offwhite: '#F9FAFB',
-              brandblue: '#2563EB',
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              playfair: ['Playfair Display', 'serif'],
-            },
-            backgroundImage: {
-              'liquid-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            }
-          }
-        }
-      }
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/index.css">
     <style>
       :root {
         --glass-bg: rgba(255, 255, 255, 0.45);
@@ -269,7 +269,6 @@
         transition-duration: 300ms;
       }
     </style>
-  <link rel="stylesheet" href="/index.css">
 </head>
   <body class="antialiased">
     <div class="liquid-bg">

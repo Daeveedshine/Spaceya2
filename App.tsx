@@ -22,7 +22,57 @@ import {
   FileText, Bell, Table, Building, ClipboardCheck, UserPlus, 
   User as UserIcon, Moon, Sun, ChevronLeft, ChevronRight, Settings as SettingsIcon, Cloud
 } from 'lucide-react';
-import { isConfigured } from './firebaseConfig';
+import { isConfigured, configurationError } from './firebaseConfig';
+
+const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
+  const isVercel = window.location.hostname.includes('vercel.app');
+  
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-black text-black dark:text-white flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-xl w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 md:p-16 shadow-2xl space-y-8">
+        <div className="w-24 h-24 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Shield className="w-12 h-12 text-rose-600 dark:text-rose-500" />
+        </div>
+        
+        <div>
+          <h1 className="text-3xl font-black mb-4 uppercase tracking-tighter">Connection Required</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
+            This application requires a secure connection to Firebase which hasn't been configured yet.
+          </p>
+        </div>
+        
+        <div className="p-6 bg-zinc-100 dark:bg-black rounded-3xl text-left border border-zinc-200 dark:border-zinc-800">
+           <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 break-words">
+             {error}
+           </p>
+        </div>
+
+        {isVercel && (
+          <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">To fix this on Vercel:</p>
+            <ol className="text-xs text-zinc-500 dark:text-zinc-400 space-y-2 list-decimal list-inside text-left">
+              <li>Open your project dashboard on Vercel</li>
+              <li>Go to <span className="p-1 bg-zinc-200 dark:bg-zinc-800 rounded font-mono">Settings &gt; Environment Variables</span></li>
+              <li>Add all required <span className="font-mono">VITE_FIREBASE_*</span> variables</li>
+              <li>Redeploy your application</li>
+            </ol>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4 pt-4">
+          <button 
+            onClick={() => window.location.reload()}
+            className="w-full flex items-center justify-center gap-3 bg-zinc-900 dark:bg-white text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95"
+          >
+            Reload to Check Connection
+          </button>
+        </div>
+      </div>
+      
+      <p className="mt-8 text-[10px] text-zinc-400 font-bold uppercase tracking-[0.4em]">Development System • Status: Restricted</p>
+    </div>
+  );
+};
 
 export const Logo: React.FC<{ size?: number, className?: string }> = ({ size = 24, className = "" }) => (
   <svg 
@@ -245,6 +295,10 @@ const App: React.FC = () => {
     { id: 'settings', label: 'Settings', icon: SettingsIcon, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
     { id: 'profile', label: 'My Profile', icon: UserIcon, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
   ];
+
+  if (!isConfigured && configurationError) {
+    return <ConfigurationErrorScreen error={configurationError} />;
+  }
 
   if (isLoading) return <SplashScreen />;
 
