@@ -298,11 +298,10 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
       // APPLICATIONS: Admins see all. Agents/Tenants see applications where they are the agent or tenant.
       if (userRole === 'ADMIN') {
         unsubscribes.push(attachListener('applications', 'applications', collection(db, 'applications')));
+      } else if (userRole === 'AGENT') {
+        unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('agentId', '==', user.uid))));
       } else {
-        unsubscribes.push(attachListener('applications', 'applications', query(
-           collection(db, 'applications'),
-           or(where('userId', '==', user.uid), where('agentId', '==', user.uid))
-        )));
+        unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('userId', '==', user.uid))));
       }
 
       // TICKETS & AGREEMENTS: Tenants see their own

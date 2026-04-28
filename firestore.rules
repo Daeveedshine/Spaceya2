@@ -124,14 +124,14 @@ service cloud.firestore {
     // 3. APPLICATIONS
     match /applications/{applicationId} {
       function isValidApplication(data) {
-        return data.keys().hasAll(['id', 'userId', 'propertyId', 'agentId', 'status', 'submissionDate', 'firstName', 'surname'])
-          && data.size() >= 8 && data.size() <= 80
-          && data.id is string && data.id.size() <= 128
-          && data.userId is string && data.userId.size() <= 128
-          && data.propertyId is string && data.propertyId.size() <= 128
-          && data.agentId is string && data.agentId.size() <= 128
+        return data.keys().hasAll(['id', 'userId', 'propertyId', 'agentId', 'status', 'submissionDate'])
+          && data.size() >= 6 && data.size() <= 150
+          && data.id is string && data.id.size() <= 200
+          && data.userId is string && data.userId.size() <= 200
+          && data.propertyId is string && data.propertyId.size() <= 200
+          && data.agentId is string && data.agentId.size() <= 200
           && data.status is string && data.status in ['PENDING', 'REVIEWING', 'APPROVED', 'REJECTED', 'MORE_INFO_REQUIRED']
-          && data.submissionDate is string && data.submissionDate.size() <= 100;
+          && data.submissionDate is string;
       }
 
       allow create: if isSignedIn()
@@ -139,8 +139,7 @@ service cloud.firestore {
                     && isValidApplication(incoming())
                     && incoming().id == applicationId
                     && incoming().userId == request.auth.uid
-                    && incoming().status == 'PENDING'
-                    && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
+                    && incoming().status == 'PENDING';
 
       allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isAdmin());
@@ -149,11 +148,10 @@ service cloud.firestore {
                     && isValidApplication(incoming())
                     && incoming().id == existing().id
                     && incoming().userId == existing().userId
-                    && incoming().propertyId == existing().propertyId
                     && (
                       isAdmin() ||
-                      // Action: Agent review
-                      (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'riskScore', 'aiRecommendation'])) ||
+                      // Action: Agent review and route property
+                      (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'propertyId', 'riskScore', 'aiRecommendation', 'customResponses'])) ||
                       // Action: Tenant edit
                       (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED'))
                     );
