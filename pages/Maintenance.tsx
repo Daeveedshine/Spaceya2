@@ -123,7 +123,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
               <h3 className="font-black text-4xl text-zinc-900 dark:text-white uppercase tracking-tighter">Manifest Deficiency</h3>
               <p className="text-zinc-400 font-black uppercase tracking-widest text-[9px] mt-2">Maintenance Logging Protocol</p>
             </div>
-            <button onClick={() => setIsSubmitting(false)} className="text-zinc-300 hover:text-rose-500 transition-colors p-2">
+            <button onClick={() => setIsSubmitting(false)} className="text-zinc-300 hover:text-black dark:hover:text-white transition-colors p-2">
               <X size={32} />
             </button>
           </div>
@@ -211,9 +211,9 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                   <div className="flex items-center gap-4">
                     <span className="text-[9px] font-black uppercase text-zinc-300 tracking-[0.4em]">Ref: {ticket.id.slice(-8)}</span>
                     <span className={`text-[8px] font-black uppercase tracking-widest ${
-                      ticket.priority === 'EMERGENCY' ? 'text-rose-600' : 
-                      ticket.priority === 'HIGH' ? 'text-amber-600' :
-                      'text-zinc-400'
+                      ticket.priority === 'EMERGENCY' ? 'text-black dark:text-white' : 
+                      ticket.priority === 'HIGH' ? 'text-zinc-500' :
+                      'text-zinc-300'
                     }`}>{ticket.priority}</span>
                   </div>
                   
@@ -251,9 +251,15 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
           );
         })}
         {tickets.length === 0 && (
-          <div className="text-center py-24 bg-white dark:bg-zinc-950 rounded-[4rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800">
-            <Wrench className="w-12 h-12 text-zinc-100 dark:text-zinc-800 mx-auto mb-6" />
-            <p className="text-zinc-300 font-black uppercase tracking-widest text-[10px]">Registry Empty</p>
+          <div className="text-center py-32 bg-white dark:bg-zinc-950 rounded-[4rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-1000">
+            <div className="relative w-fit mx-auto mb-8">
+              <div className="absolute inset-0 bg-black blur-[60px] opacity-10 animate-pulse"></div>
+              <Wrench className="w-16 h-16 text-zinc-100 dark:text-zinc-800 relative z-10" />
+            </div>
+            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-widest uppercase mb-3">Protocol Optimized</h3>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] max-w-xs mx-auto leading-relaxed">
+              Every system is currently performing within optimal parameters. No active deficiencies reported.
+            </p>
           </div>
         )}
       </div>

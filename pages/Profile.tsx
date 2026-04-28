@@ -126,7 +126,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
     
     setTimeout(() => {
       const store = getStore();
-      const updatedUser = { ...user, name, phone: userPhone, profilePictureUrl: profilePic };
+      const updatedUser = { ...user, name, phone: userPhone, profilePictureUrl: profilePic || null };
       
       const updatedUsers = store.users.map(u => u.id === user.id ? updatedUser : u);
       const newState = { ...store, users: updatedUsers, currentUser: updatedUser };
@@ -296,7 +296,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
              </button>
              <button 
                onClick={() => setActiveTab('form')}
-               className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'form' ? 'bg-white dark:bg-zinc-800 shadow-sm text-blue-600' : 'text-zinc-400 hover:text-zinc-600'}`}
+               className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'form' ? 'bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
              >
                Form Builder
              </button>
@@ -323,14 +323,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                      <Camera className="text-white w-8 h-8" />
                   </div>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-blue-600 rounded-full p-2 text-white border-4 border-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                <div className="absolute -bottom-2 -right-2 bg-black dark:bg-white rounded-full p-2 text-white dark:text-black border-4 border-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                     <Plus size={14} />
                 </div>
               </div>
               <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleProfilePicUpload} />
 
               <h2 className="text-2xl font-black text-white">{user.name}</h2>
-              <div className="mt-2 inline-flex items-center px-4 py-1.5 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+              <div className="mt-2 inline-flex items-center px-4 py-1.5 bg-white/10 dark:bg-black/10 text-zinc-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-zinc-700">
                 <Shield size={12} className="mr-2" /> {user.role}
               </div>
               
@@ -338,13 +338,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                  <div>
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Unique Suite ID</p>
                     <div className="bg-black p-3 rounded-xl border border-zinc-800 flex items-center justify-between group">
-                      <span className="text-sm font-mono font-bold text-blue-400">{user.id}</span>
+                      <span className="text-sm font-mono font-bold text-zinc-100">{user.id}</span>
                       <button 
                           onClick={handleCopyId}
                           className="p-2 text-zinc-600 hover:text-white transition-colors rounded-lg active:scale-95"
                           title="Copy ID"
                       >
-                          {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                          {copied ? <Check size={16} className="text-white" /> : <Copy size={16} />}
                       </button>
                     </div>
                     <p className="mt-2 text-[9px] text-zinc-600 font-medium italic">Use this ID to receive applications or link properties.</p>
@@ -377,7 +377,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                <div className="flex justify-between items-center mb-8">
                  <h3 className="text-xl font-black text-zinc-900 dark:text-white">General Settings</h3>
                  {showSaved && (
-                   <div className="flex items-center text-emerald-600 text-xs font-black uppercase animate-in fade-in slide-in-from-right-4">
+                   <div className="flex items-center text-black dark:text-white text-xs font-black uppercase animate-in fade-in slide-in-from-right-4">
                      <CheckCircle2 size={16} className="mr-2" /> Changes Saved
                    </div>
                  )}
@@ -390,7 +390,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input 
-                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
+                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
                           value={name}
                           onChange={e => setName(e.target.value)}
                           required
@@ -402,7 +402,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                       <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input 
-                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
+                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
                           value={userPhone}
                           onChange={e => setUserPhone(e.target.value)}
                           placeholder="+1 (555) 000-0000"
@@ -428,7 +428,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                      <button 
                        type="submit"
                        disabled={isSaving}
-                       className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/20 flex items-center disabled:opacity-50"
+                       className="bg-black dark:bg-white text-white dark:text-black px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-80 transition-all shadow-xl shadow-black/20 flex items-center disabled:opacity-50"
                      >
                        {isSaving ? 'Processing...' : (
                          <><Save size={16} className="mr-2" /> Commit Changes</>
@@ -438,13 +438,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                </form>
             </div>
 
-            <div className="mt-8 bg-amber-50 dark:bg-amber-900/10 p-8 rounded-[2.5rem] border border-amber-100 dark:border-amber-900/20 flex items-start space-x-4">
-               <div className="p-3 bg-amber-600/10 text-amber-600 rounded-xl shrink-0">
+            <div className="mt-8 bg-zinc-50 dark:bg-zinc-900/40 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 flex items-start space-x-4">
+               <div className="p-3 bg-black dark:bg-white text-white dark:text-black rounded-xl shrink-0">
                   <AlertCircle size={24} />
                </div>
                <div>
-                  <h4 className="text-sm font-black text-amber-800 dark:text-amber-500 uppercase tracking-widest">Security Notice</h4>
-                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">Ensure your Unique Suite ID is only shared with trusted tenants. This ID serves as your global routing key for all digital applications in the suite.</p>
+                  <h4 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Security Notice</h4>
+                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">Ensure your Unique Suite ID is only shared with trusted tenants. This ID serves as your global routing key for all digital applications in the suite.</p>
                </div>
             </div>
           </div>
@@ -459,7 +459,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
               <button 
                 onClick={saveTemplate} 
                 disabled={isSavingTemplate}
-                className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-xl active:scale-95 transition-all"
               >
                 {isSavingTemplate ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 Save Template
@@ -468,21 +468,21 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
 
            <div className="space-y-8">
               {editingTemplate?.sections.map((section, sIndex) => (
-                <div key={section.id} className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative group/section transition-all hover:border-blue-400/30">
+                <div key={section.id} className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative group/section transition-all hover:border-black dark:hover:border-white">
                    <div className="flex items-center justify-between mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4">
                       <div className="flex items-center gap-3 w-full">
                          <div className="flex flex-col gap-1 mr-2">
                             <button 
                                 onClick={() => moveSection(sIndex, 'up')}
                                 disabled={sIndex === 0}
-                                className="p-1 text-zinc-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+                                className="p-1 text-zinc-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
                             >
                                 <ArrowUp size={14} />
                             </button>
                             <button 
                                 onClick={() => moveSection(sIndex, 'down')}
                                 disabled={sIndex === (editingTemplate?.sections.length || 0) - 1}
-                                className="p-1 text-zinc-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+                                className="p-1 text-zinc-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
                             >
                                 <ArrowDown size={14} />
                             </button>
@@ -501,8 +501,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                    </div>
 
                    <div className="space-y-3">
-                      {section.fields.map((field, fIndex) => (
-                        <div key={field.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-offwhite dark:bg-black rounded-2xl border border-zinc-100 dark:border-zinc-800 group/field hover:border-blue-500/30 transition-all">
+                       {section.fields.map((field, fIndex) => (
+                        <div key={field.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-offwhite dark:bg-black rounded-2xl border border-zinc-100 dark:border-zinc-800 group/field hover:border-black dark:hover:border-white transition-all">
                            <div className="p-2 text-zinc-300 cursor-grab active:cursor-grabbing"><GripVertical size={16} /></div>
                            
                            {/* Field Reorder Controls */}
@@ -510,14 +510,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                                 <button 
                                     onClick={() => moveField(sIndex, fIndex, 'up')}
                                     disabled={fIndex === 0}
-                                    className="p-0.5 text-zinc-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+                                    className="p-0.5 text-zinc-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
                                 >
                                     <ArrowUp size={10} />
                                 </button>
                                 <button 
                                     onClick={() => moveField(sIndex, fIndex, 'down')}
                                     disabled={fIndex === section.fields.length - 1}
-                                    className="p-0.5 text-zinc-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+                                    className="p-0.5 text-zinc-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
                                 >
                                     <ArrowDown size={10} />
                                 </button>
@@ -567,14 +567,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                            </button>
                         </div>
                       ))}
-                      <button onClick={() => addField(section.id)} className="w-full py-4 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 font-bold text-xs uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all flex items-center justify-center gap-2 group">
+                      <button onClick={() => addField(section.id)} className="w-full py-4 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 font-bold text-xs uppercase tracking-widest hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-all flex items-center justify-center gap-2 group">
                          <Plus size={16} className="group-hover:rotate-90 transition-transform" /> Add Data Field
                       </button>
                    </div>
                 </div>
               ))}
               
-              <button onClick={addSection} className="w-full py-8 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-200 hover:text-blue-600 transition-all flex items-center justify-center gap-3">
+              <button onClick={addSection} className="w-full py-8 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 font-black uppercase tracking-widest hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:text-white dark:hover:text-black transition-all flex items-center justify-center gap-3">
                  <Plus size={20} /> Create New Form Section
               </button>
            </div>

@@ -65,14 +65,35 @@ export interface User {
   walletBalance?: number;
 }
 
+export interface Wallet {
+  id: string;
+  user_id: string | number;
+  userId?: string | number;
+  balance: number;
+  status: 'active' | 'suspended';
+  created_at: string;
+}
+
+export interface BankAccount {
+  id: string;
+  user_id: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  recipient_code: string;
+  created_at: string;
+}
+
 export interface Transaction {
   id: string;
-  userId: string;
+  user_id: string | number;
+  userId?: string | number;
   amount: number;
-  type: 'debit' | 'credit';
-  purpose: string;
-  timestamp: string;
-  status: 'completed' | 'pending' | 'failed';
+  type: 'deposit' | 'deduction' | 'withdrawal' | 'credit';
+  status: 'pending' | 'success' | 'failed';
+  reference: string;
+  description: string;
+  created_at: string;
 }
 
 export interface Property {

@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { User, UserRole, PropertyStatus, TicketStatus, NotificationType, ApplicationStatus } from '../types';
-import { getStore, formatCurrency, formatDate } from '../store';
+import { getStore, formatCurrency, formatDate, useAppStore } from '../store';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building, Users, AlertTriangle, TrendingUp, Clock, FileText, Wrench, Bell, UserPlus } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
-  const store = getStore();
+  const [store] = useAppStore();
   const isDark = store.theme === 'dark';
   const { settings } = store;
 
@@ -21,7 +21,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         .filter(p => p.status === 'paid' && myPropertyIds.includes(p.propertyId))
         .reduce((acc, curr) => acc + curr.amount, 0);
       
-      const currentUser = store.users.find(u => u.id === user.id);
+      const userWallet = store.wallets?.find(w => w.user_id === user.id || w.userId === user.id);
       
       const pendingApps = store.applications.filter(a => a.agentId === user.id && a.status === ApplicationStatus.PENDING).length;
       const openTickets = store.tickets.filter(t => t.status !== TicketStatus.RESOLVED && myPropertyIds.includes(t.propertyId)).length;
@@ -32,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         pendingTickets: openTickets, 
         monthlyRevenue: formatCurrency(revenue, settings),
         pipelineCount: pendingApps + openTickets,
-        walletBalance: formatCurrency(currentUser?.walletBalance || 0, settings)
+        walletBalance: formatCurrency(userWallet?.balance || 0, settings)
       };
     } else {
       const myProperties = store.properties.filter(p => user.assignedPropertyIds?.includes(p.id));
@@ -84,8 +84,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     <div className="space-y-12 animate-in fade-in duration-700 pb-12">
       <header className="flex flex-col sm:flex-row justify-between items-end gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-8">
         <div>
-          <h1 className="text-6xl font-black text-zinc-900 dark:text-white tracking-[12] uppercase mb-2">Workspace</h1>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px]">Monitoring Lifecycle for {user.name}</p>
+          <h1 className="text-3xl sm:text-6xl font-black text-zinc-900 dark:text-white tracking-[0.2em] sm:tracking-widest uppercase mb-2 break-words">Workspace</h1>
+          <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px] break-words">Monitoring Lifecycle for {user.name}</p>
         </div>
         {user.profilePictureUrl && (
           <div className="w-16 h-16 rounded-[2rem] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 cursor-pointer border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl">
@@ -165,9 +165,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 const StatCard = ({ label, value, icon: Icon, color }: any) => {
   return (
     <div className="glass-card p-10 rounded-[3.5rem] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-500 cursor-pointer group shadow-none border-0">
-      <p className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-4 opacity-100">{label}</p>
-      <div className="flex items-end justify-between">
-        <p className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{value}</p>
+      <p className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-4 opacity-100 break-words">{label}</p>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl sm:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none break-all">{value}</p>
         <Icon className="w-5 h-5 text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors" />
       </div>
     </div>

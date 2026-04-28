@@ -63,6 +63,8 @@ interface AppState {
   applications: TenantApplication[];
   formTemplates: FormTemplate[];
   transactions: Transaction[];
+  wallets?: any[];
+  bank_accounts?: any[];
   currentUser: User | null;
   theme: 'light' | 'dark';
   settings: UserSettings;
@@ -93,6 +95,8 @@ const initialData: AppState = {
   payments: [],
   tickets: [],
   notifications: [],
+  wallets: [],
+  bank_accounts: [],
   applications: [
     {
       id: 'mock_app_1',
@@ -244,12 +248,21 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
 
       // 2. State Merger for collections
       const stateMergers: Record<string, any[]> = {
-        users: [], properties: [], applications: [], agreements: [], tickets: [], formTemplates: []
+        users: [], properties: [], applications: [], agreements: [], tickets: [], formTemplates: [], transactions: [], bank_accounts: [], wallets: []
       };
 
       const attachListener = (collectionName: string, localKey: keyof AppState, q: any) => {
         return onSnapshot(q, (snap: any) => {
-            const data = snap.docs.map((d: any) => d.data());
+            const data = snap.docs.map((d: any) => {
+              const item = { ...d.data(), id: d.id };
+              // Convert any Firestore Timestamps to ISO strings for serializability
+              Object.keys(item).forEach(key => {
+                if (item[key] && typeof item[key].toDate === 'function') {
+                  item[key] = item[key].toDate().toISOString();
+                }
+              });
+              return item;
+            });
             stateMergers[localKey] = data; // replace specific tracker list
             
             const currentLocal = getStore();
@@ -314,6 +327,18 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
         unsubscribes.push(attachListener('formTemplates', 'formTemplates', collection(db, 'formTemplates')));
       } else {
         unsubscribes.push(attachListener('formTemplates', 'formTemplates', query(collection(db, 'formTemplates'), where('agentId', '==', user.uid))));
+      }
+
+      // NOTIFICATIONS
+      unsubscribes.push(attachListener('notifications', 'notifications', query(collection(db, 'notifications'), where('userId', '==', user.uid))));
+
+      // TRANSACTIONS & WALLETS
+      if (userRole === 'ADMIN') {
+        unsubscribes.push(attachListener('transactions', 'transactions', collection(db, 'transactions')));
+        unsubscribes.push(attachListener('wallets', 'wallets' as any, collection(db, 'wallets')));
+      } else {
+        unsubscribes.push(attachListener('transactions', 'transactions', query(collection(db, 'transactions'), where('user_id', 'in', [user.uid, 0]))));
+        unsubscribes.push(attachListener('wallets', 'wallets' as any, query(collection(db, 'wallets'), where('user_id', 'in', [user.uid, 0]))));
       }
 
     } else {

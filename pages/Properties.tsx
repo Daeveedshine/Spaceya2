@@ -196,52 +196,35 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     setShowPaymentModal(true);
   };
 
-  const handleTopUp = () => {
+  const handleTopUp = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-        const TOP_UP_AMOUNT = 5000;
-        const updatedUsers = store.users.map(u => 
-            u.id === user.id ? { ...u, walletBalance: (u.walletBalance || 0) + TOP_UP_AMOUNT } : u
-        );
-        
-        const newTransaction: Transaction = {
-            id: `tr_top_${Date.now()}`,
-            userId: user.id,
-            amount: TOP_UP_AMOUNT,
-            type: 'credit',
-            purpose: 'Wallet Top Up (Simulated)',
-            timestamp: new Date().toISOString(),
-            status: 'completed'
-        };
-
-        const updatedStore = {
-            ...store,
-            users: updatedUsers,
-            transactions: [newTransaction, ...store.transactions]
-        };
-
-        const finalUpdate = { ...updatedStore, currentUser: updatedUsers.find(u => u.id === user.id) || null };
-        saveStore(finalUpdate);
-        setStore(finalUpdate);
-        setIsSaving(false);
-    }, 1000);
+    const { simulateFundWallet } = await import('../services/simulationEngine');
+    const result = await simulateFundWallet(user.id, 5000);
+    if (result.status === 'success') {
+      alert('Wallet funded via simulation.');
+    } else {
+      alert('Error: ' + result.message);
+    }
+    setIsSaving(false);
   };
 
-  const confirmAssignmentWithPayment = () => {
+  const confirmAssignmentWithPayment = async () => {
     if (!selectedProperty || !pendingTenant) return;
     
-    const ASSIGNMENT_FEE = 1000;
-    const currentUser = store.users.find(u => u.id === user.id);
-    
-    if (!currentUser || (currentUser.walletBalance || 0) < ASSIGNMENT_FEE) {
-      alert('Insufficient wallet balance. Please top up your account.');
-      return;
-    }
-
     setIsSaving(true);
     setShowPaymentModal(false);
 
-    setTimeout(() => {
+    try {
+      const { simulateTenantAssignment } = await import('../services/simulationEngine');
+      const assignResult = await simulateTenantAssignment(user.id, pendingTenant.id, selectedProperty.id);
+
+      if (assignResult.status !== 'success') {
+         alert('Payment Failed: ' + assignResult.message);
+         setIsSaving(false);
+         setPendingTenant(null);
+         return;
+      }
+
       const today = new Date();
       const nextYear = new Date();
       nextYear.setFullYear(today.getFullYear() + 1);
@@ -258,21 +241,16 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           status: PropertyStatus.OCCUPIED,
           rentStartDate: startDate,
           rentExpiryDate: endDate
-        } : p
+        } as Property : p
       );
 
-      // 2. Update Tenant
+      // 2. Update Tenant Array
       const updatedUsers = store.users.map(u => {
         if (u.id === pendingTenant.id) {
           return { ...u, assignedPropertyIds: [...(u.assignedPropertyIds || []), selectedProperty.id] };
         }
-        if (u.id === user.id) {
-          return { ...u, walletBalance: (u.walletBalance || 0) - ASSIGNMENT_FEE };
-        }
         return u;
       });
-
-      const updatedApplications = store.applications;
 
       const newAgreement: Agreement = {
         id: `a${Date.now()}`,
@@ -282,16 +260,6 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         startDate,
         endDate,
         status: 'active'
-      };
-
-      const newTransaction: Transaction = {
-        id: `tr_${Date.now()}`,
-        userId: user.id,
-        amount: ASSIGNMENT_FEE,
-        type: 'debit',
-        purpose: `Tenant Assignment Fee: ${selectedProperty.name}`,
-        timestamp: new Date().toISOString(),
-        status: 'completed'
       };
 
       const notification = {
@@ -309,9 +277,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         ...store, 
         properties: updatedProperties, 
         users: updatedUsers,
-        applications: updatedApplications,
         agreements: [...store.agreements, newAgreement],
-        transactions: [newTransaction, ...store.transactions],
         notifications: [notification, ...store.notifications]
       };
 
@@ -319,11 +285,15 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       setStore(updatedStore);
       logger.action('tenant_assigned_to_property', { propertyId: selectedProperty.id, tenantId: pendingTenant.id });
       setSelectedProperty(updatedProperties.find(p => p.id === selectedProperty.id) || null);
-      setIsSaving(false);
-      setShowTenantPicker(false);
-      setPendingTenant(null);
-      setTenantSearch('');
-    }, 1200);
+      
+    } catch (e: any) {
+      alert('Error during assignment: ' + e.message);
+    }
+
+    setIsSaving(false);
+    setShowTenantPicker(false);
+    setPendingTenant(null);
+    setTenantSearch('');
   };
 
   const handlePropertyImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -474,9 +444,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
   const getStatusStyle = (status: PropertyStatus) => {
     switch (status) {
-      case PropertyStatus.OCCUPIED: return 'bg-emerald-500 text-white border-emerald-400/50 shadow-emerald-500/20';
-      case PropertyStatus.VACANT: return 'bg-blue-600 text-white border-blue-500/50 shadow-blue-600/20';
-      case PropertyStatus.LISTED: return 'bg-amber-500 text-white border-amber-400/50 shadow-amber-500/20';
+      case PropertyStatus.OCCUPIED: return 'bg-black text-white dark:bg-white dark:text-black border-zinc-800 dark:border-zinc-200';
+      case PropertyStatus.VACANT: return 'bg-zinc-100 text-black border-zinc-200 dark:bg-zinc-800 dark:text-white dark:border-zinc-700';
+      case PropertyStatus.LISTED: return 'bg-white text-black border-black dark:bg-black dark:text-white dark:border-white shadow-none';
       default: return 'bg-zinc-500 text-white border-zinc-400/50';
     }
   };
@@ -616,14 +586,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           <div className="relative">
             <button 
               onClick={() => { setIsFilterMenuOpen(!isFilterMenuOpen); setIsSortMenuOpen(false); }}
-              className={`w-full sm:w-auto px-6 py-4 rounded-2xl border border-white/20 dark:border-white/5 backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-xl ${isFilterMenuOpen ? 'bg-blue-600 text-white' : 'bg-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/20'}`}
+              className={`w-full sm:w-auto px-6 py-4 rounded-2xl border border-black dark:border-white backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-xl ${isFilterMenuOpen ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/20'}`}
             >
               <div className="flex items-center gap-3">
                 <Filter size={16} />
                 <span>Filters</span>
               </div>
               {(filterStatus !== 'ALL' || filterCategory !== 'ALL' || filterType !== 'ALL') && (
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-black dark:bg-white rounded-full animate-pulse" />
               )}
             </button>
 
@@ -684,22 +654,22 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           <div className="relative">
             <button 
               onClick={() => { setIsSortMenuOpen(!isSortMenuOpen); setIsFilterMenuOpen(false); }}
-              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 border border-white/20 dark:border-white/5 backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-white/20 transition-all active:scale-95 shadow-xl"
+              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 border border-black dark:border-white backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-white/20 transition-all active:scale-95 shadow-xl"
             >
               <div className="flex items-center gap-3">
-                {React.createElement(sortOptions.find(o => o.id === sortBy)?.icon || ListFilter, { size: 16, className: "text-blue-600" })}
+                {React.createElement(sortOptions.find(o => o.id === sortBy)?.icon || ListFilter, { size: 16, className: "text-black dark:text-white" })}
                 <span>{sortOptions.find(o => o.id === sortBy)?.label}</span>
               </div>
               <ChevronDown size={14} className={`transition-transform duration-300 ${isSortMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isSortMenuOpen && (
-              <div className="absolute top-full left-0 right-0 sm:right-auto sm:min-w-[240px] mt-2 z-50 glass-card rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-top-2">
+              <div className="absolute top-full left-0 right-0 sm:right-auto sm:min-w-[240px] mt-2 z-50 glass-card rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 border border-black dark:border-white">
                 {sortOptions.map((opt) => (
                   <button
                     key={opt.id}
                     onClick={() => { setSortBy(opt.id as SortOption); setIsSortMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-5 py-4 text-[10px] font-black uppercase tracking-widest transition-colors ${sortBy === opt.id ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:bg-white/10 dark:hover:bg-black/40 hover:text-blue-600 dark:hover:text-blue-400'}`}
+                    className={`w-full flex items-center gap-3 px-5 py-4 text-[10px] font-black uppercase tracking-widest transition-colors ${sortBy === opt.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white'}`}
                   >
                     <opt.icon size={16} />
                     {opt.label}
@@ -712,7 +682,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && (
             <button 
               onClick={handlePublishNew}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-600/20 font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all hover:bg-blue-700"
+              className="w-full sm:w-auto bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white px-8 py-4 rounded-2xl flex items-center justify-center shadow-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100"
             >
               <Plus className="w-4 h-4 mr-3" /> Publish Asset
             </button>
@@ -721,7 +691,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-        {properties.map(property => {
+        {properties.length > 0 ? properties.map(property => {
           const propertyAgent = store.users.find(u => u.id === property.agentId);
           const activeTickets = store.tickets.filter(t => t.propertyId === property.id && t.status !== TicketStatus.RESOLVED);
           
@@ -781,7 +751,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                       <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Lifecycle Stage</p>
                       <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{property.status}</p>
                     </div>
-                    <div className={isExpiringSoon ? 'text-amber-600' : isExpired ? 'text-rose-600' : ''}>
+                    <div className={isExpiringSoon ? 'text-zinc-600 dark:text-zinc-400' : isExpired ? 'text-black dark:text-white' : ''}>
                       <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Termination</p>
                       <p className="text-[11px] font-black uppercase tracking-widest">{formatDate(property.rentExpiryDate || '---', settings)}</p>
                     </div>
@@ -799,7 +769,35 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
               </div>
             </div>
           );
-        })}
+        }) : (
+          <div className="col-span-full py-24 flex flex-col items-center justify-center text-center space-y-10 animate-in fade-in zoom-in-95 duration-700">
+            <div className="relative">
+              <div className="absolute inset-0 bg-black blur-[100px] opacity-10 animate-pulse"></div>
+              <div className="relative w-48 h-48 bg-white dark:bg-zinc-900 rounded-[3rem] border border-black dark:border-white shadow-2xl flex items-center justify-center overflow-hidden group">
+                 <Building size={80} className="text-zinc-100 dark:text-zinc-800 transition-transform group-hover:scale-110 duration-700" />
+                 <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-2 h-2 bg-black dark:bg-white rounded-full animate-ping"></div>
+                 </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4 max-w-sm">
+              <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase leading-none">Registry Empty</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm leading-relaxed">
+                We couldn't find any assets matching your current filter criteria or registry sync. Try adjusting your filters or publish a new asset to get started.
+              </p>
+            </div>
+
+            {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && (
+              <button 
+                onClick={handlePublishNew}
+                className="px-10 py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl active:scale-95 transition-all"
+              >
+                Publish First Asset
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {selectedProperty && (
@@ -857,7 +855,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-10 pointer-events-none">
                     <p className="text-white font-black text-3xl tracking-tighter">{selectedProperty.name}</p>
                     <p className="text-white/60 text-[11px] font-black uppercase tracking-widest flex items-center gap-2 mt-2">
-                      <MapPin size={12} className="text-blue-400" /> {selectedProperty.location}
+                      <MapPin size={12} className="text-zinc-400" /> {selectedProperty.location}
                     </p>
                 </div>
                 <button onClick={() => setSelectedProperty(null)} className="absolute top-8 left-8 p-3 glass-card rounded-full text-white md:hidden shadow-xl z-10">
@@ -871,7 +869,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                    <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500 h-full flex flex-col">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-4">
-                            <UserPlus className="text-blue-600" size={32} />
+                            <UserPlus className="text-black dark:text-white" size={32} />
                             <div>
                                <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Onboard Tenant</h2>
                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Only approved candidates listed</p>
@@ -894,9 +892,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
                       <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-[300px]">
                          {approvedTenants.map(tenant => (
-                            <div key={tenant.id} className="p-6 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-between hover:border-blue-600 transition-all group shadow-sm">
+                            <div key={tenant.id} className="p-6 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-between hover:border-black dark:hover:border-white transition-all group shadow-sm">
                                <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600 font-black">
+                                  <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-black dark:text-white font-black">
                                      {tenant.name.charAt(0)}
                                   </div>
                                   <div>
@@ -906,7 +904,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                </div>
                                <button 
                                   onClick={() => handleAssignTenant(tenant)}
-                                  className="px-6 py-3 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20"
+                                  className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:opacity-80 active:scale-95 transition-all flex items-center gap-2 shadow-lg"
                                >
                                   <UserCheck size={14} /> Assign Placement
                                </button>
@@ -919,7 +917,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                          <Wrench className="text-blue-600 lucide-wrench" size={32} />
+                          <Wrench className="text-black dark:text-white lucide-wrench" size={32} />
                           <div>
                              <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Log Maintenance</h2>
                              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Report fault or damage</p>
@@ -934,7 +932,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                        <div className="space-y-4">
                           <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Fault Description</label>
                           <textarea 
-                             className="glass-input w-full p-8 rounded-[2.5rem] h-44 outline-none focus:ring-4 focus:ring-blue-600/10 text-lg font-bold text-zinc-900 dark:text-white resize-none" 
+                             className="glass-input w-full p-8 rounded-[2.5rem] h-44 outline-none focus:ring-4 focus:ring-black/10 dark:focus:ring-white/10 text-lg font-bold text-zinc-900 dark:text-white resize-none" 
                              placeholder="Describe the issue in detail..." 
                              value={maintenanceIssue} 
                              onChange={e => setMaintenanceIssue(e.target.value)}
@@ -962,7 +960,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                        <button 
                           onClick={handleSubmitMaintenance}
                           disabled={isSaving || !maintenanceIssue}
-                          className="w-full bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                          className="w-full bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                        >
                           {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                           {isSaving ? 'Submitting Request...' : 'Log Maintenance Request'}
@@ -974,7 +972,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                          <FileWarning className="text-rose-600" size={32} />
+                          <FileWarning className="text-black dark:text-white" size={32} />
                           <div>
                              <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Issue Legal Notice</h2>
                              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Formal Communication Dispatch</p>
@@ -988,14 +986,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     <div className="grid grid-cols-2 gap-4">
                        <button 
                           onClick={() => setNoticeType('RENT_INCREASE')}
-                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'RENT_INCREASE' ? 'bg-blue-600/10 border-blue-600 text-blue-600' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
+                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'RENT_INCREASE' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
                        >
                           <DollarSign size={24} />
                           <span className="text-[10px] font-black uppercase tracking-widest">Rent Increase</span>
                        </button>
                        <button 
                           onClick={() => setNoticeType('QUIT_NOTICE')}
-                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'QUIT_NOTICE' ? 'bg-rose-600/10 border-rose-600 text-rose-600' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
+                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'QUIT_NOTICE' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
                        >
                           <AlertOctagon size={24} />
                           <span className="text-[10px] font-black uppercase tracking-widest">Quit Notice</span>
@@ -1038,7 +1036,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                        <button 
                           onClick={handleSendNotice}
                           disabled={isSaving || !noticeMessage}
-                          className="w-full bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                          className="w-full bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                        >
                           {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                           {isSaving ? 'Dispatching Notice...' : 'Dispatch Legal Notice'}
@@ -1050,7 +1048,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                          <Wrench className="text-blue-600" size={32} />
+                          <Wrench className="text-black dark:text-white" size={32} />
                           <div>
                              <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Maintenance Log</h2>
                              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">History for {selectedProperty.name}</p>
@@ -1129,7 +1127,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                         </div>
                                         <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-zinc-400">
                                             <span>Service Fee</span>
-                                            <span className="text-rose-500">- ₦1,000</span>
+                                            <span className="text-black dark:text-white font-black">- ₦1,000</span>
                                         </div>
                                         <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
                                         <div className="flex justify-between items-center text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest">
@@ -1143,7 +1141,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                             <button 
                                                 onClick={confirmAssignmentWithPayment}
                                                 disabled={isSaving}
-                                                className="w-full py-6 bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                                className="w-full py-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl hover:opacity-80 active:scale-95 transition-all disabled:opacity-50"
                                             >
                                                 {isSaving ? <Loader2 className="animate-spin mx-auto" /> : 'Confirm & Authorize Payment'}
                                             </button>
@@ -1151,7 +1149,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                             <button 
                                                 onClick={handleTopUp}
                                                 disabled={isSaving}
-                                                className="w-full py-6 bg-emerald-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                                className="w-full py-6 bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-2 border-black dark:border-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl hover:opacity-80 active:scale-95 transition-all disabled:opacity-50"
                                             >
                                                 {isSaving ? <Loader2 className="animate-spin mx-auto" /> : 'Top Up Wallet (₦5,000)'}
                                             </button>
@@ -1181,7 +1179,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                 onChange={e => setEditFormData({...editFormData, name: e.target.value})}
                             />
                         ) : (
-                            <h2 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter leading-tight">{selectedProperty.name}</h2>
+                            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter leading-tight break-words">{selectedProperty.name}</h2>
                         )}
                       </div>
                       <div className="flex gap-4 ml-6">
@@ -1365,24 +1363,24 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                             <div className="flex items-center justify-between mb-4">
                                                 <p className={`text-[10px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity ${
                                                     getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
-                                                    ? 'text-amber-500' 
+                                                    ? 'text-zinc-900 dark:text-white underline decoration-zinc-500' 
                                                     : 'text-zinc-500 dark:text-zinc-400'
                                                 }`}>Expiry</p>
                                                 {getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 ? (
-                                                    <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />
+                                                    <AlertTriangle className="w-4 h-4 text-black dark:text-white animate-pulse" />
                                                 ) : (
-                                                    <CalendarRange className="w-4 h-4 text-blue-600" />
+                                                    <CalendarRange className="w-4 h-4 text-black dark:text-white" />
                                                 )}
                                             </div>
                                             <p className={`text-xl font-black tracking-tighter truncate leading-tight ${
                                                 getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
-                                                ? 'text-amber-600 dark:text-amber-400' 
+                                                ? 'text-black dark:text-white underline decoration-zinc-800' 
                                                 : 'text-zinc-900 dark:text-white'
                                             }`}>
                                                 {formatDate(selectedProperty.rentExpiryDate, settings)}
                                             </p>
                                             {getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 && (
-                                                <p className="text-[9px] font-black text-amber-500 uppercase mt-2">
+                                                <p className="text-[9px] font-black text-black dark:text-white uppercase mt-2">
                                                     Expires in {getDaysRemaining(selectedProperty.rentExpiryDate)} days
                                                 </p>
                                             )}
@@ -1420,7 +1418,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
                         <div className="space-y-4">
                             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                                <Info size={14} className="text-blue-600" /> Executive Summary
+                                <Info size={14} className="text-black dark:text-white" /> Executive Summary
                             </p>
                             {isEditing ? (
                                 <textarea 
@@ -1429,7 +1427,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     onChange={e => setEditFormData({...editFormData, description: e.target.value})}
                                 />
                             ) : (
-                                <p className="text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed text-lg border-l-4 border-blue-600 pl-8 py-6 bg-white/5 backdrop-blur-md rounded-r-[2.5rem]">
+                                <p className="text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed text-lg border-l-4 border-black dark:border-white pl-8 py-6 bg-white/5 backdrop-blur-md rounded-r-[2.5rem]">
                                     {selectedProperty.description || "Portfolio brief pending submission."}
                                 </p>
                             )}
@@ -1532,10 +1530,10 @@ const InputWrapper = ({ label, children }: { label: string, children?: React.Rea
 );
 
 const DetailCard = ({ icon: Icon, label, value }: any) => (
-  <div className="p-8 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 group hover:border-blue-600 transition-colors shadow-xl">
+  <div className="p-8 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 group hover:border-black dark:hover:border-white transition-colors shadow-xl">
     <div className="flex items-center justify-between mb-4">
         <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
-        <Icon className="w-4 h-4 text-blue-600" />
+        <Icon className="w-4 h-4 text-black dark:text-white" />
     </div>
     <p className="text-xl font-black text-zinc-900 dark:text-white tracking-tighter truncate leading-tight">{value}</p>
   </div>

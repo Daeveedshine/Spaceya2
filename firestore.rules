@@ -27,6 +27,15 @@ service cloud.firestore {
       return isSignedIn() && isRole('ADMIN');
     }
 
+    function isOwner(obj) {
+      return isSignedIn() && (
+        obj.user_id == request.auth.uid || 
+        obj.userId == request.auth.uid ||
+        obj.id == request.auth.uid ||
+        (request.auth.uid == obj.user_id) // Extra safety check
+      );
+    }
+
     // --- Bootstrapped connection check ---
     match /test/connection {
       allow read: if true; // Publicly readable for boot check
@@ -54,12 +63,13 @@ service cloud.firestore {
                     && incoming().id == userId
                     && userId == request.auth.uid;
 
-      allow get: if isSignedIn() && (request.auth.uid == userId || isRole('AGENT') || isAdmin());
+      allow get: if isSignedIn() && (request.auth.uid == userId || resource.data.role == 'AGENT' || isAdmin());
       
       allow list: if isSignedIn() && (
-        resource.data.id == request.auth.uid 
-        || isRole('AGENT') 
-        || isAdmin()
+        resource.data.id == request.auth.uid || 
+        isRole('AGENT') ||
+        resource.data.role == 'AGENT' || 
+        isAdmin()
       );
 
       allow update: if isSignedIn() 
@@ -210,17 +220,54 @@ service cloud.firestore {
     // 6. PAYMENTS & TRANSACTIONS
     match /payments/{paymentId} {
       allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('AGENT') || isAdmin());
+      allow write: if isSignedIn(); // Simulation
+    }
+
+    match /wallets/{walletId} {
+      allow read: if isSignedIn() && (walletId == request.auth.uid || walletId == 'COMPANY_WALLET_0' || isAdmin());
+      allow list: if isSignedIn() && (
+        resource.data.user_id == request.auth.uid || 
+        resource.data.userId == request.auth.uid ||
+        resource.data.user_id == 0 || 
+        resource.data.user_id == '0' ||
+        isAdmin()
+      );
+      allow write: if isSignedIn(); // Simulation
+    }
+
+    match /bank_accounts/{accountId} {
+      allow read: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow write: if isSignedIn(); // Simulation
     }
 
     match /transactions/{transactionId} {
        function isValidTransaction(data) {
-        return data.keys().hasAll(['id', 'userId', 'amount', 'type', 'purpose', 'timestamp', 'status'])
-          && data.size() == 7
-          && data.id is string && data.id.size() <= 128
-          && data.userId is string && data.userId.size() <= 128;
+        return data.keys().hasAll(['user_id', 'amount', 'type', 'description', 'created_at', 'status', 'reference'])
+          && data.size() >= 7 && data.size() <= 12
+          && (data.user_id is string || data.user_id is number || data.userId is string)
+          && data.type in ['deposit', 'deduction', 'withdrawal', 'credit'];
       }
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && isValidTransaction(incoming()) && (incoming().userId == request.auth.uid || isAdmin());
+      allow read: if isSignedIn() && (
+        resource.data.user_id == request.auth.uid || 
+        resource.data.userId == request.auth.uid ||
+        resource.data.user_id == 0 || 
+        resource.data.user_id == '0' ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.user_id == request.auth.uid || 
+        resource.data.userId == request.auth.uid ||
+        resource.data.user_id == 0 || 
+        resource.data.user_id == '0' ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && isValidTransaction(incoming()) && (
+        incoming().user_id == request.auth.uid || 
+        incoming().userId == request.auth.uid ||
+        incoming().user_id == 0 || 
+        isAdmin()
+      );
     }
 
     // 7. NOTIFICATIONS

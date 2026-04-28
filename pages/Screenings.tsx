@@ -143,9 +143,9 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
 
   const getStatusStyle = (status: ApplicationStatus) => {
     switch (status) {
-      case ApplicationStatus.APPROVED: return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case ApplicationStatus.REJECTED: return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      case ApplicationStatus.PENDING: return 'bg-amber-500/10 text-amber-500 border-amber-600/20';
+      case ApplicationStatus.APPROVED: return 'bg-black text-white border-black font-black';
+      case ApplicationStatus.REJECTED: return 'bg-zinc-100 text-zinc-400 border-zinc-200';
+      case ApplicationStatus.PENDING: return 'bg-white text-black border-black font-bold';
       default: return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
   };
@@ -170,7 +170,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
             <button 
                 key={app.id} 
                 onClick={() => setSelectedApp(app)} 
-                className={`w-full text-left p-6 rounded-[2.5rem] border-2 transition-all flex items-center gap-6 ${selectedApp?.id === app.id ? 'bg-blue-600 text-white border-blue-400 shadow-2xl' : 'bg-zinc-900 text-white border-zinc-800 shadow-sm'}`}
+                className={`w-full text-left p-6 rounded-[2.5rem] border-2 transition-all flex items-center gap-6 ${selectedApp?.id === app.id ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-2xl' : 'bg-zinc-900 text-white border-zinc-800 shadow-sm'}`}
             >
               <div className="w-16 h-16 bg-zinc-800 rounded-2xl overflow-hidden flex items-center justify-center font-black shrink-0 border border-zinc-700 shadow-xl">
                 {app.passportPhotoUrl ? (
@@ -181,13 +181,19 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-black text-xl truncate">{app.firstName} {app.surname}</h4>
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedApp?.id === app.id ? 'text-blue-100' : 'text-zinc-500'}`}>{app.status}</p>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedApp?.id === app.id ? 'text-zinc-400' : 'text-zinc-500'}`}>{app.status}</p>
               </div>
               <ChevronRight size={18} />
             </button>
           ))}
           {filteredApps.length === 0 && (
-            <div className="text-center py-20 bg-zinc-950 rounded-[3rem] border-2 border-dashed border-zinc-900 text-zinc-800">No records found.</div>
+            <div className="text-center py-24 bg-zinc-950 rounded-[3rem] border-2 border-dashed border-zinc-900 animate-in fade-in duration-1000">
+              <div className="relative w-fit mx-auto mb-6">
+                <div className="absolute inset-0 bg-black dark:bg-white blur-[50px] opacity-10 animate-pulse"></div>
+                <Search size={40} className="text-zinc-800 relative z-10" />
+              </div>
+              <p className="text-zinc-700 font-black uppercase tracking-[0.3em] text-[10px]">No matches found</p>
+            </div>
           )}
         </div>
 
@@ -203,19 +209,19 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                  </div>
                  <button 
                    onClick={handlePrint}
-                   className="flex items-center gap-2 bg-blue-600 hover:bg-black text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-900/20 active:scale-95 group"
+                   className="flex items-center gap-2 bg-black dark:bg-zinc-800 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 group"
                  >
                    <Printer size={16} className="group-hover:animate-bounce" /> Export / Print to Device
                  </button>
                </div>
 
                {/* Print Header - Only visible on print */}
-               <div className="hidden print:flex items-center justify-between p-12 bg-zinc-950 text-white border-b-[10px] border-blue-600 mb-8">
+               <div className="hidden print:flex items-center justify-between p-12 bg-zinc-950 text-white border-b-[10px] border-black mb-8">
                   <div className="flex items-center gap-4">
-                    <div className="bg-blue-600 p-4 rounded-2xl"><Building size={24} /></div>
+                    <div className="bg-black p-4 rounded-2xl"><Building size={24} /></div>
                     <div>
                       <h1 className="text-3xl font-black tracking-tighter">SPACEYA PORTFOLIO</h1>
-                      <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-blue-400">Official Tenancy Enrollment Form</p>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-400">Official Tenancy Enrollment Form</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -224,7 +230,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   </div>
                </div>
 
-               <div className="bg-zinc-900 p-12 text-white flex flex-col md:flex-row justify-between items-center gap-8 border-b-8 border-blue-600 print:bg-transparent print:text-black print:border-none print:p-12 print:pt-0">
+               <div className="bg-zinc-900 p-12 text-white flex flex-col md:flex-row justify-between items-center gap-8 border-b-8 border-black print:bg-transparent print:text-black print:border-none print:p-12 print:pt-0">
                   <div className="flex items-center gap-8">
                     <div 
                       onClick={() => selectedApp.passportPhotoUrl && setExpandedImage(selectedApp.passportPhotoUrl)}
@@ -242,7 +248,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-4xl font-black tracking-tighter print:text-black">{selectedApp.firstName} {selectedApp.surname}</h2>
+                      <h2 className="text-2xl sm:text-4xl font-black tracking-tighter print:text-black break-words">{selectedApp.firstName} {selectedApp.surname}</h2>
                       <div className="flex items-center gap-4 mt-2">
                         <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border print:border-zinc-300 print:text-black ${getStatusStyle(selectedApp.status)}`}>{selectedApp.status}</span>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Application Date: {selectedApp.applicationDate}</span>
@@ -254,19 +260,19 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                <div className="p-10 md:p-14 space-y-16 text-black print:p-12 print:pt-4">
                   {/* ROUTING HUB: Integrated Property Assignment */}
                   {selectedApp.status === ApplicationStatus.APPROVED && !store.users.find(u => u.id === selectedApp.userId)?.assignedPropertyIds?.includes(selectedApp.propertyId) && (
-                    <section className="p-8 bg-blue-600/5 border-2 border-blue-600/20 rounded-[3rem] space-y-8 animate-in zoom-in-95 duration-500 print:hidden">
+                    <section className="p-8 bg-zinc-50 border-2 border-zinc-200 rounded-[3rem] space-y-8 animate-in zoom-in-95 duration-500 print:hidden">
                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+                             <div className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center text-white shadow-lg">
                                 <RefreshCw size={24} />
                              </div>
                              <div>
                                 <h4 className="text-xl font-black text-zinc-900 tracking-tight">Lifecycle Asset Routing</h4>
-                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Route an available property to this candidate</p>
+                                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Route an available property to this candidate</p>
                              </div>
                           </div>
                           {selectedApp.propertyId !== 'PENDING' && (
-                             <div className="px-4 py-1.5 bg-amber-500/10 text-amber-600 rounded-full text-[9px] font-black uppercase border border-amber-500/20">
+                             <div className="px-4 py-1.5 bg-zinc-100 text-black rounded-full text-[9px] font-black uppercase border border-black">
                                 Target: {store.properties.find(p => p.id === selectedApp.propertyId)?.name}
                              </div>
                           )}
@@ -277,17 +283,17 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                              <button 
                                 key={prop.id}
                                 onClick={() => setRoutedPropertyId(prop.id)}
-                                className={`p-6 rounded-3xl border-2 transition-all text-left flex items-start gap-4 hover:border-blue-600 ${routedPropertyId === prop.id ? 'border-blue-600 bg-blue-600/10 shadow-xl' : 'bg-white border-zinc-100 shadow-sm'}`}
+                                className={`p-6 rounded-3xl border-2 transition-all text-left flex items-start gap-4 hover:border-black ${routedPropertyId === prop.id ? 'border-black bg-zinc-50 shadow-xl' : 'bg-white border-zinc-100 shadow-sm'}`}
                              >
-                                <div className={`p-3 rounded-2xl ${routedPropertyId === prop.id ? 'bg-blue-600 text-white' : 'bg-zinc-50 text-zinc-400'}`}>
+                                <div className={`p-3 rounded-2xl ${routedPropertyId === prop.id ? 'bg-black text-white' : 'bg-zinc-50 text-zinc-400'}`}>
                                    <Building size={20} />
                                 </div>
                                 <div className="min-w-0">
                                    <p className="font-black text-zinc-900 tracking-tight truncate">{prop.name}</p>
                                    <p className="text-[10px] font-bold text-zinc-500 truncate">{prop.location}</p>
-                                   <p className="text-xs font-black text-blue-600 mt-1">₦{prop.rent.toLocaleString()}/yr</p>
+                                   <p className="text-xs font-black text-black mt-1">₦{prop.rent.toLocaleString()}/yr</p>
                                 </div>
-                                {routedPropertyId === prop.id && <Check size={20} className="text-blue-600 ml-auto shrink-0" />}
+                                {routedPropertyId === prop.id && <Check size={20} className="text-black ml-auto shrink-0" />}
                              </button>
                           ))}
                           {availableProperties.length === 0 && (
@@ -303,7 +309,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                              <button 
                                onClick={() => handleRouteProperty(routedPropertyId)}
                                disabled={isRouting}
-                               className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-blue-600/20 flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-95"
+                               className="w-full bg-black text-white py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-black/20 flex items-center justify-center gap-3 hover:opacity-80 transition-all active:scale-95"
                              >
                                 {isRouting ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                                 {isRouting ? 'routing lifecycle...' : 'Confirm Routing & Activate Tenancy'}
@@ -316,7 +322,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   {/* Section 1: Identity */}
                   <section className="space-y-10 break-inside-avoid">
                     <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-100 pb-4 flex items-center gap-3">
-                       <UserIcon size={16} className="text-blue-600" /> 01: Profile Information
+                       <UserIcon size={16} className="text-black" /> 01: Profile Information
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
                       <DetailRow label="Surname" value={selectedApp.surname} />
@@ -334,7 +340,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   {/* Section 2: Residential History */}
                   <section className="space-y-10 break-inside-avoid">
                     <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-100 pb-4 flex items-center gap-3">
-                       <MapPin size={16} className="text-blue-600" /> 02: Residential Analysis
+                       <MapPin size={16} className="text-black" /> 02: Residential Analysis
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                        <DetailRow label="Current Residential Address" value={selectedApp.currentHomeAddress} />
@@ -349,7 +355,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   {/* Section 3: Verification Evidence */}
                   <section className="space-y-10 break-inside-avoid">
                     <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-100 pb-4 flex items-center gap-3">
-                       <ShieldCheck size={16} className="text-blue-600" /> 03: Identity Verification
+                       <ShieldCheck size={16} className="text-black" /> 03: Identity Verification
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                        <div className="space-y-10">
@@ -379,7 +385,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                           <p className="text-6xl font-serif italic text-white border-b-2 border-slate-800 pb-6 px-12 print:text-black print:border-slate-100">
                             {selectedApp.signature}
                           </p>
-                          <div className="mt-10 flex items-center gap-4 text-emerald-500">
+                          <div className="mt-10 flex items-center gap-4 text-black">
                              <ShieldCheck size={24} />
                              <span className="text-[10px] font-black uppercase tracking-[0.4em]">Official Timestamp Verified</span>
                           </div>
@@ -391,7 +397,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   {Object.keys(selectedApp.customResponses || {}).length > 0 && (
                     <section className="space-y-10 break-inside-avoid">
                        <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-100 pb-4 flex items-center gap-3">
-                          <List size={16} className="text-blue-600" /> 04: Additional Information
+                          <List size={16} className="text-black" /> 04: Additional Information
                        </h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           {Object.entries(selectedApp.customResponses || {}).map(([key, value]) => {
@@ -407,11 +413,11 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   {/* Action Buttons - Hidden on print */}
                   <div className="pt-12 border-t border-zinc-100 flex flex-col sm:flex-row gap-6 print:hidden">
                      {selectedApp.status !== ApplicationStatus.APPROVED && (
-                        <button onClick={() => handleUpdateStatus(selectedApp.id, ApplicationStatus.APPROVED)} className="flex-[2] bg-emerald-600 hover:bg-black text-white py-6 rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-100 active:scale-95">
+                        <button onClick={() => handleUpdateStatus(selectedApp.id, ApplicationStatus.APPROVED)} className="flex-[2] bg-black hover:opacity-80 text-white py-6 rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95">
                            <CheckCircle size={20} /> Finalize Approval
                         </button>
                      )}
-                     <button onClick={() => handleUpdateStatus(selectedApp.id, ApplicationStatus.REJECTED)} className="flex-1 bg-rose-50 border-2 border-rose-100 text-rose-500 py-6 rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-3 transition-all hover:bg-rose-500 hover:text-white active:scale-95">
+                     <button onClick={() => handleUpdateStatus(selectedApp.id, ApplicationStatus.REJECTED)} className="flex-1 bg-zinc-50 border-2 border-zinc-200 text-zinc-400 py-6 rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-3 transition-all hover:bg-black hover:text-white active:scale-95">
                         <XCircle size={20} /> Decline Candidate
                      </button>
                   </div>
@@ -424,9 +430,15 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                </div>
             </div>
           ) : (
-            <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center bg-zinc-950 rounded-[4rem] border-2 border-dashed border-zinc-900 print:hidden">
-                <ClipboardCheck size={64} className="text-zinc-900 mb-6" />
-                <p className="text-zinc-700 font-black uppercase tracking-[0.3em] text-sm">Select Dossier to Review</p>
+            <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center bg-zinc-950 rounded-[4rem] border-2 border-dashed border-zinc-900 print:hidden animate-in fade-in zoom-in-95 duration-1000">
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 bg-black dark:bg-white blur-[80px] opacity-10 animate-pulse"></div>
+                  <ClipboardCheck size={64} className="text-zinc-900 relative z-10" />
+                </div>
+                <h3 className="text-2xl font-black text-zinc-800 tracking-widest uppercase mb-2">Review Desk</h3>
+                <p className="text-zinc-700 font-bold uppercase tracking-[0.4em] text-[10px] max-w-xs text-center opacity-60">
+                  Select a candidate dossier from the registry to initiate the verification protocol.
+                </p>
             </div>
           )}
         </div>
@@ -447,7 +459,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
            <div className="relative w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
               <img 
                 src={expandedImage} 
-                className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_100px_rgba(37,99,235,0.2)]" 
+                className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.2)]" 
                 alt="Expanded View"
               />
            </div>

@@ -73,14 +73,14 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
         </div>
         <div className="flex items-center gap-3">
            {showSaved && (
-             <div className="flex items-center text-emerald-600 text-[10px] font-black uppercase tracking-widest animate-in slide-in-from-right-4">
+             <div className="flex items-center text-black dark:text-white text-[10px] font-black uppercase tracking-widest animate-in slide-in-from-right-4">
                 <CheckCircle2 size={16} className="mr-2" /> Synced to Vault
              </div>
            )}
            <button 
              onClick={handleSave}
              disabled={isSaving}
-             className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+             className="bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
            >
              {isSaving ? <Activity size={16} className="animate-spin" /> : <Save size={16} />}
              Commit Changes
@@ -93,7 +93,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
         {/* Appearance & Interface */}
         <section className="space-y-6">
            <div className="flex items-center gap-3 text-zinc-400">
-              <Eye size={20} className="text-blue-600" />
+              <Eye size={20} className="text-black dark:text-white" />
               <h3 className="text-xs font-black uppercase tracking-[0.2em]">Appearance & Vision</h3>
            </div>
            
@@ -106,13 +106,13 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
                  <div className="flex p-1 bg-zinc-100 dark:bg-black rounded-xl border border-zinc-200 dark:border-zinc-800">
                     <button 
                       onClick={() => handleThemeSwitch('light')}
-                      className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+                      className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-white text-black shadow-sm' : 'text-zinc-400'}`}
                     >
                        <Sun size={18} />
                     </button>
                     <button 
                       onClick={() => handleThemeSwitch('dark')}
-                      className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-zinc-800 text-blue-400 shadow-sm' : 'text-zinc-400'}`}
+                      className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-400'}`}
                     >
                        <Moon size={18} />
                     </button>
@@ -155,7 +155,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
         {/* Intelligence Alerts */}
         <section className="space-y-6">
            <div className="flex items-center gap-3 text-zinc-400">
-              <Bell size={20} className="text-blue-600" />
+              <Bell size={20} className="text-black dark:text-white" />
               <h3 className="text-xs font-black uppercase tracking-[0.2em]">Intelligence Alerts</h3>
            </div>
            
@@ -194,7 +194,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
         {/* Regional & Localization */}
         <section className="space-y-6">
            <div className="flex items-center gap-3 text-zinc-400">
-              <Globe size={20} className="text-blue-600" />
+              <Globe size={20} className="text-black dark:text-white" />
               <h3 className="text-xs font-black uppercase tracking-[0.2em]">Regional Protocols</h3>
            </div>
            
@@ -235,17 +235,17 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
         {/* Security & Access */}
         <section className="space-y-6">
            <div className="flex items-center gap-3 text-zinc-400">
-              <Shield size={20} className="text-blue-600" />
+              <Shield size={20} className="text-black dark:text-white" />
               <h3 className="text-xs font-black uppercase tracking-[0.2em]">Vault Security</h3>
            </div>
            
            <div className="glass-card p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 h-full flex flex-col justify-center">
-              <div className="p-6 bg-blue-600/10 rounded-3xl border border-blue-600/20 text-center space-y-4">
-                 <Shield size={32} className="text-blue-600 mx-auto" />
+              <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-3xl border border-zinc-200 dark:border-zinc-700 text-center space-y-4">
+                 <Shield size={32} className="text-black dark:text-white mx-auto" />
                  <p className="text-xs font-bold text-zinc-900 dark:text-zinc-200 leading-relaxed">
                    Your session is currently bridge-encrypted via SPACEYA Secure Protocol.
                  </p>
-                 <button className="w-full py-3 bg-white dark:bg-zinc-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:text-blue-600 transition-colors shadow-sm">
+                 <button className="w-full py-3 bg-white dark:bg-zinc-900 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors shadow-sm">
                     Review Access Logs
                  </button>
               </div>
@@ -255,7 +255,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
 
       <footer className="mt-12 p-8 bg-zinc-950 rounded-[3rem] border border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-6">
          <div className="flex items-center gap-4 text-left">
-            <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600">
+            <div className="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-white">
                <Info size={24} />
             </div>
             <div>
@@ -272,7 +272,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
 const ToggleItem = ({ icon: Icon, label, desc, active, onClick }: any) => (
   <div className="flex items-center justify-between group">
      <div className="flex items-center gap-4">
-        <div className={`p-2 rounded-xl transition-all ${active ? 'bg-blue-600/10 text-blue-600' : 'bg-zinc-100 dark:bg-black text-zinc-400'}`}>
+        <div className={`p-2 rounded-xl transition-all ${active ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-zinc-100 dark:bg-black text-zinc-400'}`}>
            <Icon size={18} />
         </div>
         <div className="space-y-0.5">
@@ -280,7 +280,7 @@ const ToggleItem = ({ icon: Icon, label, desc, active, onClick }: any) => (
            <p className="text-[10px] text-zinc-500 font-medium">{desc}</p>
         </div>
      </div>
-     <button onClick={onClick} className="text-blue-600 transition-transform active:scale-90">
+     <button onClick={onClick} className="text-black dark:text-white transition-transform active:scale-90">
         {active ? <ToggleRight size={32} /> : <ToggleLeft size={32} className="text-zinc-300 dark:text-zinc-800" />}
      </button>
   </div>

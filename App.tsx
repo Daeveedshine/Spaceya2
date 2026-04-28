@@ -30,8 +30,8 @@ const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black text-black dark:text-white flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-xl w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 md:p-16 shadow-2xl space-y-8">
-        <div className="w-24 h-24 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Shield className="w-12 h-12 text-rose-600 dark:text-rose-500" />
+        <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Shield className="w-12 h-12 text-black dark:text-white" />
         </div>
         
         <div>
@@ -123,7 +123,7 @@ const SplashScreen: React.FC = () => (
         <Logo size={64} className="text-white" />
       </div>
       <h1 className="text-6xl font-semibold tracking-tighter mb-2 drop-shadow-xl text-white">SPACEYA</h1>
-      <p className="text-blue-400 font-playfair tracking-widest text-lg italic">Your Space, Handled</p>
+      <p className="text-white opacity-60 font-playfair tracking-widest text-lg italic">Your Space, Handled</p>
     </div>
   </div>
 );
@@ -320,21 +320,21 @@ const App: React.FC = () => {
       )}
 
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between glass-card p-4 shadow-sm shrink-0 z-[60] border-b border-white/10">
+      <div className="md:hidden flex items-center justify-between glass-card p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
         <div className="flex items-center gap-2">
-           <Logo size={24} className="text-blue-600 dark:text-blue-400" />
+           <Logo size={24} className="text-black dark:text-white" />
            <h1 className="font-bold text-lg tracking-tighter">SPACEYA</h1>
         </div>
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleTheme}
-            className="p-2.5 rounded-xl bg-white/10 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 active:scale-95 transition-transform"
+            className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white active:scale-95 transition-transform"
           >
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="p-2.5 rounded-xl bg-blue-600 text-white active:scale-95 transition-transform"
+            className="p-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black active:scale-95 transition-transform"
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -380,11 +380,11 @@ const App: React.FC = () => {
                 
                 {item.badge && item.badge > 0 ? (
                   !isSidebarCollapsed ? (
-                    <span className="ml-auto bg-blue-600 dark:bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black border border-white/20">
+                    <span className="ml-auto bg-black dark:bg-white text-white dark:text-black text-[9px] px-2 py-0.5 rounded-full font-black border border-zinc-200 dark:border-zinc-800">
                       {item.badge}
                     </span>
                   ) : (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border border-white dark:border-zinc-900"></span>
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-black dark:bg-white rounded-full border border-white dark:border-zinc-900"></span>
                   )
                 ) : null}
               </button>
@@ -413,13 +413,13 @@ const App: React.FC = () => {
              {/* Desktop Collapse Toggle */}
              <button 
                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-               className="hidden md:flex w-full items-center justify-center p-3.5 text-zinc-400 hover:text-blue-600 hover:bg-white/10 rounded-2xl transition-all"
+               className="hidden md:flex w-full items-center justify-center p-3.5 text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-2xl transition-all"
              >
                {isSidebarCollapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-[10px] uppercase font-black tracking-widest">Collapse Menu</span></div>}
              </button>
              
              {!isSidebarCollapsed && isConfigured && (
-                <div className="flex items-center justify-center gap-2 pt-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest opacity-60">
+                <div className="flex items-center justify-center gap-2 pt-2 text-[9px] font-black text-black dark:text-white uppercase tracking-widest opacity-60">
                     <Cloud size={10} /> Cloud Sync Active
                 </div>
              )}
@@ -428,13 +428,13 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-4 md:p-8 lg:p-10 print:p-0 transition-all duration-300 relative z-10 bg-offwhite dark:bg-transparent">
+      <main className="flex-1 overflow-auto p-4 md:p-8 lg:p-10 print:p-0 transition-all duration-300 relative z-10 bg-white dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto h-full">
           <ErrorBoundary>
             <Suspense fallback={
               <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-400">
                  <div className="flex flex-col items-center gap-4 animate-pulse">
-                   <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-blue-600 rounded-full animate-spin"></div>
+                   <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
                    <p className="tracking-widest font-bold uppercase text-xs">Loading Interface...</p>
                  </div>
               </div>

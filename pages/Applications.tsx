@@ -127,49 +127,83 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     
     try {
       let agent: User | null = null;
+      console.log('Searching for agent with ID:', cleanId);
 
-      // 1. Try Direct UID Match (Case Sensitive)
-      const agentDoc = await getDoc(doc(db, 'users', cleanId));
-      if (agentDoc.exists() && agentDoc.data().role === UserRole.AGENT) {
-        agent = agentDoc.data() as User;
+      // 1. Try Direct UID Match
+      try {
+        const agentDoc = await getDoc(doc(db, 'users', cleanId));
+        if (agentDoc.exists()) {
+          const data = agentDoc.data();
+          if (data.role === 'AGENT' || data.role === 'ADMIN') {
+            agent = { ...data, id: agentDoc.id } as User;
+          } else {
+            console.warn('User found but is not an agent:', data.role);
+            alert(`Verification Failed: The user found (${data.name || 'User'}) is registered as a ${data.role}, not an AGENT.`);
+            setIsSearchingAgent(false);
+            return;
+          }
+        }
+      } catch (err: any) {
+        if (err.message && err.message.toLowerCase().includes('permissions')) {
+          // This happens if the document doesn't exist AND the user isn't an agent,
+          // because Firestore evaluates `resource.data.role == AGENT` to false.
+          console.warn('Permission denied on direct getDoc. Document might not exist or not an agent.');
+        } else {
+          throw err;
+        }
       }
 
       // 2. Try Email Match (If ID looks like an email)
       if (!agent && cleanId.includes('@')) {
-        const q = query(collection(db, 'users'), where('email', '==', cleanId.toLowerCase()), where('role', '==', UserRole.AGENT));
+        const q = query(
+          collection(db, 'users'), 
+          where('email', '==', cleanId.toLowerCase()), 
+          where('role', '==', UserRole.AGENT)
+        );
         const snap = await getDocs(q);
         if (!snap.empty) {
-          agent = snap.docs[0].data() as User;
+          const doc = snap.docs[0];
+          agent = { ...doc.data(), id: doc.id } as User;
         }
       }
 
       // 3. Try Name Match (Last Resort)
       if (!agent) {
-        const q = query(collection(db, 'users'), where('name', '==', cleanId), where('role', '==', UserRole.AGENT));
+        const q = query(
+          collection(db, 'users'), 
+          where('name', '==', cleanId), 
+          where('role', '==', UserRole.AGENT)
+        );
         const snap = await getDocs(q);
         if (!snap.empty) {
-          agent = snap.docs[0].data() as User;
+          const doc = snap.docs[0];
+          agent = { ...doc.data(), id: doc.id } as User;
         }
       }
 
       if (agent) {
         setTargetAgent(agent);
-        setTargetAgentId(agent.id); // Normalize state to the real ID
+        setTargetAgentId(agent.id); 
         
-        const templateDoc = await getDoc(doc(db, 'formTemplates', agent.id));
-        const template = templateDoc.exists() ? (templateDoc.data() as FormTemplate) : DEFAULT_TEMPLATE;
+        try {
+          const templateDoc = await getDoc(doc(db, 'formTemplates', agent.id));
+          const template = templateDoc.exists() ? (templateDoc.data() as FormTemplate) : DEFAULT_TEMPLATE;
+          setActiveTemplate(template);
+        } catch (e) {
+          console.warn('Could not load custom template, using default:', e);
+          setActiveTemplate(DEFAULT_TEMPLATE);
+        }
         
-        setActiveTemplate(template);
         setViewMode('form');
         setFormData(prev => ({ ...prev, agentIdCode: agent?.id }));
       } else {
         setTargetAgent(null);
-        alert('Agent not found. Please check the Agent ID, Name, or Email.');
+        alert('Agent not found. Please ensure you have the correct Agent UID, Name, or Email. If you are an agent, ensure you selected "Agent Gateway" during sign-in.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error validating agent:', error);
+      alert('Error connecting to verification server. Please check your connection and try again.');
       setTargetAgent(null);
-      alert('Error finding Agent. Wait a moment and try again.');
     } finally {
       setIsSearchingAgent(false);
     }
@@ -224,8 +258,8 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         currentLandlordPhone: formData.currentLandlordPhone || '',
         verificationType: formData.verificationType || '',
         verificationIdNumber: formData.verificationIdNumber || '',
-        verificationUrl: formData.verificationUrl,
-        passportPhotoUrl: formData.passportPhotoUrl,
+        verificationUrl: formData.verificationUrl || null,
+        passportPhotoUrl: formData.passportPhotoUrl || null,
         agentIdCode: targetAgent?.id || '',
         signature: formData.signature || '',
         applicationDate: formData.applicationDate || new Date().toISOString().split('T')[0],
@@ -328,11 +362,11 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-8 pb-20 animate-in fade-in zoom-in-95 duration-500">
          <div className="bg-white dark:bg-zinc-900 p-10 md:p-14 rounded-[3.5rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 max-w-lg w-full text-center space-y-8">
-            <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto text-white shadow-xl shadow-blue-600/20">
+            <div className="w-20 h-20 bg-black dark:bg-white rounded-3xl flex items-center justify-center mx-auto text-white dark:text-black shadow-xl">
                <ShieldCheck size={40} />
             </div>
             <div>
-               <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Agent Verification</h2>
+               <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tighter break-words">Agent Verification</h2>
                <p className="text-zinc-500 font-medium mt-2 text-sm">Enter the unique ID of your leasing agent to access their specific enrollment form.</p>
             </div>
             <div className="relative">
@@ -348,7 +382,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
             <button 
               onClick={() => validateAgent(targetAgentId)}
               disabled={isSearchingAgent || !targetAgentId}
-              className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              className="w-full bg-black dark:bg-white text-white dark:text-black py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
             >
                {isSearchingAgent ? <Loader2 className="animate-spin" /> : <ArrowRight />}
                {isSearchingAgent ? 'Verifying...' : 'Access Form'}
@@ -373,8 +407,8 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
             <button onClick={() => setViewMode('gate')} className="p-3 bg-white dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                <ArrowLeft size={20} className="text-zinc-500" />
             </button>
-            <div className="text-center">
-               <h2 className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-tighter">Application for {targetAgent?.name}</h2>
+            <div className="text-center min-w-0">
+               <h2 className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-tighter break-words">Application for {targetAgent?.name}</h2>
                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Step {currentStepIndex + 1} of {activeTemplate.sections.length}</p>
             </div>
             <div className="w-12"></div>
@@ -383,13 +417,13 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
          {/* Progress Bar */}
          <div className="flex gap-2">
             {activeTemplate.sections.map((_, idx) => (
-               <div key={idx} className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${idx <= currentStepIndex ? 'bg-blue-600' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
+               <div key={idx} className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${idx <= currentStepIndex ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
             ))}
          </div>
 
          <div className="bg-white dark:bg-zinc-900 p-8 md:p-14 rounded-[3.5rem] border border-zinc-100 dark:border-zinc-800 shadow-2xl">
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 key={currentStepIndex}">
-               <div className="flex items-center gap-4 text-blue-600">
+               <div className="flex items-center gap-4 text-black dark:text-white">
                   <FileText size={32} />
                   <h3 className="text-2xl font-black">{currentSection.title}</h3>
                </div>
@@ -403,7 +437,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         
                         {field.type === 'textarea' ? (
                            <textarea 
-                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold h-32 resize-none outline-none focus:ring-2 focus:ring-blue-600"
+                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold h-32 resize-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                               value={formData[field.key] || ''}
                               onChange={(e) => handleInputChange(field.key, e.target.value)}
                               placeholder={field.placeholder || ''}
@@ -411,7 +445,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : field.type === 'select' ? (
                            <div className="relative">
                               <select 
-                                 className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold appearance-none outline-none focus:ring-2 focus:ring-blue-600"
+                                 className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold appearance-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                                  value={formData[field.key] || ''}
                                  onChange={(e) => handleInputChange(field.key, e.target.value)}
                               >
@@ -423,7 +457,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : field.type === 'file' ? (
                            <div 
                               onClick={() => document.getElementById(`file-${field.id}`)?.click()}
-                              className="h-48 rounded-[2.5rem] bg-offwhite dark:bg-black border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer group hover:border-blue-600/30 transition-all overflow-hidden"
+                              className="h-48 rounded-[2.5rem] bg-offwhite dark:bg-black border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer group hover:border-black dark:hover:border-white transition-all overflow-hidden"
                            >
                               {formData[field.key] ? (
                                  <img src={formData[field.key]} className="w-full h-full object-cover" alt="Uploaded" />
@@ -444,7 +478,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : (
                            <input 
                               type={field.type}
-                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold outline-none focus:ring-2 focus:ring-blue-600"
+                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                               value={formData[field.key] || ''}
                               onChange={(e) => handleInputChange(field.key, e.target.value)}
                               placeholder={field.placeholder || ''}
@@ -462,13 +496,13 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                      <button 
                         onClick={handleSubmitApplication}
                         disabled={isSubmitting}
-                        className="flex-[2] bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                        className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
                      >
                         {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle size={20} />}
                         Submit Application
                      </button>
                   ) : (
-                     <button onClick={() => setCurrentStepIndex(prev => prev + 1)} className="flex-[2] bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3">
+                     <button onClick={() => setCurrentStepIndex(prev => prev + 1)} className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3">
                         Next Step <ArrowRight size={18} />
                      </button>
                   )}
@@ -484,42 +518,42 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     <div className="space-y-6 print:hidden-container">
       <div className="flex items-center justify-between mb-8 print:hidden">
          <h1 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">My Submissions</h1>
-         <button onClick={() => setViewMode('gate')} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-xl active:scale-95 transition-all">
+         <button onClick={() => setViewMode('gate')} className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-xl active:scale-95 transition-all">
             <Plus size={16} /> New Application
          </button>
       </div>
 
       {myApplications.length > 0 ? (
         myApplications.map(app => (
-          <div key={app.id} className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between shadow-sm group hover:border-blue-200 transition-all gap-6 print:hidden">
+          <div key={app.id} className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between shadow-sm group hover:border-black dark:hover:border-white transition-all gap-6 print:hidden">
             <div className="flex items-center gap-6 flex-1">
                 <div className="w-20 h-20 bg-offwhite dark:bg-black rounded-3xl flex items-center justify-center overflow-hidden border border-zinc-50 dark:border-zinc-800 shadow-xl">
                   {app.passportPhotoUrl ? (
                      <img src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                   ) : (
-                     <span className="font-black text-blue-600 text-xl">{app.firstName.charAt(0)}</span>
+                     <span className="font-black text-black dark:text-white text-xl">{app.firstName.charAt(0)}</span>
                   )}
                 </div>
-                <div>
-                  <h4 className="text-2xl font-black text-zinc-900 dark:text-white leading-tight">{app.firstName} {app.surname}</h4>
+                <div className="min-w-0">
+                  <h4 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white leading-tight break-words">{app.firstName} {app.surname}</h4>
                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-1">{app.status} • Filed: {new Date(app.submissionDate).toLocaleDateString()}</p>
                   <div className="mt-2 flex items-center gap-4">
-                     <span className="text-[9px] font-black text-emerald-500 uppercase">Risk Index: {app.riskScore}%</span>
-                     <span className="text-[9px] font-black text-blue-600 uppercase">Status: {app.status}</span>
+                     <span className="text-[9px] font-black text-zinc-500 uppercase">Risk Index: {app.riskScore}%</span>
+                     <span className="text-[9px] font-black text-black dark:text-white uppercase">Status: {app.status}</span>
                   </div>
                 </div>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
                 <button 
                   onClick={() => setViewingApp(app)}
-                  className="flex-1 md:flex-none p-5 bg-offwhite dark:bg-black rounded-2xl text-zinc-400 hover:text-blue-600 hover:bg-white transition-all shadow-sm flex items-center justify-center gap-3 group"
+                  className="flex-1 md:flex-none p-5 bg-offwhite dark:bg-black rounded-2xl text-zinc-400 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-zinc-800 transition-all shadow-sm flex items-center justify-center gap-3 group"
                 >
                   <Eye size={20} /> <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">View</span>
                 </button>
                 <button 
                   onClick={() => handleDownloadPDF(app)}
                   disabled={isDownloading}
-                  className="flex-1 md:flex-none p-5 bg-offwhite dark:bg-black rounded-2xl text-zinc-400 hover:text-blue-600 hover:bg-white transition-all shadow-sm flex items-center justify-center gap-3 group disabled:opacity-50"
+                  className="flex-1 md:flex-none p-5 bg-offwhite dark:bg-black rounded-2xl text-zinc-400 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-zinc-800 transition-all shadow-sm flex items-center justify-center gap-3 group disabled:opacity-50"
                 >
                   {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />} 
                   <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
@@ -528,14 +562,26 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
           </div>
         ))
       ) : (
-        <div className="bg-white dark:bg-zinc-900 p-16 rounded-[4rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800 text-center space-y-8 shadow-sm print:hidden">
-            <div className="w-24 h-24 bg-offwhite dark:bg-black rounded-full flex items-center justify-center mx-auto shadow-xl">
-               <FileText size={40} className="text-zinc-200" />
+          <div className="bg-white dark:bg-zinc-900 p-16 py-24 rounded-[4rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800 text-center space-y-8 shadow-sm print:hidden animate-in fade-in zoom-in-95 duration-1000">
+            <div className="relative w-fit mx-auto">
+               <div className="absolute inset-0 bg-black blur-[80px] opacity-10 animate-pulse"></div>
+               <div className="w-32 h-32 bg-offwhite dark:bg-black rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl relative z-10">
+                  <FileText size={48} className="text-zinc-200 dark:text-zinc-800" />
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black border-4 border-white dark:border-zinc-900">
+                    <Plus size={14} />
+                  </div>
+               </div>
             </div>
-            <div className="space-y-2">
-               <h3 className="text-2xl font-black text-zinc-900 dark:text-white">Submission History Empty</h3>
-               <p className="text-zinc-400 text-sm max-w-xs mx-auto font-medium">No tenancy dossiers found on your registry. Begin your enrollment process to start a new lifecycle.</p>
+            <div className="space-y-4 max-w-sm mx-auto">
+               <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-widest uppercase mb-3 leading-none">History Empty</h3>
+               <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.35em] leading-relaxed">No tenancy dossiers found on your registry. Begin your enrollment process to start a new lifecycle.</p>
             </div>
+            <button 
+              onClick={() => setViewMode('gate')}
+              className="px-10 py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl active:scale-95 transition-all"
+            >
+              Start First Entry
+            </button>
         </div>
       )}
 
@@ -545,9 +591,9 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
           <div className="bg-white dark:bg-zinc-900 w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800 relative">
              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-black/50">
                 <div className="flex items-center gap-4">
-                   <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      <FileText size={24} />
-                   </div>
+                    <div className="w-12 h-12 bg-zinc-100 dark:bg-black rounded-2xl flex items-center justify-center text-black dark:text-white border border-zinc-200 dark:border-zinc-800">
+                       <FileText size={24} />
+                    </div>
                    <div>
                       <h3 className="text-xl font-black text-zinc-900 dark:text-white">Application Details</h3>
                       <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Dossier ID: {viewingApp.id}</p>
@@ -584,7 +630,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                       )}
                    </div>
                    <div className="text-center md:text-left">
-                      <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">{viewingApp.firstName} {viewingApp.surname}</h2>
+                      <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tighter break-words">{viewingApp.firstName} {viewingApp.surname}</h2>
                       <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
                         <span className="px-4 py-1 rounded-full text-[10px] font-black uppercase bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">{viewingApp.status}</span>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Date: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>

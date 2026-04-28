@@ -54,8 +54,8 @@ if (configurationError) {
     app = initializeApp(activeConfig);
     // Using more compatible polling settings for restricted environments
     db = initializeFirestore(app, {
-      forceLongPolling: true,
-    }, activeConfig.firestoreDatabaseId);
+      experimentalAutoDetectLongPolling: true,
+    } as any, activeConfig.firestoreDatabaseId);
     auth = getAuth(app);
     isConfigured = true;
   } catch (error: any) {

@@ -31,9 +31,9 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
   const getStatusStyle = (status: ApplicationStatus) => {
     switch (status) {
-      case ApplicationStatus.APPROVED: return 'bg-emerald-100 text-emerald-700';
-      case ApplicationStatus.REJECTED: return 'bg-rose-100 text-rose-700';
-      case ApplicationStatus.PENDING: return 'bg-amber-100 text-amber-700';
+      case ApplicationStatus.APPROVED: return 'bg-black text-white border-black font-black';
+      case ApplicationStatus.REJECTED: return 'bg-zinc-100 text-zinc-400 border-zinc-200';
+      case ApplicationStatus.PENDING: return 'bg-white text-black border-black font-bold';
       default: return 'bg-slate-100 text-slate-700';
     }
   };
@@ -59,7 +59,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
              <input 
                type="text" 
                placeholder="Search registry..."
-               className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-600 font-bold text-white shadow-xl"
+               className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-white font-bold text-white shadow-xl"
                value={searchTerm}
                onChange={e => setSearchTerm(e.target.value)}
              />
@@ -102,7 +102,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                     </td>
                     <td className="px-8 py-5">
                       {prop ? (
-                        <p className="text-xs font-bold text-blue-400 group-hover:text-blue-300 transition-colors">{prop.name}</p>
+                        <p className="text-xs font-bold text-zinc-300 group-hover:text-white transition-colors">{prop.name}</p>
                       ) : (
                         <p className="text-xs font-black uppercase tracking-widest italic opacity-40 text-zinc-600">Unallocated</p>
                       )}
@@ -110,7 +110,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                     <td className="px-8 py-5 text-right">
                       <button 
                         onClick={() => setSelectedApp(app)}
-                        className="text-blue-500 hover:text-white font-black text-[10px] inline-flex items-center gap-2 uppercase tracking-widest bg-blue-500/10 px-6 py-3 rounded-2xl transition-all hover:bg-blue-600 shadow-xl"
+                        className="text-black dark:text-white font-black text-[10px] inline-flex items-center gap-2 uppercase tracking-widest bg-white dark:bg-zinc-800 px-6 py-3 rounded-2xl transition-all hover:bg-zinc-200 dark:hover:bg-zinc-700 shadow-xl"
                       >
                          Open Dossier <FileSearch size={16} />
                       </button>
@@ -131,8 +131,8 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
       {selectedApp && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md print:bg-white print:p-0 print:static print:block animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-white w-full max-w-5xl my-8 rounded-[4rem] shadow-2xl print:shadow-none print:rounded-none animate-in zoom-in-95 duration-500 overflow-hidden">
-             <div className="p-10 md:p-14 border-b-8 border-blue-600 bg-zinc-950 text-white print:p-0 print:bg-white print:text-black">
+          <div className="bg-white w-full max-w-5xl my-8 rounded-[4rem] shadow-2xl print:shadow-none print:rounded-none animate-in zoom-in-95 duration-500 overflow-hidden text-black">
+             <div className="p-10 md:p-14 border-b-8 border-black bg-zinc-950 text-white print:p-0 print:bg-white print:text-black">
                <div className="flex justify-between items-start mb-12 print:hidden">
                  <button 
                   onClick={() => setSelectedApp(null)}
@@ -142,7 +142,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                  </button>
                  <button 
                    onClick={handleExportPDF}
-                   className="bg-blue-600 text-white px-10 py-5 rounded-[1.5rem] font-black flex items-center shadow-2xl shadow-blue-900/40 hover:bg-black transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
+                   className="bg-black dark:bg-zinc-800 text-white px-10 py-5 rounded-[1.5rem] font-black flex items-center shadow-2xl hover:opacity-80 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
                  >
                    <Download size={20} className="mr-2" /> Download Dossier
                  </button>
@@ -162,10 +162,10 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                         <span className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(selectedApp.status)}`}>{selectedApp.status}</span>
                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">ID: {selectedApp.id.substring(3)}</span>
                       </div>
-                      <h2 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">{selectedApp.firstName} {selectedApp.surname}</h2>
+                      <h2 className="text-3xl md:text-6xl font-black tracking-tighter leading-none break-words">{selectedApp.firstName} {selectedApp.surname}</h2>
                       <div className="flex flex-wrap items-center gap-8 text-zinc-400 font-bold text-sm">
-                        <span className="flex items-center gap-3"><Smartphone size={18} className="text-blue-500" /> {selectedApp.phoneNumber}</span>
-                        <span className="flex items-center gap-3 uppercase tracking-widest text-[10px]"><Calendar size={18} className="text-blue-500" /> Submitted: {selectedApp.applicationDate}</span>
+                        <span className="flex items-center gap-3"><Smartphone size={18} className="text-zinc-500" /> {selectedApp.phoneNumber}</span>
+                        <span className="flex items-center gap-3 uppercase tracking-widest text-[10px]"><Calendar size={18} className="text-zinc-500" /> Submitted: {selectedApp.applicationDate}</span>
                       </div>
                     </div>
                  </div>
@@ -222,7 +222,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                         <p className="text-6xl font-serif italic text-white border-b-2 border-slate-800 pb-6 px-12 print:text-black print:border-slate-100">
                           {selectedApp.signature}
                         </p>
-                        <div className="mt-10 flex items-center gap-4 text-emerald-500">
+                        <div className="mt-10 flex items-center gap-4 text-black">
                            <ShieldCheck size={24} />
                            <span className="text-[10px] font-black uppercase tracking-[0.4em]">Official Timestamp Verified</span>
                         </div>
