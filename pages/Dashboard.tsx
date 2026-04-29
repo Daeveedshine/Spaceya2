@@ -81,25 +81,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   }, [store.payments, settings.localization.currency]);
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-12">
-      <header className="flex flex-col sm:flex-row justify-between items-end gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-8">
-        <div>
-          <h1 className="text-3xl sm:text-6xl font-black text-zinc-900 dark:text-white tracking-[0.2em] sm:tracking-widest uppercase mb-2 break-words">Workspace</h1>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px] break-words">Monitoring Lifecycle for {user.name}</p>
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-12">
+      <header className="flex flex-col items-center text-center gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-12">
         {user.profilePictureUrl && (
-          <div className="w-16 h-16 rounded-[2rem] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 cursor-pointer border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2.5rem] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 cursor-pointer border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl mb-2">
              <img src={user.profilePictureUrl} alt="Profile" className="w-full h-full object-cover" />
           </div>
         )}
+        <div>
+          <h1 className="text-3xl sm:text-6xl font-black text-black dark:text-white tracking-[0.2em] sm:tracking-widest uppercase mb-3 break-words">Your Space</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-[0.3em] text-[10px] break-words">Monitoring Lifecycle for {user.name}</p>
+        </div>
       </header>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 ${user.role === UserRole.AGENT ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-1`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${user.role === UserRole.AGENT ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4`}>
         {user.role === UserRole.AGENT ? (
           <>
             <StatCard label="Portfolio" value={stats.totalProperties} icon={Building} color="zinc" />
-            <StatCard label="Wallet" value={stats.walletBalance} icon={TrendingUp} color="zinc" />
-            <StatCard label="Revenue" value={stats.monthlyRevenue} icon={TrendingUp} color="zinc" />
+            <StatCard label="Wallet" value={stats.walletBalance} icon={TrendingUp} color="emerald" />
+            <StatCard label="Yield" value={stats.monthlyRevenue} icon={TrendingUp} color="zinc" />
           </>
         ) : (
           <>
@@ -111,13 +111,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
-        <div className="lg:col-span-2 glass-card p-12 rounded-[4rem] border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between mb-12">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400">Yield Analytics</h3>
-            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-full">Currency: {settings.localization.currency}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-zinc-50/50 dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">Yield Analytics</h3>
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-full">Currency: {settings.localization.currency}</div>
           </div>
-          <div className="h-80 w-full" style={{ minHeight: '350px' }}>
+          <div className="h-64 sm:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={paymentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"} />
@@ -125,20 +125,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 <YAxis axisLine={false} tickLine={false} tick={{fill: isDark ? '#444' : '#999', fontSize: 9, fontWeight: '900'}} />
                 <Tooltip 
                   cursor={{fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}}
-                  contentStyle={{backgroundColor: isDark ? '#000' : '#FFF', border: '1px solid #333', borderRadius: '20px', padding: '15px'}}
+                  contentStyle={{backgroundColor: isDark ? '#000' : '#FFF', border: '1px solid #333', borderRadius: '12px', padding: '12px'}}
                 />
-                <Bar dataKey="amount" fill={isDark ? "#FFF" : "#000"} radius={[4, 4, 4, 4]} barSize={32} />
+                <Bar dataKey="amount" fill={isDark ? "#FFF" : "#000"} radius={[2, 2, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="glass-card p-12 rounded-[4rem] border-zinc-200 dark:border-zinc-800 flex flex-col">
-          <div className="flex items-center justify-between mb-10">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400">Events</h3>
-            <Bell className="w-4 h-4 text-zinc-300" />
+        <div className="bg-zinc-50/50 dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">Events</h3>
+            <Bell className="w-4 h-4 text-zinc-400 dark:text-zinc-600" />
           </div>
-          <div className="space-y-6 flex-1">
+          <div className="space-y-4 flex-1">
             {recentNotifications.length > 0 ? recentNotifications.map(notification => (
                 <AlertItem 
                     key={notification.id}
@@ -147,13 +147,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                     time={new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
                 />
             )) : (
-                <div className="flex flex-col items-center justify-center h-full py-16 opacity-20">
-                    <Bell className="w-10 h-10 mb-4" />
+                <div className="flex flex-col items-center justify-center h-full py-12 opacity-20">
+                    <Bell className="w-8 h-8 mb-4" />
                     <p className="text-[9px] font-black uppercase tracking-widest text-center italic">Archive is Clear</p>
                 </div>
             )}
           </div>
-          <button className="w-full mt-10 py-5 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-[2rem] text-[9px] font-black uppercase tracking-[0.4em] hover:opacity-80 transition-all">
+          <button className="w-full mt-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl text-[9px] font-black uppercase tracking-[0.4em] hover:opacity-80 transition-all">
               Archival Center
           </button>
         </div>
@@ -163,12 +163,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 };
 
 const StatCard = ({ label, value, icon: Icon, color }: any) => {
+  const valueColorClass = color === 'emerald' ? 'text-emerald-500' : 'text-black dark:text-white';
+  
   return (
-    <div className="glass-card p-10 rounded-[3.5rem] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-500 cursor-pointer group shadow-none border-0">
-      <p className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-4 opacity-100 break-words">{label}</p>
+    <div className="p-5 transition-all duration-500 cursor-pointer group bg-zinc-50/50 dark:bg-white/5 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 translate-y-0 hover:-translate-y-1">
+      <p className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.3em] mb-2 opacity-100 break-words">{label}</p>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-2xl sm:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none break-all">{value}</p>
-        <Icon className="w-5 h-5 text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors" />
+        <p className={`text-xl sm:text-2xl font-black tracking-tighter leading-none break-all ${valueColorClass}`}>{value}</p>
+        <Icon className="w-4 h-4 text-zinc-400 dark:text-zinc-600 group-hover:text-black dark:group-hover:text-white transition-colors" />
       </div>
     </div>
   );
@@ -178,10 +180,10 @@ const AlertItem = ({ title, desc, time }: any) => {
   return (
     <div className="group border-l-2 border-zinc-100 dark:border-zinc-800 pl-6 py-2">
       <div className="flex justify-between items-start mb-2">
-        <h4 className="text-[10px] font-black uppercase text-zinc-900 dark:text-zinc-100 tracking-widest">{title}</h4>
-        <span className="text-[9px] text-zinc-400 font-bold">{time}</span>
+        <h4 className="text-[10px] font-black uppercase text-black dark:text-zinc-100 tracking-widest">{title}</h4>
+        <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-bold">{time}</span>
       </div>
-      <p className="text-[11px] leading-relaxed text-zinc-500 font-medium opacity-80">{desc}</p>
+      <p className="text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400 font-medium opacity-80">{desc}</p>
     </div>
   );
 };

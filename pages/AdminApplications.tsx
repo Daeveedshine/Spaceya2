@@ -32,8 +32,8 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
   const getStatusStyle = (status: ApplicationStatus) => {
     switch (status) {
       case ApplicationStatus.APPROVED: return 'bg-black text-white border-black font-black';
-      case ApplicationStatus.REJECTED: return 'bg-zinc-100 text-zinc-400 border-zinc-200';
-      case ApplicationStatus.PENDING: return 'bg-white text-black border-black font-bold';
+      case ApplicationStatus.REJECTED: return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 border-zinc-200 dark:border-zinc-700';
+      case ApplicationStatus.PENDING: return 'bg-white dark:bg-zinc-900 text-black dark:text-white border-black dark:border-white font-bold';
       default: return 'bg-slate-100 text-slate-700';
     }
   };
@@ -44,22 +44,22 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
         <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:bg-zinc-800 transition-all text-white"
+            className="p-3 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all text-black dark:text-white"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Global Registry</h1>
-            <p className="text-zinc-500 text-sm font-medium">Monitoring {store.applications.length} historical and active profiles.</p>
+            <h1 className="text-3xl font-black text-black dark:text-white tracking-tight">Global Registry</h1>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Monitoring {store.applications.length} historical and active profiles.</p>
           </div>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
            <div className="relative flex-1 sm:min-w-[300px]">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400" size={18} />
              <input 
                type="text" 
                placeholder="Search registry..."
-               className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-white font-bold text-white shadow-xl"
+               className="w-full pl-12 pr-4 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white font-bold text-black dark:text-white shadow-xl"
                value={searchTerm}
                onChange={e => setSearchTerm(e.target.value)}
              />
@@ -67,24 +67,24 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
         </div>
       </header>
 
-      <div className="bg-zinc-900 rounded-[2.5rem] border border-zinc-800 shadow-2xl overflow-hidden print:hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-2xl overflow-hidden print:hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-black text-[10px] font-black text-zinc-500 uppercase tracking-[0.25em] border-b border-zinc-800">
+              <tr className="bg-zinc-50 dark:bg-black text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.25em] border-b border-zinc-100 dark:border-zinc-800">
                 <th className="px-8 py-6">Applicant Dossier</th>
                 <th className="px-8 py-6">Target Property</th>
                 <th className="px-8 py-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800">
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filteredApps.map(app => {
                 const prop = store.properties.find(p => p.id === app.propertyId);
                 return (
-                  <tr key={app.id} className="hover:bg-black/50 transition-colors group">
+                  <tr key={app.id} className="hover:bg-zinc-50 dark:hover:bg-black/50 transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-zinc-800 overflow-hidden border border-zinc-700 flex items-center justify-center text-zinc-500 font-black shadow-lg">
+                        <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-600 dark:text-zinc-400 font-black shadow-lg">
                            {app.passportPhotoUrl ? (
                              <img src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                            ) : (
@@ -92,19 +92,19 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                            )}
                         </div>
                         <div>
-                          <p className="text-lg font-black text-white">{app.firstName} {app.surname}</p>
+                          <p className="text-lg font-black text-black dark:text-white">{app.firstName} {app.surname}</p>
                           <div className="flex items-center gap-2">
                              <span className={`px-2 py-0.5 rounded-[4px] text-[8px] font-black uppercase ${getStatusStyle(app.status)}`}>{app.status}</span>
-                             <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">{app.applicationDate}</span>
+                             <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">{app.applicationDate}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
                       {prop ? (
-                        <p className="text-xs font-bold text-zinc-300 group-hover:text-white transition-colors">{prop.name}</p>
+                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-black dark:group-hover:text-white transition-colors">{prop.name}</p>
                       ) : (
-                        <p className="text-xs font-black uppercase tracking-widest italic opacity-40 text-zinc-600">Unallocated</p>
+                        <p className="text-xs font-black uppercase tracking-widest italic opacity-40 text-zinc-500 dark:text-zinc-500">Unallocated</p>
                       )}
                     </td>
                     <td className="px-8 py-5 text-right">
@@ -131,18 +131,18 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
       {selectedApp && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md print:bg-white print:p-0 print:static print:block animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-white w-full max-w-5xl my-8 rounded-[4rem] shadow-2xl print:shadow-none print:rounded-none animate-in zoom-in-95 duration-500 overflow-hidden text-black">
-             <div className="p-10 md:p-14 border-b-8 border-black bg-zinc-950 text-white print:p-0 print:bg-white print:text-black">
+           <div className="bg-white dark:bg-zinc-950 w-full max-w-5xl my-8 rounded-[4rem] shadow-2xl print:shadow-none print:rounded-none animate-in zoom-in-95 duration-500 overflow-hidden text-black dark:text-white">
+             <div className="p-10 md:p-14 border-b-8 border-black dark:border-white bg-zinc-50 dark:bg-black text-black dark:text-white print:p-0 print:bg-white print:text-black">
                <div className="flex justify-between items-start mb-12 print:hidden">
                  <button 
                   onClick={() => setSelectedApp(null)}
-                  className="bg-white/10 p-4 rounded-full text-zinc-400 hover:text-white transition-all shadow-xl"
+                  className="bg-black/10 dark:bg-white/10 p-4 rounded-full text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-all shadow-xl"
                  >
                    <ArrowLeft size={24} />
                  </button>
                  <button 
                    onClick={handleExportPDF}
-                   className="bg-black dark:bg-zinc-800 text-white px-10 py-5 rounded-[1.5rem] font-black flex items-center shadow-2xl hover:opacity-80 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
+                   className="bg-black dark:bg-white text-white dark:text-black px-10 py-5 rounded-[1.5rem] font-black flex items-center shadow-2xl hover:opacity-80 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
                  >
                    <Download size={20} className="mr-2" /> Download Dossier
                  </button>
@@ -150,32 +150,32 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
                <div className="flex flex-col md:flex-row justify-between items-center gap-12">
                  <div className="flex items-center gap-10">
-                    <div className="w-32 h-32 bg-white rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-2xl print:border-4">
+                    <div className="w-32 h-32 bg-white dark:bg-zinc-900 rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-2xl print:border-4 border border-zinc-200 dark:border-zinc-800">
                       {selectedApp.passportPhotoUrl ? (
                         <img src={selectedApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                       ) : (
-                        <div className="text-zinc-300 text-5xl font-black">{selectedApp.firstName.charAt(0)}</div>
+                        <div className="text-zinc-300 dark:text-zinc-700 text-5xl font-black">{selectedApp.firstName.charAt(0)}</div>
                       )}
                     </div>
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <span className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(selectedApp.status)}`}>{selectedApp.status}</span>
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">ID: {selectedApp.id.substring(3)}</span>
+                        <span className="text-[10px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.3em]">ID: {selectedApp.id.substring(3)}</span>
                       </div>
                       <h2 className="text-3xl md:text-6xl font-black tracking-tighter leading-none break-words">{selectedApp.firstName} {selectedApp.surname}</h2>
-                      <div className="flex flex-wrap items-center gap-8 text-zinc-400 font-bold text-sm">
-                        <span className="flex items-center gap-3"><Smartphone size={18} className="text-zinc-500" /> {selectedApp.phoneNumber}</span>
-                        <span className="flex items-center gap-3 uppercase tracking-widest text-[10px]"><Calendar size={18} className="text-zinc-500" /> Submitted: {selectedApp.applicationDate}</span>
+                      <div className="flex flex-wrap items-center gap-8 text-zinc-600 dark:text-zinc-400 font-bold text-sm">
+                        <span className="flex items-center gap-3"><Smartphone size={18} className="text-zinc-400 dark:text-zinc-600" /> {selectedApp.phoneNumber}</span>
+                        <span className="flex items-center gap-3 uppercase tracking-widest text-[10px]"><Calendar size={18} className="text-zinc-400 dark:text-zinc-600" /> Submitted: {selectedApp.applicationDate}</span>
                       </div>
                     </div>
                  </div>
                </div>
              </div>
 
-             <div className="p-10 md:p-16 space-y-20 print:p-0 print:mt-12 text-black">
+             <div className="p-10 md:p-16 space-y-20 print:p-0 print:mt-12 text-black dark:text-white">
                {/* 01: Profile */}
                <section className="space-y-10">
-                  <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.4em] border-b-2 border-slate-50 pb-4">01: Registry Information</h3>
+                  <h3 className="text-xs font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.4em] border-b-2 border-zinc-100 dark:border-zinc-900 pb-4">01: Registry Information</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
                      <DataPoint label="Surname" value={selectedApp.surname} />
                      <DataPoint label="First Name" value={selectedApp.firstName} />
@@ -190,12 +190,12 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
                {/* 02: Background */}
                <section className="space-y-10">
-                  <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.4em] border-b-2 border-slate-50 pb-4">02: Residential Analysis</h3>
+                  <h3 className="text-xs font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.4em] border-b-2 border-zinc-100 dark:border-zinc-900 pb-4">02: Residential Analysis</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                      <DataPoint label="Current Home Address" value={selectedApp.currentHomeAddress} />
                      <DataPoint label="Reason for Relocation" value={selectedApp.reasonForRelocating} />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 p-10 bg-slate-50 rounded-[3rem] border border-slate-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 p-10 bg-zinc-50 dark:bg-zinc-900 rounded-[3rem] border border-zinc-100 dark:border-zinc-800">
                      <DataPoint label="Previous Landlord" value={selectedApp.currentLandlordName} />
                      <DataPoint label="Landlord Phone" value={selectedApp.currentLandlordPhone} />
                   </div>
@@ -203,26 +203,26 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
                {/* 03: Identity */}
                <section className="space-y-10">
-                  <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.4em] border-b-2 border-slate-50 pb-4">03: Verification Dossier</h3>
+                  <h3 className="text-xs font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.4em] border-b-2 border-zinc-100 dark:border-zinc-900 pb-4">03: Verification Dossier</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                      <div className="space-y-10">
                         <DataPoint label="ID Verification Method" value={selectedApp.verificationType} />
                         <DataPoint label="Official ID Number" value={selectedApp.verificationIdNumber} />
-                        <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col shadow-sm">
-                           <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Identity Scan Evidence</p>
+                        <div className="bg-zinc-50 dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 flex flex-col shadow-sm">
+                           <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-6">Identity Scan Evidence</p>
                            {selectedApp.verificationUrl ? (
-                             <img src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-72 object-contain shadow-2xl" alt="ID Document" />
+                             <img src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-72 object-contain shadow-2xl grayscale hover:grayscale-0 transition-all duration-700" alt="ID Document" />
                            ) : (
-                             <div className="py-24 text-center text-slate-300 italic text-xs">No scan available.</div>
+                             <div className="py-24 text-center text-zinc-400 dark:text-zinc-600 italic text-xs">No scan available.</div>
                            )}
                         </div>
                      </div>
-                     <div className="p-14 bg-slate-900 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl print:bg-white print:border-4">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] mb-8">Dossier Authentication</p>
-                        <p className="text-6xl font-serif italic text-white border-b-2 border-slate-800 pb-6 px-12 print:text-black print:border-slate-100">
+                     <div className="p-14 bg-black dark:bg-zinc-900 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl print:bg-white print:border-4">
+                        <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.5em] mb-8">Dossier Authentication</p>
+                        <p className="text-6xl font-serif italic text-white dark:text-zinc-100 border-b-2 border-zinc-800 dark:border-zinc-700 pb-6 px-12 print:text-black print:border-slate-100">
                           {selectedApp.signature}
                         </p>
-                        <div className="mt-10 flex items-center gap-4 text-black">
+                        <div className="mt-10 flex items-center gap-4 text-white dark:text-white">
                            <ShieldCheck size={24} />
                            <span className="text-[10px] font-black uppercase tracking-[0.4em]">Official Timestamp Verified</span>
                         </div>
@@ -256,8 +256,8 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
 const DataPoint = ({ label, value }: { label: string, value: any }) => (
   <div className="space-y-1">
-    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] leading-none mb-2 truncate">{label}</p>
-    <p className="text-lg font-bold text-slate-900 leading-tight break-words">{value || 'N/A'}</p>
+    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.3em] leading-none mb-2 truncate">{label}</p>
+    <p className="text-lg font-bold text-black dark:text-white leading-tight break-words">{value || 'N/A'}</p>
   </div>
 );
 

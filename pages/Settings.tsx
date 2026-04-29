@@ -68,8 +68,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
     <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">Application Hub</h1>
-          <p className="text-zinc-500 font-medium mt-1">Personalize your SPACEYA lifecycle experience.</p>
+          <h1 className="text-4xl font-black text-black dark:text-white tracking-tighter">Application Hub</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-medium mt-1">Personalize your SPACEYA lifecycle experience.</p>
         </div>
         <div className="flex items-center gap-3">
            {showSaved && (
@@ -100,8 +100,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
            <div className="glass-card p-8 rounded-[2.5rem] space-y-8 border border-white/20 dark:border-white/5">
               <div className="flex items-center justify-between">
                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white">Active Theme</p>
-                    <p className="text-[10px] text-zinc-500 font-medium">Select your interface atmosphere.</p>
+                    <p className="text-sm font-bold text-black dark:text-white">Active Theme</p>
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Select your interface atmosphere.</p>
                  </div>
                  <div className="flex p-1 bg-zinc-100 dark:bg-black rounded-xl border border-zinc-200 dark:border-zinc-800">
                     <button 
@@ -121,8 +121,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
 
               <div className="flex items-center justify-between">
                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white">Display Density</p>
-                    <p className="text-[10px] text-zinc-500 font-medium">Adjust workspace whitespace.</p>
+                    <p className="text-sm font-bold text-black dark:text-white">Display Density</p>
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Adjust workspace whitespace.</p>
                  </div>
                  <select 
                    className="bg-zinc-100 dark:bg-black text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 outline-none text-zinc-900 dark:text-white"
@@ -201,8 +201,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
            <div className="glass-card p-8 rounded-[2.5rem] space-y-8 border border-white/20 dark:border-white/5">
               <div className="flex items-center justify-between">
                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white">Active Currency</p>
-                    <p className="text-[10px] text-zinc-500 font-medium">Primary financial display unit.</p>
+                    <p className="text-sm font-bold text-black dark:text-white">Active Currency</p>
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Primary financial display unit.</p>
                  </div>
                  <select 
                    className="bg-zinc-100 dark:bg-black text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 outline-none text-zinc-900 dark:text-white"
@@ -217,8 +217,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
 
               <div className="flex items-center justify-between">
                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white">Timestamp Format</p>
-                    <p className="text-[10px] text-zinc-500 font-medium">Standardized calendar display.</p>
+                    <p className="text-sm font-bold text-black dark:text-white">Timestamp Format</p>
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Standardized calendar display.</p>
                  </div>
                  <select 
                    className="bg-zinc-100 dark:bg-black text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 outline-none text-zinc-900 dark:text-white"
@@ -242,7 +242,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
            <div className="glass-card p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 h-full flex flex-col justify-center">
               <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-3xl border border-zinc-200 dark:border-zinc-700 text-center space-y-4">
                  <Shield size={32} className="text-black dark:text-white mx-auto" />
-                 <p className="text-xs font-bold text-zinc-900 dark:text-zinc-200 leading-relaxed">
+                 <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
                    Your session is currently bridge-encrypted via SPACEYA Secure Protocol.
                  </p>
                  <button className="w-full py-3 bg-white dark:bg-zinc-900 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors shadow-sm">
@@ -263,7 +263,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
                <p className="text-[10px] text-zinc-500 font-medium">Changes here affect your entire lifecycle suite.</p>
             </div>
          </div>
-         <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 SPACEYA GLOBAL OPS</p>
+         <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.4em]">© 2024 SPACEYA GLOBAL OPS</p>
       </footer>
     </div>
   );
@@ -276,8 +276,8 @@ const ToggleItem = ({ icon: Icon, label, desc, active, onClick }: any) => (
            <Icon size={18} />
         </div>
         <div className="space-y-0.5">
-           <p className="text-sm font-bold text-zinc-900 dark:text-white leading-none">{label}</p>
-           <p className="text-[10px] text-zinc-500 font-medium">{desc}</p>
+           <p className="text-sm font-bold text-black dark:text-white leading-none">{label}</p>
+           <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">{desc}</p>
         </div>
      </div>
      <button onClick={onClick} className="text-black dark:text-white transition-transform active:scale-90">

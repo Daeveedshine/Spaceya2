@@ -360,19 +360,19 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
 
   if (viewMode === 'gate') {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-8 pb-20 animate-in fade-in zoom-in-95 duration-500">
-         <div className="bg-white dark:bg-zinc-900 p-10 md:p-14 rounded-[3.5rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 max-w-lg w-full text-center space-y-8">
+      <div className="min-h-full flex flex-col items-center justify-center space-y-8 pb-20 animate-in fade-in zoom-in-95 duration-500">
+          <div className="bg-white dark:bg-zinc-900 p-10 md:p-14 rounded-[3.5rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 max-w-lg w-full text-center space-y-8">
             <div className="w-20 h-20 bg-black dark:bg-white rounded-3xl flex items-center justify-center mx-auto text-white dark:text-black shadow-xl">
                <ShieldCheck size={40} />
             </div>
             <div>
-               <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tighter break-words">Agent Verification</h2>
-               <p className="text-zinc-500 font-medium mt-2 text-sm">Enter the unique ID of your leasing agent to access their specific enrollment form.</p>
+               <h2 className="text-2xl sm:text-3xl font-black text-black dark:text-white tracking-tighter break-words">Agent Verification</h2>
+               <p className="text-zinc-600 dark:text-zinc-400 font-medium mt-2 text-sm">Enter the unique ID of your leasing agent to access their specific enrollment form.</p>
             </div>
             <div className="relative">
-               <UserCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400" />
+               <UserCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                <input 
-                 className="w-full pl-14 pr-6 py-6 bg-offwhite dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-lg font-bold text-center tracking-widest outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                 className="w-full pl-14 pr-6 py-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-lg font-bold text-center tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-black dark:text-white"
                  placeholder="AGENT ID (e.g. u1)"
                  value={targetAgentId}
                  onChange={(e) => setTargetAgentId(e.target.value)}
@@ -388,11 +388,11 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                {isSearchingAgent ? 'Verifying...' : 'Access Form'}
             </button>
             <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
-               <button onClick={() => setViewMode('history')} className="text-zinc-400 font-bold text-xs hover:text-blue-600 transition-colors uppercase tracking-widest">
+               <button onClick={() => setViewMode('history')} className="text-zinc-500 dark:text-zinc-400 font-bold text-xs hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest">
                   View My Submitted Dossiers
                </button>
             </div>
-         </div>
+          </div>
       </div>
     );
   }
@@ -421,23 +421,25 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
             ))}
          </div>
 
-         <div className="bg-white dark:bg-zinc-900 p-8 md:p-14 rounded-[3.5rem] border border-zinc-100 dark:border-zinc-800 shadow-2xl">
+          <div className="bg-white dark:bg-zinc-950 p-8 md:p-14 rounded-[3.5rem] border border-zinc-100 dark:border-zinc-800 shadow-2xl">
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 key={currentStepIndex}">
                <div className="flex items-center gap-4 text-black dark:text-white">
-                  <FileText size={32} />
-                  <h3 className="text-2xl font-black">{currentSection.title}</h3>
+                  <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+                    <FileText size={32} />
+                  </div>
+                  <h3 className="text-2xl font-black tracking-tight">{currentSection.title}</h3>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {currentSection.fields.map(field => (
                      <div key={field.id} className={field.type === 'textarea' || field.type === 'file' ? 'col-span-1 md:col-span-2' : 'col-span-1'}>
-                        <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2 ml-1">
+                        <label className="block text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2 ml-1">
                            {field.label} {field.required && <span className="text-rose-500">*</span>}
                         </label>
                         
                         {field.type === 'textarea' ? (
                            <textarea 
-                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold h-32 resize-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                              className="w-full p-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-[2rem] text-sm font-bold text-black dark:text-white h-32 resize-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                               value={formData[field.key] || ''}
                               onChange={(e) => handleInputChange(field.key, e.target.value)}
                               placeholder={field.placeholder || ''}
@@ -445,26 +447,26 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : field.type === 'select' ? (
                            <div className="relative">
                               <select 
-                                 className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold appearance-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                                 className="w-full p-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-[2rem] text-sm font-bold text-black dark:text-white appearance-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                                  value={formData[field.key] || ''}
                                  onChange={(e) => handleInputChange(field.key, e.target.value)}
                               >
                                  <option value="">Select Option...</option>
                                  {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                               </select>
-                              <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={18} />
+                              <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                            </div>
                         ) : field.type === 'file' ? (
                            <div 
                               onClick={() => document.getElementById(`file-${field.id}`)?.click()}
-                              className="h-48 rounded-[2.5rem] bg-offwhite dark:bg-black border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer group hover:border-black dark:hover:border-white transition-all overflow-hidden"
+                              className="h-48 rounded-[2.5rem] bg-zinc-50 dark:bg-black border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer group hover:border-black dark:hover:border-white transition-all overflow-hidden"
                            >
                               {formData[field.key] ? (
                                  <img src={formData[field.key]} className="w-full h-full object-cover" alt="Uploaded" />
                               ) : (
                                  <div className="text-center group-hover:scale-110 transition-transform">
-                                    <Camera size={32} className="text-zinc-300 mx-auto mb-2" />
-                                    <p className="text-[9px] font-black uppercase text-zinc-400">Click to Upload</p>
+                                    <Camera size={32} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
+                                    <p className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-600">Click to Upload</p>
                                  </div>
                               )}
                               <input 
@@ -478,7 +480,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : (
                            <input 
                               type={field.type}
-                              className="glass-input w-full p-6 rounded-[2rem] text-sm font-bold outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                              className="w-full p-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-[2rem] text-sm font-bold text-black dark:text-white outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                               value={formData[field.key] || ''}
                               onChange={(e) => handleInputChange(field.key, e.target.value)}
                               placeholder={field.placeholder || ''}
@@ -490,7 +492,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
 
                <div className="flex gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                   {currentStepIndex > 0 && (
-                     <button onClick={() => setCurrentStepIndex(prev => prev - 1)} className="flex-1 bg-offwhite dark:bg-zinc-800 py-6 rounded-[2rem] font-black uppercase text-[10px] text-zinc-400">Back</button>
+                     <button onClick={() => setCurrentStepIndex(prev => prev - 1)} className="flex-1 bg-zinc-100 dark:bg-zinc-800 py-6 rounded-[2rem] font-black uppercase text-[10px] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">Back</button>
                   )}
                   {isLastStep ? (
                      <button 
@@ -583,34 +585,32 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
               Start First Entry
             </button>
         </div>
-      )}
-
-      {/* VIEW MODAL (On Screen & Download Source) */}
+      )}      {/* VIEW MODAL (On Screen & Download Source) */}
       {viewingApp && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800 relative">
-             <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-black/50">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-zinc-950 w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800 relative">
+             <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-black text-black dark:text-white">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-zinc-100 dark:bg-black rounded-2xl flex items-center justify-center text-black dark:text-white border border-zinc-200 dark:border-zinc-800">
+                    <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-2xl flex items-center justify-center text-black dark:text-white border border-zinc-200 dark:border-zinc-800 shadow-sm">
                        <FileText size={24} />
                     </div>
                    <div>
-                      <h3 className="text-xl font-black text-zinc-900 dark:text-white">Application Details</h3>
-                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Dossier ID: {viewingApp.id}</p>
+                      <h3 className="text-xl font-black tracking-tight">Application Details</h3>
+                      <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.3em]">Dossier ID: {viewingApp.id}</p>
                    </div>
                 </div>
                 <div className="flex gap-3">
                    <button 
                      onClick={() => handleDownloadPDF(viewingApp)} 
                      disabled={isDownloading}
-                     className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-all disabled:opacity-50"
+                     className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-all disabled:opacity-50"
                    >
                       {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} 
                       Download PDF
                    </button>
                    <button 
                      onClick={() => setViewingApp(null)} 
-                     className="bg-zinc-200 dark:bg-zinc-800 p-3 rounded-xl text-zinc-500 hover:text-rose-500 transition-all"
+                     className="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-xl text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-all"
                    >
                       <X size={20} />
                    </button>
@@ -618,22 +618,22 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
              </div>
              
              {/* Printable/Viewable Content Area */}
-             <div id="printable-content" className="p-10 overflow-y-auto custom-scrollbar space-y-12 bg-white dark:bg-zinc-900 text-black dark:text-white">
+             <div id="printable-content" className="p-10 overflow-y-auto custom-scrollbar space-y-12 bg-white dark:bg-zinc-950 text-black dark:text-white">
                 <div className="flex flex-col md:flex-row gap-8 items-center border-b border-zinc-100 dark:border-zinc-800 pb-10">
-                   <div className="w-24 h-24 bg-zinc-100 dark:bg-black rounded-3xl overflow-hidden border-2 border-zinc-200 dark:border-zinc-800">
+                   <div className="w-24 h-24 bg-zinc-50 dark:bg-black rounded-3xl overflow-hidden border-2 border-zinc-100 dark:border-zinc-800 shadow-xl">
                       {viewingApp.passportPhotoUrl ? (
                         <img src={viewingApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-300 text-3xl font-black">
+                        <div className="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-700 text-3xl font-black">
                           {viewingApp.firstName.charAt(0)}
                         </div>
                       )}
                    </div>
                    <div className="text-center md:text-left">
-                      <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tighter break-words">{viewingApp.firstName} {viewingApp.surname}</h2>
-                      <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
-                        <span className="px-4 py-1 rounded-full text-[10px] font-black uppercase bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">{viewingApp.status}</span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Date: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>
+                      <h2 className="text-2xl sm:text-3xl font-black text-black dark:text-white tracking-tighter leading-none">{viewingApp.firstName} {viewingApp.surname}</h2>
+                      <div className="flex items-center justify-center md:justify-start gap-4 mt-3">
+                        <span className="px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-zinc-200 dark:border-zinc-700">{viewingApp.status}</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-500 font-black uppercase tracking-[0.2em]">Filed: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>
                       </div>
                    </div>
                 </div>

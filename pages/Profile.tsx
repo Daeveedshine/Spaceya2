@@ -282,8 +282,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">My Profile</h1>
-          <p className="text-zinc-500 font-medium mt-1">Manage your identification and suite configuration.</p>
+          <h1 className="text-3xl font-black text-black dark:text-white tracking-tighter">My Profile</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-medium mt-1">Manage your identification and suite configuration.</p>
         </div>
         
         {user.role === UserRole.AGENT && (
@@ -308,12 +308,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-left-4 duration-500">
           <div className="md:col-span-1 space-y-6">
             {/* Identity Card */}
-            <div className="bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-800 flex flex-col items-center text-center shadow-2xl">
+            <div className="bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-900 flex flex-col items-center text-center shadow-2xl">
               <div 
                 className="relative group cursor-pointer" 
                 onClick={() => fileInputRef.current?.click()}
               >
-                <div className="w-28 h-28 bg-white rounded-[2rem] overflow-hidden flex items-center justify-center text-zinc-300 border border-zinc-200 text-3xl font-black shadow-lg mb-6 relative">
+                <div className="w-28 h-28 bg-white rounded-[2rem] overflow-hidden flex items-center justify-center text-zinc-400 border border-zinc-200 text-3xl font-black shadow-lg mb-6 relative">
                   {profilePic ? (
                     <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -323,20 +323,20 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                      <Camera className="text-white w-8 h-8" />
                   </div>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-black dark:bg-white rounded-full p-2 text-white dark:text-black border-4 border-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                <div className="absolute -bottom-2 -right-2 bg-black dark:bg-white rounded-full p-2 text-white dark:text-black border-4 border-zinc-950 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                     <Plus size={14} />
                 </div>
               </div>
               <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleProfilePicUpload} />
 
               <h2 className="text-2xl font-black text-white">{user.name}</h2>
-              <div className="mt-2 inline-flex items-center px-4 py-1.5 bg-white/10 dark:bg-black/10 text-zinc-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-zinc-700">
+              <div className="mt-2 inline-flex items-center px-4 py-1.5 bg-white/10 dark:bg-black/10 text-white rounded-full text-[10px] font-black uppercase tracking-widest border border-zinc-700">
                 <Shield size={12} className="mr-2" /> {user.role}
               </div>
               
               <div className="mt-8 w-full pt-8 border-t border-zinc-800 space-y-6">
                  <div>
-                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Unique Suite ID</p>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Unique Suite ID</p>
                     <div className="bg-black p-3 rounded-xl border border-zinc-800 flex items-center justify-between group">
                       <span className="text-sm font-mono font-bold text-zinc-100">{user.id}</span>
                       <button 
@@ -347,12 +347,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                           {copied ? <Check size={16} className="text-white" /> : <Copy size={16} />}
                       </button>
                     </div>
-                    <p className="mt-2 text-[9px] text-zinc-600 font-medium italic">Use this ID to receive applications or link properties.</p>
+                    <p className="mt-2 text-[9px] text-zinc-500 font-medium italic">Use this ID to receive applications or link properties.</p>
                  </div>
 
                  {user.role === UserRole.AGENT && (
                    <div>
-                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Tenant Onboarding Link</p>
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Tenant Onboarding Link</p>
                       <div className="bg-blue-900/10 p-3 rounded-xl border border-blue-600/20 flex items-center justify-between group cursor-pointer" onClick={handleCopyLink}>
                         <div className="flex items-center gap-2 overflow-hidden">
                             <LinkIcon size={14} className="text-blue-500 shrink-0" />
@@ -364,7 +364,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                             {linkCopied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
                         </button>
                       </div>
-                      <p className="mt-2 text-[9px] text-zinc-600 font-medium italic">Share this link. New tenants will be auto-routed to your application inbox.</p>
+                      <p className="mt-2 text-[9px] text-zinc-500 font-medium italic">Share this link. New tenants will be auto-routed to your application inbox.</p>
                    </div>
                  )}
               </div>
@@ -375,7 +375,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
             {/* Settings Panel */}
             <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-8 md:p-12 shadow-sm border border-zinc-100 dark:border-zinc-800">
                <div className="flex justify-between items-center mb-8">
-                 <h3 className="text-xl font-black text-zinc-900 dark:text-white">General Settings</h3>
+                 <h3 className="text-xl font-black text-black dark:text-white">General Settings</h3>
                  {showSaved && (
                    <div className="flex items-center text-black dark:text-white text-xs font-black uppercase animate-in fade-in slide-in-from-right-4">
                      <CheckCircle2 size={16} className="mr-2" /> Changes Saved
@@ -386,11 +386,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                <form onSubmit={handleUpdate} className="space-y-8">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2 ml-1">Full Legal Name</label>
+                      <label className="block text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2 ml-1">Full Legal Name</label>
                       <div className="relative">
-                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />
                         <input 
-                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
+                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-black dark:text-white"
                           value={name}
                           onChange={e => setName(e.target.value)}
                           required
@@ -398,11 +398,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2 ml-1">Contact Phone</label>
+                      <label className="block text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2 ml-1">Contact Phone</label>
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />
                         <input 
-                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-zinc-900 dark:text-white"
+                          className="w-full pl-11 pr-5 py-4 bg-offwhite dark:bg-black border border-black dark:border-white rounded-2xl focus:ring-2 focus:ring-zinc-400 outline-none transition-all text-sm font-bold text-black dark:text-white"
                           value={userPhone}
                           onChange={e => setUserPhone(e.target.value)}
                           placeholder="+1 (555) 000-0000"
@@ -412,16 +412,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2 ml-1">Account Email</label>
+                    <label className="block text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2 ml-1">Account Email</label>
                     <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />
                       <input 
-                        className="w-full pl-11 pr-5 py-4 bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-sm font-bold text-zinc-500 cursor-not-allowed"
+                        className="w-full pl-11 pr-5 py-4 bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-sm font-bold text-zinc-600 dark:text-zinc-400 cursor-not-allowed"
                         value={user.email}
                         disabled
                       />
                     </div>
-                    <p className="mt-2 text-[10px] text-zinc-400 font-medium ml-1">Email changes require admin verification.</p>
+                    <p className="mt-2 text-[10px] text-zinc-500 dark:text-zinc-400 font-medium ml-1">Email changes require admin verification.</p>
                   </div>
 
                   <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">

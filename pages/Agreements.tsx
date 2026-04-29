@@ -20,8 +20,8 @@ const Agreements: React.FC<AgreementsProps> = ({ user }) => {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-black dark:border-white mb-4">
               <Sparkles size={12} /> Feature Development
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter">Legal Core Coming Soon</h1>
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium max-w-md mx-auto leading-relaxed">
+            <h1 className="text-4xl md:text-5xl font-black text-black dark:text-white tracking-tighter">Legal Core Coming Soon</h1>
+            <p className="text-zinc-600 dark:text-zinc-400 font-medium max-w-md mx-auto leading-relaxed">
               We are finalizing the security protocols for our digital lease engine. Soon, you'll be able to generate, sign, and store legally binding agreements directly in the suite.
             </p>
           </div>
@@ -35,7 +35,7 @@ const Agreements: React.FC<AgreementsProps> = ({ user }) => {
       </div>
 
       <div className="text-center">
-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em]">Proprietary Technology v2.0</p>
+        <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.4em]">Proprietary Technology v2.0</p>
       </div>
     </div>
   );

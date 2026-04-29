@@ -8,7 +8,11 @@ service cloud.firestore {
 
     // --- PHASE 3: Primitives ---
     function isSignedIn() { 
-      return request.auth != null && request.auth.token.email_verified == true; 
+      return request.auth != null; 
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
     }
     
     function isValidId(id) { 
@@ -24,7 +28,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && isRole('ADMIN');
+      return isVerified() && isRole('ADMIN');
     }
 
     function isOwner(obj) {
@@ -54,25 +58,26 @@ service cloud.firestore {
           && data.role is string && data.role in ['ADMIN', 'AGENT', 'TENANT']
           && (!('phone' in data) || (data.phone is string && data.phone.size() <= 30))
           && (!('walletBalance' in data) || (data.walletBalance is number))
+          && (!('profilePictureUrl' in data) || (data.profilePictureUrl is string && data.profilePictureUrl.size() <= 500))
           && (!('assignedPropertyIds' in data) || (data.assignedPropertyIds is list && data.assignedPropertyIds.size() <= 100));
       }
 
-      allow create: if isSignedIn() 
+      allow create: if (isSignedIn() || isVerified()) 
                     && isValidId(userId)
                     && isValidUser(incoming())
                     && incoming().id == userId
                     && userId == request.auth.uid;
 
-      allow get: if isSignedIn() && (request.auth.uid == userId || resource.data.role == 'AGENT' || isAdmin());
+      allow get: if isSignedIn() && (request.auth.uid == userId || (resource.data.role == 'AGENT' && isVerified()) || isAdmin());
       
       allow list: if isSignedIn() && (
         resource.data.id == request.auth.uid || 
-        isRole('AGENT') ||
+        (isRole('AGENT') && isVerified()) ||
         resource.data.role == 'AGENT' || 
         isAdmin()
       );
 
-      allow update: if isSignedIn() 
+      allow update: if isVerified() 
                     && isValidUser(incoming())
                     && incoming().id == existing().id // Entity remains same
                     && incoming().role == existing().role // Role is immutable
@@ -104,14 +109,14 @@ service cloud.firestore {
 
       allow read: if isSignedIn();
       
-      allow create: if isSignedIn() 
+      allow create: if isVerified() 
                     && (isRole('AGENT') || isAdmin())
                     && isValidId(propertyId)
                     && isValidProperty(incoming())
                     && incoming().id == propertyId
                     && incoming().agentId == request.auth.uid;
 
-      allow update: if isSignedIn()
+      allow update: if isVerified()
                     && isValidProperty(incoming())
                     && (
                       isAdmin() ||
@@ -134,7 +139,7 @@ service cloud.firestore {
           && data.submissionDate is string;
       }
 
-      allow create: if isSignedIn()
+      allow create: if isVerified()
                     && isValidId(applicationId)
                     && isValidApplication(incoming())
                     && incoming().id == applicationId
@@ -144,7 +149,7 @@ service cloud.firestore {
       allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.agentId == request.auth.uid || isAdmin());
 
-      allow update: if isSignedIn()
+      allow update: if isVerified()
                     && isValidApplication(incoming())
                     && incoming().id == existing().id
                     && incoming().userId == existing().userId
@@ -174,7 +179,7 @@ service cloud.firestore {
         || isAdmin()
       );
       
-      allow create: if isSignedIn() 
+      allow create: if isVerified() 
                     && isValidAgreement(incoming())
                     && (isAdmin() || get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId == request.auth.uid);
     }
@@ -195,13 +200,13 @@ service cloud.firestore {
         || isAdmin()
       );
       
-      allow create: if isSignedIn() 
+      allow create: if isVerified() 
                     && isValidTicket(incoming())
                     && incoming().id == ticketId
                     && incoming().tenantId == request.auth.uid
                     && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
 
-      allow update: if isSignedIn()
+      allow update: if isVerified()
                     && isValidTicket(incoming())
                     && incoming().id == existing().id
                     && incoming().tenantId == existing().tenantId
@@ -218,7 +223,7 @@ service cloud.firestore {
     // 6. PAYMENTS & TRANSACTIONS
     match /payments/{paymentId} {
       allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('AGENT') || isAdmin());
-      allow write: if isSignedIn(); // Simulation
+      allow write: if isVerified(); // Simulation
     }
 
     match /wallets/{walletId} {
@@ -230,13 +235,13 @@ service cloud.firestore {
         resource.data.user_id == '0' ||
         isAdmin()
       );
-      allow write: if isSignedIn(); // Simulation
+      allow write: if isVerified(); // Simulation
     }
 
     match /bank_accounts/{accountId} {
       allow read: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
-      allow write: if isSignedIn(); // Simulation
+      allow write: if isVerified(); // Simulation
     }
 
     match /transactions/{transactionId} {
@@ -260,7 +265,7 @@ service cloud.firestore {
         resource.data.user_id == '0' ||
         isAdmin()
       );
-      allow create: if isSignedIn() && isValidTransaction(incoming()) && (
+      allow create: if isVerified() && isValidTransaction(incoming()) && (
         incoming().user_id == request.auth.uid || 
         incoming().userId == request.auth.uid ||
         incoming().user_id == 0 || 
@@ -283,7 +288,7 @@ service cloud.firestore {
     // 8. FORM TEMPLATES
     match /formTemplates/{templateId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == templateId || isAdmin());
+      allow create, update: if isVerified() && (request.auth.uid == templateId || isAdmin());
     }
 
   }

@@ -79,8 +79,8 @@ const Notifications: React.FC<NotificationsProps> = ({ user, onRefreshCount, onN
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tighter">Notification Center</h1>
-          <p className="text-zinc-500 font-medium">Stay updated with your property events.</p>
+          <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tighter leading-none mb-2">Notification Center</h1>
+          <p className="text-zinc-600 dark:text-zinc-300 font-medium text-sm">Stay updated with your property events.</p>
         </div>
         <div className="flex items-center gap-3">
             <button 
@@ -107,13 +107,13 @@ const Notifications: React.FC<NotificationsProps> = ({ user, onRefreshCount, onN
         {notifications.length > 0 ? notifications.map(notification => (
             <div 
             key={notification.id} 
-            className={`group p-8 rounded-[2.5rem] border-2 transition-all flex items-start gap-6 ${notification.isRead ? 'bg-white/5 border-zinc-100 dark:border-zinc-800 opacity-60' : 'bg-white dark:bg-zinc-900 border-black dark:border-white shadow-xl shadow-black/5'}`}
+            className={`group p-8 rounded-[2.5rem] border-2 transition-all flex items-start gap-6 ${notification.isRead ? 'bg-zinc-50/50 dark:bg-white/5 border-zinc-100 dark:border-zinc-800 opacity-60' : 'bg-white dark:bg-zinc-900 border-black dark:border-white shadow-2xl shadow-black/5'}`}
           >
             <div className={`p-4 rounded-2xl shrink-0 ${notification.isRead ? 'bg-zinc-100 dark:bg-zinc-800' : 'bg-black dark:bg-white'}`}>
-              {notification.type === NotificationType.SUCCESS ? <CheckCircle2 className={notification.isRead ? 'text-zinc-400' : 'text-white dark:text-black'} /> :
-               notification.type === NotificationType.WARNING ? <AlertTriangle className={notification.isRead ? 'text-zinc-400' : 'text-white dark:text-black'} /> :
-               notification.type === NotificationType.ERROR ? <AlertCircle className={notification.isRead ? 'text-zinc-400' : 'text-white dark:text-black'} /> :
-               <Info className={notification.isRead ? 'text-zinc-400' : 'text-white dark:text-black'} />}
+              {notification.type === NotificationType.SUCCESS ? <CheckCircle2 className={notification.isRead ? 'text-zinc-400 dark:text-zinc-600' : 'text-white dark:text-black'} /> :
+               notification.type === NotificationType.WARNING ? <AlertTriangle className={notification.isRead ? 'text-zinc-400 dark:text-zinc-600' : 'text-white dark:text-black'} /> :
+               notification.type === NotificationType.ERROR ? <AlertCircle className={notification.isRead ? 'text-zinc-400 dark:text-zinc-600' : 'text-white dark:text-black'} /> :
+               <Info className={notification.isRead ? 'text-zinc-400 dark:text-zinc-600' : 'text-white dark:text-black'} />}
             </div>
             
             <div className="flex-1 min-w-0">
@@ -122,11 +122,11 @@ const Notifications: React.FC<NotificationsProps> = ({ user, onRefreshCount, onN
                     {notification.title}
                     {!notification.isRead && <span className="ml-3 w-2.5 h-2.5 rounded-full bg-black dark:bg-white inline-block animate-pulse"></span>}
                 </h4>
-                <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap ml-2">
+                <span className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 whitespace-nowrap ml-2 uppercase tracking-widest">
                     {getTimeAgo(notification.timestamp)}
                 </span>
               </div>
-              <p className={`text-sm leading-relaxed mb-6 whitespace-pre-wrap break-words font-medium ${notification.isRead ? 'text-zinc-400' : 'text-zinc-600 dark:text-zinc-400'}`}>
+              <p className={`text-sm leading-relaxed mb-6 whitespace-pre-wrap break-words font-bold ${notification.isRead ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-600 dark:text-zinc-300'}`}>
                 {notification.message}
               </p>
               

@@ -101,15 +101,15 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
 
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-24">
-      <header className="flex flex-col sm:flex-row justify-between items-end gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-8 px-1">
+      <header className="flex flex-col items-center text-center gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-12 px-1">
         <div>
-          <h1 className="text-6xl font-black text-zinc-900 dark:text-white tracking-[12] uppercase mb-2">Systems</h1>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px]">Infrastructure Triage & Resolution Protocol</p>
+          <h1 className="text-5xl sm:text-7xl font-black text-black dark:text-white tracking-[0.2em] sm:tracking-[0.3em] uppercase mb-3">Systems</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-[0.3em] text-[10px]">Infrastructure Triage & Resolution Protocol</p>
         </div>
         {user.role === UserRole.TENANT && (
           <button 
             onClick={() => setIsSubmitting(true)} 
-            className="w-full sm:w-auto bg-zinc-900 dark:bg-white text-white dark:text-black px-10 py-5 rounded-full font-black uppercase tracking-[0.4em] text-[9px] flex items-center justify-center shadow-2xl active:scale-95 transition-all"
+            className="w-full sm:w-auto bg-zinc-900 dark:bg-white text-white dark:text-black px-10 py-5 rounded-full font-black uppercase tracking-[0.4em] text-[10px] flex items-center justify-center shadow-2xl active:scale-95 transition-all"
           >
             Log Deficiency
           </button>
@@ -120,10 +120,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
         <div className="bg-white dark:bg-zinc-950 p-12 md:p-16 rounded-[4rem] border border-zinc-200 dark:border-zinc-800 shadow-[0_48px_128px_-12px_rgba(0,0,0,0.2)] animate-in zoom-in-95">
           <div className="flex justify-between items-start mb-12">
             <div>
-              <h3 className="font-black text-4xl text-zinc-900 dark:text-white uppercase tracking-tighter">Manifest Deficiency</h3>
-              <p className="text-zinc-400 font-black uppercase tracking-widest text-[9px] mt-2">Maintenance Logging Protocol</p>
+              <h3 className="font-black text-4xl text-black dark:text-white uppercase tracking-tighter">Manifest Deficiency</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[9px] mt-2">Maintenance Logging Protocol</p>
             </div>
-            <button onClick={() => setIsSubmitting(false)} className="text-zinc-300 hover:text-black dark:hover:text-white transition-colors p-2">
+            <button onClick={() => setIsSubmitting(false)} className="text-zinc-400 dark:text-zinc-600 hover:text-black dark:hover:text-white transition-colors p-2">
               <X size={32} />
             </button>
           </div>
@@ -131,10 +131,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
              <div className="space-y-10">
                 <div className="space-y-4">
-                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Unit ID</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Unit ID</p>
                    <div className="relative">
                       <select 
-                        className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border-none rounded-[2rem] px-8 py-6 text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-white outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5"
+                        className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border-none rounded-[2rem] px-8 py-6 text-xs font-black uppercase tracking-widest text-black dark:text-white outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5"
                         value={newPropertyId}
                         onChange={e => setNewPropertyId(e.target.value)}
                       >
@@ -147,9 +147,9 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                    </div>
                 </div>
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Descriptive Summary</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Descriptive Summary</p>
                   <textarea 
-                    className="w-full p-10 bg-zinc-50 dark:bg-zinc-900 border-none rounded-[3rem] h-64 outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5 text-lg font-bold text-zinc-900 dark:text-white resize-none" 
+                    className="w-full p-10 bg-zinc-50 dark:bg-zinc-900 border-none rounded-[3rem] h-64 outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5 text-lg font-bold text-black dark:text-white resize-none" 
                     placeholder="Enter Deficiency Details..." 
                     value={newIssue} 
                     onChange={e => setNewIssue(e.target.value)} 
@@ -158,7 +158,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
              </div>
              
              <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Visual Evidence</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Visual Evidence</p>
                 <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="h-full min-h-[350px] rounded-[3rem] bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
@@ -167,8 +167,8 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                     <img src={newImage} className="w-full h-full object-cover" alt="Evidence" />
                   ) : (
                     <div className="text-center group-hover:scale-110 transition-transform">
-                      <Camera size={64} className="text-zinc-200 dark:text-zinc-800 mx-auto mb-6" />
-                      <p className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-300">Initiate Imaging</p>
+                      <Camera size={64} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-6" />
+                      <p className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-400 dark:text-zinc-600">Initiate Imaging</p>
                     </div>
                   )}
                 </div>
@@ -184,7 +184,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
             >
                Commit Log
             </button>
-            <button onClick={() => setIsSubmitting(false)} className="flex-1 text-zinc-400 font-black uppercase tracking-[0.4em] text-[10px] px-8 bg-zinc-100 dark:bg-zinc-900 rounded-full hover:bg-zinc-200 transition-colors">Discard</button>
+            <button onClick={() => setIsSubmitting(false)} className="flex-1 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-[0.4em] text-[10px] px-8 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 transition-colors">Discard</button>
           </div>
         </div>
       )}
@@ -209,22 +209,22 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
               <div className="flex-1 flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <span className="text-[9px] font-black uppercase text-zinc-300 tracking-[0.4em]">Ref: {ticket.id.slice(-8)}</span>
+                    <span className="text-[9px] font-black uppercase text-zinc-500 dark:text-zinc-400 tracking-[0.4em]">Ref: {ticket.id.slice(-8)}</span>
                     <span className={`text-[8px] font-black uppercase tracking-widest ${
                       ticket.priority === 'EMERGENCY' ? 'text-black dark:text-white' : 
-                      ticket.priority === 'HIGH' ? 'text-zinc-500' :
-                      'text-zinc-300'
+                      ticket.priority === 'HIGH' ? 'text-zinc-600 dark:text-zinc-400' :
+                      'text-zinc-500'
                     }`}>{ticket.priority}</span>
                   </div>
                   
-                  <h4 className="text-4xl font-black text-zinc-900 dark:text-white leading-tight tracking-tighter uppercase">{ticket.issue}</h4>
+                  <h4 className="text-4xl font-black text-black dark:text-white leading-tight tracking-tighter uppercase">{ticket.issue}</h4>
                   
                   <div className="flex items-center gap-6 mt-4">
-                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3">
-                       <Building size={14} className="text-zinc-300" /> {property?.name || 'Unit Unknown'}
+                     <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center gap-3">
+                       <Building size={14} className="text-zinc-400 dark:text-zinc-600" /> {property?.name || 'Unit Unknown'}
                      </p>
-                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3">
-                       <Clock size={14} className="text-zinc-300" /> {new Date(ticket.createdAt).toLocaleDateString()}
+                     <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center gap-3">
+                       <Clock size={14} className="text-zinc-400 dark:text-zinc-600" /> {new Date(ticket.createdAt).toLocaleDateString()}
                      </p>
                   </div>
                 </div>
@@ -254,10 +254,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
           <div className="text-center py-32 bg-white dark:bg-zinc-950 rounded-[4rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-1000">
             <div className="relative w-fit mx-auto mb-8">
               <div className="absolute inset-0 bg-black blur-[60px] opacity-10 animate-pulse"></div>
-              <Wrench className="w-16 h-16 text-zinc-100 dark:text-zinc-800 relative z-10" />
+              <Wrench className="w-16 h-16 text-zinc-300 dark:text-zinc-700 relative z-10" />
             </div>
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-widest uppercase mb-3">Protocol Optimized</h3>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] max-w-xs mx-auto leading-relaxed">
+            <h3 className="text-2xl font-black text-black dark:text-white tracking-widest uppercase mb-3">Protocol Optimized</h3>
+            <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.4em] max-w-xs mx-auto leading-relaxed">
               Every system is currently performing within optimal parameters. No active deficiencies reported.
             </p>
           </div>

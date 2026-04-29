@@ -80,24 +80,25 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
   if (isAgent) {
     return (
       <div className="space-y-10 animate-in fade-in duration-500 pb-12">
-        <header>
-          <h1 className="text-3xl sm:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter break-words">Financial Center</h1>
-          <p className="text-zinc-500 font-medium tracking-tight mt-1">Manage your wallet and assignment settlements.</p>
-        </header>
+      <header className="flex flex-col items-center text-center gap-8 border-b border-zinc-200 dark:border-zinc-800 pb-12">
+        <div className="flex flex-col items-center">
+          <h1 className="text-3xl sm:text-6xl font-black text-black dark:text-white tracking-[0.2em] sm:tracking-widest uppercase mb-3 break-words">Financial Center</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-[0.3em] text-[10px] break-words">Manage your wallet and assignment settlements.</p>
+        </div>
+      </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Wallet Balance Card */}
             <div className="lg:col-span-1 relative group">
-                <div className="absolute inset-0 bg-black blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
-                <div className="relative glass-card p-10 rounded-[3.5rem] border-black/20 h-full flex flex-col justify-between overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-zinc-900/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-black blur-3xl opacity-5 dark:opacity-10 group-hover:opacity-10 transition-opacity" />
+                <div className="relative bg-white dark:bg-zinc-900 p-10 rounded-[3.5rem] border border-zinc-200 dark:border-white/20 h-full flex flex-col justify-between overflow-hidden shadow-2xl">
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-zinc-900/10 dark:bg-white/5 rounded-full blur-3xl" />
                     
                     <div>
-                        <div className="flex items-center gap-3 text-zinc-400 mb-6">
+                        <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 mb-6">
                             <Wallet size={20} />
                             <span className="text-[10px] font-black uppercase tracking-widest">Available Balance</span>
                         </div>
-                        <h2 className="text-3xl sm:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter mb-2 break-words">
+                        <h2 className="text-3xl sm:text-5xl font-black text-emerald-500 dark:text-emerald-400 tracking-tighter mb-2 break-words">
                             {formatCurrency(walletBalance, settings)}
                         </h2>
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white rounded-full text-[9px] font-black uppercase tracking-wider border border-black dark:border-white">
@@ -111,7 +112,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                                 setAmount('5000');
                                 setShowDepositModal(true);
                             }}
-                            className="w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:opacity-80 active:scale-95 transition-all shadow-xl shadow-black/20"
+                            className="w-full py-5 bg-emerald-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-emerald-700 active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
                         >
                             Deposit Funds
                         </button>
@@ -121,11 +122,11 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                                 setShowWithdrawalModal(true);
                             }}
                             disabled={isProcessing}
-                            className="w-full py-5 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all disabled:opacity-50"
+                            className="w-full py-5 bg-red-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-red-700 active:scale-95 transition-all shadow-xl shadow-red-500/20 disabled:opacity-50"
                         >
                             Request Withdrawal
                         </button>
-                        <p className="text-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest pt-2">Withdrawals processed in 24h</p>
+                        <p className="text-center text-[9px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest pt-2">Withdrawals processed in 24h</p>
                     </div>
                 </div>
             </div>
@@ -153,7 +154,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                             </button>
 
                             <div className="flex justify-center mb-10">
-                                <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-black dark:text-white">
+                                <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-3xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                                     <TrendingUp size={40} />
                                 </div>
                             </div>
@@ -199,7 +200,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                                 <button 
                                     onClick={handleDeposit}
                                     disabled={isProcessing}
-                                    className="w-full py-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-black/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
+                                    className="w-full py-6 bg-emerald-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
                                 >
                                     {isProcessing ? <Loader2 className="animate-spin mx-auto" /> : 'Confirm Deposit'}
                                 </button>
@@ -232,7 +233,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                             </button>
 
                             <div className="flex justify-center mb-10">
-                                <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-black dark:text-white">
+                                <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 dark:text-red-400">
                                     <TrendingDown size={40} />
                                 </div>
                             </div>
@@ -278,7 +279,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                                 <button 
                                     onClick={handleWithdrawal}
                                     disabled={isProcessing || parseFloat(amount) > walletBalance}
-                                    className="w-full py-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-black/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
+                                    className="w-full py-6 bg-red-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
                                 >
                                     {isProcessing ? <Loader2 className="animate-spin mx-auto" /> : parseFloat(amount) > walletBalance ? 'Insufficient Balance' : 'Confirm Withdrawal'}
                                 </button>
@@ -289,9 +290,9 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
             </AnimatePresence>
 
             {/* Transaction History */}
-            <div className="lg:col-span-2 glass-card p-10 rounded-[3.5rem] border-white/20">
+            <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-10 rounded-[3.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-white">Recent Settlements</h3>
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-black dark:text-white">Recent Settlements</h3>
                     <button className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest hover:underline">View All Leads</button>
                 </div>
 
@@ -299,29 +300,29 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                     {transactions.length > 0 ? transactions.map(t => {
                         const isDebit = t.type === 'deduction' || t.type === 'withdrawal';
                         return (
-                        <div key={t.id} className="p-4 sm:p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/5 flex items-center justify-between gap-3 group hover:bg-black dark:hover:bg-zinc-800 transition-all">
+                        <div key={t.id} className="p-4 sm:p-6 bg-zinc-50/50 dark:bg-black/40 rounded-3xl border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between gap-3 group hover:bg-zinc-100 dark:hover:bg-black transition-all">
                             <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDebit ? 'bg-zinc-100 text-black border border-black' : 'bg-black text-white border border-black dark:border-white'}`}>
+                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDebit ? 'bg-white dark:bg-zinc-800 text-black dark:text-white border border-black' : 'bg-black text-white border border-black dark:border-white'}`}>
                                     {isDebit ? <TrendingDown size={18} /> : <TrendingUp size={18} />}
                                 </div>
                                 <div className="min-w-0 text-left">
-                                    <p className="font-black text-zinc-900 dark:text-white tracking-tight break-words text-sm sm:text-base leading-tight">{t.description}</p>
-                                    <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                                    <p className="font-black text-black dark:text-white tracking-tight break-words text-sm sm:text-base leading-tight">{t.description}</p>
+                                    <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest mt-1">
                                         <Clock size={10} className="shrink-0" /> <span className="truncate">{new Date(t.created_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             </div>
                             <div className="text-right shrink-0">
-                                <p className={`text-sm sm:text-lg font-black tracking-tighter ${isDebit ? 'text-zinc-600 dark:text-zinc-400' : 'text-black dark:text-white'} break-all`}>
+                                <p className={`text-sm sm:text-lg font-black tracking-tighter ${isDebit ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'} break-all`}>
                                     {isDebit ? '-' : '+'}{formatCurrency(t.amount, settings)}
                                 </p>
-                                <span className="text-[8px] sm:text-[9px] font-black uppercase text-zinc-400 tracking-widest">{t.status}</span>
+                                <span className="text-[8px] sm:text-[9px] font-black uppercase text-zinc-500 tracking-widest">{t.status}</span>
                             </div>
                         </div>
                     )}) : (
                         <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                            <Receipt size={64} className="mb-4 text-zinc-300" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em]">No Transactions Found</p>
+                            <Receipt size={64} className="mb-4 text-zinc-300 dark:text-zinc-700" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black dark:text-white">No Transactions Found</p>
                         </div>
                     )}
                 </div>

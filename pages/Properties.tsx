@@ -575,13 +575,13 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
   return (
     <div className="space-y-8 md:space-y-12 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      <header className="flex flex-col items-center text-center gap-8 border-b border-zinc-200 dark:border-zinc-800 pb-12">
         <div>
-          <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter">Inventory</h1>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-2 opacity-60">Asset Registry</p>
+          <h1 className="text-3xl sm:text-7xl font-black text-black dark:text-white tracking-[0.2em] sm:tracking-[0.3em] uppercase mb-3 text-center">Inventory</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-[0.3em] text-[10px] text-center">Asset Registry Sync: {properties.length} Active Entities</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center justify-center">
           {/* Filter Button */}
           <div className="relative">
             <button 
@@ -600,10 +600,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             {isFilterMenuOpen && (
               <div className="absolute top-full right-0 mt-2 z-50 glass-card p-6 rounded-[2rem] shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 w-full sm:w-72 flex flex-col gap-4">
                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Status</label>
+                    <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Status</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
@@ -614,10 +614,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     </div>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Category</label>
+                    <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Category</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
                         >
@@ -628,10 +628,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     </div>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Type</label>
+                    <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Type</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
                         >
@@ -688,9 +688,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 transition-all duration-500">
         {properties.length > 0 ? properties.map(property => {
           const propertyAgent = store.users.find(u => u.id === property.agentId);
           const activeTickets = store.tickets.filter(t => t.propertyId === property.id && t.status !== TicketStatus.RESOLVED);
@@ -708,63 +708,63 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             <div 
               key={property.id} 
               onClick={() => handleOpenDetail(property)}
-              className="group bg-white dark:bg-zinc-900 overflow-hidden transition-all duration-700 cursor-pointer flex flex-col md:flex-row border-b border-zinc-100 dark:border-zinc-800 pb-12"
+              className="group bg-zinc-50/50 dark:bg-white/5 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-500 cursor-pointer flex flex-col gap-3"
             >
-              <div className="w-full md:w-5/12 h-80 md:h-[350px] bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden shrink-0">
+              <div className="w-full h-44 bg-zinc-50 dark:bg-zinc-900 relative overflow-hidden shrink-0 rounded-md">
                 <img 
                   src={thumbnail} 
                   alt={property.name} 
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                 />
-                <div className="absolute top-4 left-4 flex flex-col gap-1">
-                  <span className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest ${getStatusStyle(property.status)}`}>
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  <span className={`px-2 py-0.5 text-[6px] font-black uppercase tracking-widest rounded-sm ${getStatusStyle(property.status)}`}>
                     {property.status}
                   </span>
                 </div>
               </div>
 
-              <div className="pt-8 md:pt-0 md:pl-10 flex-1 flex flex-col justify-between">
+              <div className="flex-1 flex flex-col px-1 pb-1">
                 <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-3xl font-black text-zinc-900 dark:text-white leading-tight tracking-[-0.03em] uppercase">{property.name}</h3>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-sm font-black text-black dark:text-white leading-tight tracking-tight uppercase truncate pr-4">{property.name}</h3>
                     {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && (
                       <button 
                         onClick={(e) => handleStartEdit(e, property)}
-                        className="p-2 text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                        className="p-0.5 text-zinc-400 dark:text-zinc-600 hover:text-black dark:hover:text-white transition-colors"
                       >
-                        <Edit size={16} />
+                        <Edit size={10} />
                       </button>
                     )}
                   </div>
                   
-                  <div className="flex items-center text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
-                    <MapPin className="w-3 h-3 mr-2" />
+                  <div className="flex items-center text-zinc-500 dark:text-zinc-400 text-[7px] font-bold uppercase tracking-wider mb-2">
+                    <MapPin className="w-2 h-2 mr-1" />
                     <span className="truncate">{property.location}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     <div>
-                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Asset Type</p>
-                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{property.type}</p>
+                      <p className="text-[5px] font-bold text-zinc-500 dark:text-zinc-600 uppercase mb-0 tracking-wider">Type</p>
+                      <p className="text-[8px] font-black text-black dark:text-zinc-100 uppercase tracking-wide truncate">{property.type}</p>
                     </div>
                     <div>
-                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Lifecycle Stage</p>
-                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{property.status}</p>
-                    </div>
-                    <div className={isExpiringSoon ? 'text-zinc-600 dark:text-zinc-400' : isExpired ? 'text-black dark:text-white' : ''}>
-                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Termination</p>
-                      <p className="text-[11px] font-black uppercase tracking-widest">{formatDate(property.rentExpiryDate || '---', settings)}</p>
+                      <p className="text-[5px] font-bold text-zinc-500 dark:text-zinc-600 uppercase mb-0 tracking-wider">Status</p>
+                      <p className="text-[8px] font-black text-black dark:text-zinc-100 uppercase tracking-wide truncate">{property.status}</p>
                     </div>
                     <div>
-                      <p className="text-[8px] font-black text-zinc-300 uppercase mb-1 tracking-[0.2em]">Yield</p>
-                      <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{formatCurrency(property.rent, settings)}</p>
+                      <p className="text-[5px] font-bold text-zinc-500 dark:text-zinc-600 uppercase mb-0 tracking-wider">Expiry</p>
+                      <p className="text-[8px] font-black text-black dark:text-zinc-200 uppercase tracking-wide truncate">{formatDate(property.rentExpiryDate || '---', settings)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[5px] font-bold text-zinc-500 dark:text-zinc-600 uppercase mb-0 tracking-wider">Rent</p>
+                      <p className="text-[8px] font-black text-black dark:text-zinc-100 uppercase tracking-wide truncate">{formatCurrency(property.rent, settings)}</p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between pt-8 mt-auto group-hover:translate-x-2 transition-transform duration-500">
-                    <span className="text-[9px] font-black uppercase tracking-[0.5em] text-zinc-300">View Details</span>
-                    <ArrowRight className="w-4 h-4 text-zinc-300" />
+                <div className="flex items-center justify-between pt-3 mt-4 group-hover:translate-x-1 transition-transform duration-500">
+                    <span className="text-[6px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Details View</span>
+                    <ArrowRight className="w-2 h-2 text-zinc-400 dark:text-zinc-600" />
                 </div>
               </div>
             </div>
@@ -774,7 +774,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             <div className="relative">
               <div className="absolute inset-0 bg-black blur-[100px] opacity-10 animate-pulse"></div>
               <div className="relative w-48 h-48 bg-white dark:bg-zinc-900 rounded-[3rem] border border-black dark:border-white shadow-2xl flex items-center justify-center overflow-hidden group">
-                 <Building size={80} className="text-zinc-100 dark:text-zinc-800 transition-transform group-hover:scale-110 duration-700" />
+                 <Building size={80} className="text-zinc-300 dark:text-zinc-700 transition-transform group-hover:scale-110 duration-700" />
                  <div className="absolute inset-0 flex items-center justify-center">
                    <div className="w-2 h-2 bg-black dark:bg-white rounded-full animate-ping"></div>
                  </div>
@@ -782,8 +782,8 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             </div>
             
             <div className="space-y-4 max-w-sm">
-              <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase leading-none">Registry Empty</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm leading-relaxed">
+              <h3 className="text-3xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">Registry Empty</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 font-medium text-sm leading-relaxed">
                 We couldn't find any assets matching your current filter criteria or registry sync. Try adjusting your filters or publish a new asset to get started.
               </p>
             </div>
@@ -801,12 +801,12 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       </div>
 
       {selectedProperty && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-3xl animate-in fade-in duration-500">
-          <div className="glass-card w-full max-w-6xl md:rounded-[3.5rem] shadow-[0_32px_128px_rgba(0,0,0,0.5)] border-white/20 dark:border-white/5 overflow-hidden flex flex-col md:flex-row h-full md:h-auto md:max-h-[92vh] relative">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto pt-20 pb-20">
+          <div className="bg-white dark:bg-zinc-950 w-full max-w-xl rounded-xl shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col relative transition-all duration-500">
              
-             {/* CAROUSEL SECTION */}
+             {/* CAROUSEL SECTION - NOW TOP POSITIONED */}
              <div 
-               className="w-full md:w-5/12 h-72 md:h-auto relative group shrink-0 bg-black"
+               className="w-full h-64 sm:h-80 relative group shrink-0 bg-black"
                onTouchStart={onTouchStart}
                onTouchMove={onTouchMove}
                onTouchEnd={onTouchEnd}
@@ -821,7 +821,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                         alt="Property Preview" 
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                        <Maximize2 className="text-white" size={48} />
+                        <Maximize2 className="text-white" size={32} />
                     </div>
                 </div>
 
@@ -832,47 +832,50 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                             onClick={prevImage}
                             className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                            <ChevronLeft size={24} />
+                            <ChevronLeft size={20} />
                         </button>
                         <button 
                             onClick={nextImage}
                             className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                            <ChevronRight size={24} />
+                            <ChevronRight size={20} />
                         </button>
-                        <div className="absolute bottom-20 md:bottom-28 left-0 right-0 flex justify-center gap-2 z-10">
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10">
                             {displayImages.map((_, idx) => (
                                 <button 
                                     key={idx}
                                     onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
-                                    className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'}`}
+                                    className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white w-3' : 'bg-white/50 hover:bg-white/80'}`}
                                 />
                             ))}
                         </div>
                     </>
                 )}
 
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-10 pointer-events-none">
-                    <p className="text-white font-black text-3xl tracking-tighter">{selectedProperty.name}</p>
-                    <p className="text-white/60 text-[11px] font-black uppercase tracking-widest flex items-center gap-2 mt-2">
-                      <MapPin size={12} className="text-zinc-400" /> {selectedProperty.location}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-6 pointer-events-none">
+                    <p className="text-white font-black text-xl tracking-tight uppercase leading-none">{selectedProperty.name}</p>
+                    <p className="text-white/60 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 mt-1.5">
+                      <MapPin size={10} className="text-zinc-400" /> {selectedProperty.location}
                     </p>
                 </div>
-                <button onClick={() => setSelectedProperty(null)} className="absolute top-8 left-8 p-3 glass-card rounded-full text-white md:hidden shadow-xl z-10">
-                  <X size={20} />
+                <button 
+                  onClick={() => setSelectedProperty(null)} 
+                  className="absolute top-4 right-4 p-2.5 bg-black/50 backdrop-blur-md rounded-full text-white shadow-xl z-20 hover:bg-black transition-colors"
+                >
+                  <X size={18} />
                 </button>
              </div>
 
-             <div className="flex-1 p-8 md:p-14 overflow-y-auto custom-scrollbar scroll-smooth">
+             <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar scroll-smooth">
                 {showTenantPicker ? (
                    /* ... Tenant Picker UI ... */
                    <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500 h-full flex flex-col">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-4">
-                            <UserPlus className="text-black dark:text-white" size={32} />
+                            <UserPlus className="text-black dark:text-white" size={24} />
                             <div>
-                               <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Onboard Tenant</h2>
-                               <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Only approved candidates listed</p>
+                               <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Onboard Tenant</h2>
+                               <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Only approved candidates listed</p>
                             </div>
                          </div>
                          <button onClick={() => setShowTenantPicker(false)} className="p-4 bg-white/5 rounded-full text-zinc-400 hover:text-rose-500 transition-all">
@@ -892,7 +895,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
                       <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-[300px]">
                          {approvedTenants.map(tenant => (
-                            <div key={tenant.id} className="p-6 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-between hover:border-black dark:hover:border-white transition-all group shadow-sm">
+                            <div key={tenant.id} className="p-4 bg-zinc-50/50 dark:bg-white/5 border border-zinc-100 dark:border-zinc-800 rounded-lg flex items-center justify-between hover:border-black dark:hover:border-white transition-all group shadow-sm">
                                <div className="flex items-center gap-4">
                                   <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-black dark:text-white font-black">
                                      {tenant.name.charAt(0)}
@@ -916,41 +919,41 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   /* ... Maintenance Form UI ... */
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                          <Wrench className="text-black dark:text-white lucide-wrench" size={32} />
+                       <div className="flex items-center gap-3">
+                          <Wrench className="text-black dark:text-white lucide-wrench" size={24} />
                           <div>
-                             <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Log Maintenance</h2>
-                             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Report fault or damage</p>
+                             <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Log Maintenance</h2>
+                             <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Report fault or damage</p>
                           </div>
                        </div>
-                       <button onClick={() => setShowMaintenanceForm(false)} className="p-4 bg-white/5 rounded-full text-zinc-400 hover:text-rose-500 transition-all">
-                          <X size={20} />
+                       <button onClick={() => setShowMaintenanceForm(false)} className="p-3 bg-zinc-50 dark:bg-white/5 rounded-lg text-zinc-400 hover:text-rose-500 transition-all">
+                          <X size={18} />
                        </button>
                     </div>
 
-                    <div className="space-y-8">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Fault Description</label>
+                    <div className="space-y-6">
+                       <div className="space-y-3">
+                          <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-1">Fault Description</label>
                           <textarea 
-                             className="glass-input w-full p-8 rounded-[2.5rem] h-44 outline-none focus:ring-4 focus:ring-black/10 dark:focus:ring-white/10 text-lg font-bold text-zinc-900 dark:text-white resize-none" 
+                             className="glass-input w-full p-4 rounded-lg h-32 outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-sm font-bold text-zinc-900 dark:text-white resize-none" 
                              placeholder="Describe the issue in detail..." 
                              value={maintenanceIssue} 
                              onChange={e => setMaintenanceIssue(e.target.value)}
                           />
                        </div>
 
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Evidence / Picture</label>
+                       <div className="space-y-3">
+                          <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-1">Evidence / Picture</label>
                           <div 
                              onClick={() => fileInputRef.current?.click()}
-                             className="h-64 rounded-[3rem] bg-white/5 border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-600/40 transition-all"
+                             className="h-48 rounded-lg bg-zinc-50 dark:bg-white/5 border-2 border-dashed border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-black dark:hover:border-white transition-all"
                           >
                              {maintenanceImage ? (
                                 <img src={maintenanceImage} className="w-full h-full object-cover" alt="Preview" />
                              ) : (
                                 <div className="text-center group-hover:scale-110 transition-transform">
-                                   <Camera size={48} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
-                                   <p className="text-[10px] font-black uppercase text-zinc-400">Snap or Upload Photo</p>
+                                   <Camera size={32} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
+                                   <p className="text-[8px] font-black uppercase text-zinc-400">Snap or Upload Photo</p>
                                 </div>
                              )}
                           </div>
@@ -960,10 +963,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                        <button 
                           onClick={handleSubmitMaintenance}
                           disabled={isSaving || !maintenanceIssue}
-                          className="w-full bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                          className="w-full bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                        >
-                          {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                          {isSaving ? 'Submitting Request...' : 'Log Maintenance Request'}
+                          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                          {isSaving ? 'Submitting...' : 'Log Maintenance'}
                        </button>
                     </div>
                   </div>
@@ -971,62 +974,61 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   /* ... Notice Form UI ... */
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                          <FileWarning className="text-black dark:text-white" size={32} />
+                       <div className="flex items-center gap-3">
+                          <FileWarning className="text-black dark:text-white" size={24} />
                           <div>
-                             <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Issue Legal Notice</h2>
-                             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Formal Communication Dispatch</p>
+                             <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Issue Notice</h2>
+                             <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Formal Dispatch</p>
                           </div>
                        </div>
-                       <button onClick={() => setShowNoticeForm(false)} className="p-4 bg-white/5 rounded-full text-zinc-400 hover:text-rose-500 transition-all">
-                          <X size={20} />
+                       <button onClick={() => setShowNoticeForm(false)} className="p-3 bg-zinc-50 dark:bg-white/5 rounded-lg text-zinc-400 hover:text-rose-500 transition-all">
+                          <X size={18} />
                        </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                        <button 
                           onClick={() => setNoticeType('RENT_INCREASE')}
-                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'RENT_INCREASE' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
+                          className={`p-4 rounded-lg border transition-all flex flex-col items-center gap-1.5 ${noticeType === 'RENT_INCREASE' ? 'bg-zinc-950 text-white dark:bg-white dark:text-black border-zinc-950 dark:border-white' : 'bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                        >
-                          <DollarSign size={24} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Rent Increase</span>
+                          <DollarSign size={18} />
+                          <span className="text-[8px] font-black uppercase tracking-widest">Rent Hike</span>
                        </button>
                        <button 
                           onClick={() => setNoticeType('QUIT_NOTICE')}
-                          className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${noticeType === 'QUIT_NOTICE' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-white/5 border-transparent text-zinc-500 hover:bg-white/10'}`}
+                          className={`p-4 rounded-lg border transition-all flex flex-col items-center gap-1.5 ${noticeType === 'QUIT_NOTICE' ? 'bg-zinc-950 text-white dark:bg-white dark:text-black border-zinc-950 dark:border-white' : 'bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                        >
-                          <AlertOctagon size={24} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Quit Notice</span>
+                          <AlertOctagon size={18} />
+                          <span className="text-[8px] font-black uppercase tracking-widest">Quit Notice</span>
                        </button>
                     </div>
 
-                    <div className="space-y-6">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Notice Content (Customizable)</label>
+                    <div className="space-y-5">
+                       <div className="space-y-3">
+                          <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-1">Notice Content</label>
                           <textarea 
-                             className="glass-input w-full p-8 rounded-[2.5rem] h-56 outline-none focus:ring-4 focus:ring-blue-600/10 text-sm font-bold text-zinc-900 dark:text-white resize-none" 
+                             className="glass-input w-full p-4 rounded-lg h-40 outline-none focus:ring-2 focus:ring-black/5 text-sm font-bold text-zinc-900 dark:text-white resize-none" 
                              placeholder="Enter official notice message..." 
                              value={noticeMessage} 
                              onChange={e => setNoticeMessage(e.target.value)}
                           />
                        </div>
 
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Attach Document (PDF)</label>
+                       <div className="space-y-3">
+                          <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-1">Document (PDF)</label>
                           <div 
                              onClick={() => noticeFileInputRef.current?.click()}
-                             className="h-32 rounded-[2rem] bg-white/5 border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-600/40 transition-all"
+                             className="h-24 rounded-lg bg-zinc-50 dark:bg-white/5 border-2 border-dashed border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-black transition-all"
                           >
                              {noticeFile ? (
                                 <div className="text-center">
-                                    <FileText size={32} className="text-emerald-500 mx-auto mb-2" />
-                                    <p className="text-[10px] font-black uppercase text-emerald-500">{noticeFileName || 'Document Attached'}</p>
-                                    <p className="text-[9px] font-bold text-zinc-500 mt-1">Click to replace</p>
+                                    <FileText size={24} className="text-emerald-500 mx-auto mb-1" />
+                                    <p className="text-[8px] font-black uppercase text-emerald-500 truncate max-w-[200px]">{noticeFileName || 'Attached'}</p>
                                 </div>
                              ) : (
                                 <div className="text-center group-hover:scale-110 transition-transform">
-                                   <Upload size={32} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
-                                   <p className="text-[10px] font-black uppercase text-zinc-400">Upload PDF Document</p>
+                                   <Upload size={24} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-1" />
+                                   <p className="text-[8px] font-black uppercase text-zinc-400">Upload PDF</p>
                                 </div>
                              )}
                           </div>
@@ -1036,10 +1038,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                        <button 
                           onClick={handleSendNotice}
                           disabled={isSaving || !noticeMessage}
-                          className="w-full bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] py-7 rounded-[2.5rem] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                          className="w-full bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                        >
-                          {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-                          {isSaving ? 'Dispatching Notice...' : 'Dispatch Legal Notice'}
+                          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                          Dispatch Notice
                        </button>
                     </div>
                   </div>
@@ -1047,44 +1049,44 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   /* ... Maintenance List UI ... */
                   <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                          <Wrench className="text-black dark:text-white" size={32} />
+                       <div className="flex items-center gap-3">
+                          <Wrench className="text-black dark:text-white" size={24} />
                           <div>
-                             <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Maintenance Log</h2>
-                             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">History for {selectedProperty.name}</p>
+                             <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Maintenance Log</h2>
+                             <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">History: {selectedProperty.name}</p>
                           </div>
                        </div>
-                       <button onClick={() => setShowMaintenanceList(false)} className="p-4 bg-white/5 rounded-full text-zinc-400 hover:text-rose-500 transition-all">
-                          <X size={20} />
+                       <button onClick={() => setShowMaintenanceList(false)} className="p-3 bg-zinc-50 dark:bg-white/5 rounded-lg text-zinc-400 hover:text-rose-500 transition-all">
+                          <X size={18} />
                        </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {store.tickets.filter(t => t.propertyId === selectedProperty.id).length > 0 ? (
                             store.tickets.filter(t => t.propertyId === selectedProperty.id).map(ticket => (
-                                <div key={ticket.id} className="p-6 bg-white/5 border border-white/10 rounded-[2rem] space-y-4">
+                                <div key={ticket.id} className="p-4 bg-zinc-50/50 dark:bg-white/5 border border-zinc-100 dark:border-zinc-800 rounded-lg space-y-3">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h4 className="text-lg font-black text-zinc-900 dark:text-white">{ticket.issue}</h4>
-                                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                                            <h4 className="text-sm font-black text-zinc-900 dark:text-white uppercase">{ticket.issue}</h4>
+                                            <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">{new Date(ticket.createdAt).toLocaleDateString()}</p>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase ${
+                                        <span className={`px-2 py-0.5 rounded-sm text-[7px] font-black uppercase ${
                                             ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-600/10 text-blue-600'
                                         }`}>
                                             {ticket.status.replace('_', ' ')}
                                         </span>
                                     </div>
                                     {ticket.imageUrl && (
-                                        <div className="h-48 w-full rounded-2xl overflow-hidden cursor-pointer bg-black/20" onClick={() => setExpandedImage(ticket.imageUrl || null)}>
+                                        <div className="h-40 w-full rounded-md overflow-hidden cursor-pointer bg-black/20" onClick={() => setExpandedImage(ticket.imageUrl || null)}>
                                             <img src={ticket.imageUrl} className="w-full h-full object-cover hover:scale-105 transition-transform" alt="Evidence" />
                                         </div>
                                     )}
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-24 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2rem]">
-                                <Wrench className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
-                                <p className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">No maintenance records found.</p>
+                            <div className="text-center py-12 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-lg">
+                                <Wrench className="w-8 h-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-2" />
+                                <p className="text-zinc-400 font-bold uppercase text-[8px] tracking-widest">No maintenance records.</p>
                             </div>
                         )}
                     </div>
@@ -1099,66 +1101,66 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                 exit={{ opacity: 0 }}
                                 className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6"
                             >
-                                <motion.div 
-                                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    <motion.div 
+                                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
                                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                                    className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[3rem] p-10 border border-white/10 shadow-2xl relative overflow-hidden"
+                                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                    className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl relative overflow-hidden"
                                 >
-                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600" />
+                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400" />
                                     
-                                    <div className="flex justify-center mb-8">
-                                        <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-600">
-                                            <CreditCard size={40} />
+                                    <div className="flex justify-center mb-6">
+                                        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-900 rounded-lg flex items-center justify-center text-black dark:text-white">
+                                            <CreditCard size={32} />
                                         </div>
                                     </div>
 
-                                    <div className="text-center space-y-4 mb-10">
-                                        <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">Placement Fee</h3>
-                                        <p className="text-zinc-500 font-medium text-sm">
-                                            A standard administrative fee of <span className="text-zinc-900 dark:text-white font-black">₦1,000</span> is required to finalize this tenant assignment.
+                                    <div className="text-center space-y-2 mb-8">
+                                        <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Service Fee</h3>
+                                        <p className="text-zinc-500 font-medium text-[10px] uppercase tracking-wide">
+                                            Admin fee of <span className="text-zinc-900 dark:text-white font-black">₦1,000</span> required.
                                         </p>
                                     </div>
 
-                                    <div className="bg-zinc-50 dark:bg-black/40 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 mb-8 space-y-4">
-                                        <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-zinc-400">
-                                            <span>Wallet Balance</span>
+                                    <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800 mb-6 space-y-3">
+                                        <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
+                                            <span>Wallet</span>
                                             <span className="text-zinc-900 dark:text-white">{formatCurrency(store.users.find(u => u.id === user.id)?.walletBalance || 0, settings)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-zinc-400">
-                                            <span>Service Fee</span>
+                                        <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
+                                            <span>Fee</span>
                                             <span className="text-black dark:text-white font-black">- ₦1,000</span>
                                         </div>
                                         <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
-                                        <div className="flex justify-between items-center text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest">
-                                            <span>Net Total</span>
+                                        <div className="flex justify-between items-center text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-widest">
+                                            <span>Total</span>
                                             <span>{formatCurrency((store.users.find(u => u.id === user.id)?.walletBalance || 0) - 1000, settings)}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-3">
                                         {(store.users.find(u => u.id === user.id)?.walletBalance || 0) >= 1000 ? (
                                             <button 
                                                 onClick={confirmAssignmentWithPayment}
                                                 disabled={isSaving}
-                                                className="w-full py-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl hover:opacity-80 active:scale-95 transition-all disabled:opacity-50"
+                                                className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                             >
-                                                {isSaving ? <Loader2 className="animate-spin mx-auto" /> : 'Confirm & Authorize Payment'}
+                                                {isSaving ? <Loader2 className="animate-spin mx-auto w-4 h-4" /> : 'Confirm Payment'}
                                             </button>
                                         ) : (
                                             <button 
                                                 onClick={handleTopUp}
                                                 disabled={isSaving}
-                                                className="w-full py-6 bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-2 border-black dark:border-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl hover:opacity-80 active:scale-95 transition-all disabled:opacity-50"
+                                                className="w-full py-4 bg-white dark:bg-zinc-900 text-black dark:text-white border border-zinc-950 dark:border-white font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                             >
-                                                {isSaving ? <Loader2 className="animate-spin mx-auto" /> : 'Top Up Wallet (₦5,000)'}
+                                                {isSaving ? <Loader2 className="animate-spin mx-auto w-4 h-4" /> : 'Add Funds (₦5,000)'}
                                             </button>
                                         )}
                                         <button 
                                             onClick={() => { setShowPaymentModal(false); setPendingTenant(null); }}
-                                            className="w-full py-4 text-zinc-400 font-black uppercase tracking-[0.2em] text-[9px] hover:text-rose-500 transition-colors"
+                                            className="w-full py-2 text-zinc-400 font-black uppercase tracking-[0.2em] text-[8px] hover:text-rose-500 transition-colors"
                                         >
-                                            Cancel Transaction
+                                            Abort
                                         </button>
                                     </div>
                                 </motion.div>
@@ -1166,39 +1168,36 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                         )}
                     </AnimatePresence>
 
-                    <div className="flex justify-between items-start mb-12">
+                    <div className="flex justify-between items-start mb-8">
                       <div className="space-y-4 flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
-                            <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-lg border backdrop-blur-md ${getStatusStyle(selectedProperty.status)}`}>{selectedProperty.status}</span>
-                            <span className="bg-white/10 border border-white/20 text-zinc-700 dark:text-zinc-300 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase">{selectedProperty.category}</span>
+                            <span className={`px-3 py-1 rounded-sm text-[8px] font-black uppercase shadow-sm border backdrop-blur-md ${getStatusStyle(selectedProperty.status)}`}>{selectedProperty.status}</span>
+                            <span className="bg-zinc-100 dark:bg-white/10 border border-zinc-200 dark:border-white/20 text-zinc-700 dark:text-zinc-300 px-3 py-1 rounded-sm text-[8px] font-black uppercase">{selectedProperty.category}</span>
                         </div>
                         {isEditing ? (
                             <input 
-                                className="glass-input text-3xl font-black text-zinc-900 dark:text-white tracking-tighter p-4 rounded-2xl w-full outline-none" 
+                                className="glass-input text-2xl font-black text-zinc-900 dark:text-white tracking-tighter p-3 rounded-lg w-full outline-none" 
                                 value={editFormData.name} 
                                 onChange={e => setEditFormData({...editFormData, name: e.target.value})}
                             />
                         ) : (
-                            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter leading-tight break-words">{selectedProperty.name}</h2>
+                            <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight uppercase leading-tight break-words">{selectedProperty.name}</h2>
                         )}
                       </div>
-                      <div className="flex gap-4 ml-6">
+                      <div className="flex gap-2 ml-4">
                         {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && !isEditing && (
                             <button 
                                 onClick={() => setIsEditing(true)}
-                                className="p-4 glass-input rounded-full text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-white/10"
+                                className="p-2.5 bg-zinc-50 dark:bg-white/5 rounded-lg text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-zinc-100 dark:border-white/10"
                             >
-                                <Edit size={20} />
+                                <Edit size={16} />
                             </button>
                         )}
-                        <button onClick={() => setSelectedProperty(null)} className="p-4 glass-input rounded-full text-zinc-500 hover:text-rose-500 transition-all hidden md:block">
-                            <X size={20} />
-                        </button>
                       </div>
                     </div>
                     
-                    <div className="space-y-12">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {isEditing ? (
                                 <>
                                     <InputWrapper label="Location">
@@ -1355,33 +1354,33 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     <DetailCard icon={Building} label="Category" value={selectedProperty.category} />
                                     {selectedProperty.rentStartDate && <DetailCard icon={CalendarDays} label="Start" value={formatDate(selectedProperty.rentStartDate, settings)} />}
                                     {selectedProperty.rentExpiryDate && (
-                                        <div className={`p-8 backdrop-blur-md rounded-[2.5rem] border group hover:border-blue-600 transition-colors shadow-xl ${
+                                        <div className={`p-6 bg-zinc-50/50 dark:bg-white/5 rounded-lg border group hover:border-black dark:hover:border-white transition-colors shadow-sm ${
                                             getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
                                             ? 'bg-amber-500/5 border-amber-500/20' 
-                                            : 'bg-white/5 border-white/10'
+                                            : 'border-zinc-100 dark:border-zinc-800'
                                         }`}>
-                                            <div className="flex items-center justify-between mb-4">
-                                                <p className={`text-[10px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity ${
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className={`text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity ${
                                                     getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
                                                     ? 'text-zinc-900 dark:text-white underline decoration-zinc-500' 
                                                     : 'text-zinc-500 dark:text-zinc-400'
                                                 }`}>Expiry</p>
                                                 {getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 ? (
-                                                    <AlertTriangle className="w-4 h-4 text-black dark:text-white animate-pulse" />
+                                                    <AlertTriangle className="w-3.5 h-3.5 text-black dark:text-white animate-pulse" />
                                                 ) : (
-                                                    <CalendarRange className="w-4 h-4 text-black dark:text-white" />
+                                                    <CalendarRange className="w-3.5 h-3.5 text-black dark:text-white" />
                                                 )}
                                             </div>
-                                            <p className={`text-xl font-black tracking-tighter truncate leading-tight ${
+                                            <p className={`text-lg font-black tracking-tight truncate leading-tight ${
                                                 getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
-                                                ? 'text-black dark:text-white underline decoration-zinc-800' 
+                                                ? 'text-black dark:text-white' 
                                                 : 'text-zinc-900 dark:text-white'
                                             }`}>
                                                 {formatDate(selectedProperty.rentExpiryDate, settings)}
                                             </p>
                                             {getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 && (
-                                                <p className="text-[9px] font-black text-black dark:text-white uppercase mt-2">
-                                                    Expires in {getDaysRemaining(selectedProperty.rentExpiryDate)} days
+                                                <p className="text-[8px] font-black text-black dark:text-white uppercase mt-1.5 uppercase">
+                                                    In {getDaysRemaining(selectedProperty.rentExpiryDate)} days
                                                 </p>
                                             )}
                                         </div>
@@ -1391,21 +1390,21 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                         </div>
 
                         {selectedProperty.tenantId && !isEditing && (
-                           <div className="p-8 bg-emerald-600/5 border border-emerald-600/20 rounded-[2.5rem] flex items-center justify-between">
-                              <div className="flex items-center gap-5">
-                                 <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                                    <UserCheck size={28} />
+                           <div className="p-6 bg-emerald-600/5 border border-emerald-600/20 rounded-lg flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                                    <UserCheck size={24} />
                                  </div>
                                  <div>
-                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Resident</p>
-                                    <p className="text-xl font-black text-zinc-900 dark:text-white tracking-tighter">
+                                    <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Resident</p>
+                                    <p className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
                                        {store.users.find(u => u.id === selectedProperty.tenantId)?.name || "Identity Protected"}
                                     </p>
                                  </div>
                               </div>
                               <div className="text-right">
-                                 <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Lease Expiry</p>
-                                 <p className={`text-sm font-black ${
+                                 <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest text-right">Expiry</p>
+                                 <p className={`text-xs font-black ${
                                      getDaysRemaining(selectedProperty.rentExpiryDate) !== null && getDaysRemaining(selectedProperty.rentExpiryDate)! <= 30 
                                      ? 'text-amber-500' 
                                      : 'text-rose-500'
@@ -1416,39 +1415,39 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                            </div>
                         )}
 
-                        <div className="space-y-4">
-                            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                                <Info size={14} className="text-black dark:text-white" /> Executive Summary
+                        <div className="space-y-3">
+                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                <Info size={12} className="text-black dark:text-white" /> Summary
                             </p>
                             {isEditing ? (
                                 <textarea 
-                                    className="glass-input w-full h-44 p-6 rounded-[2rem] text-sm font-bold resize-none" 
+                                    className="glass-input w-full h-32 p-4 rounded-lg text-sm font-bold resize-none" 
                                     value={editFormData.description} 
                                     onChange={e => setEditFormData({...editFormData, description: e.target.value})}
                                 />
                             ) : (
-                                <p className="text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed text-lg border-l-4 border-black dark:border-white pl-8 py-6 bg-white/5 backdrop-blur-md rounded-r-[2.5rem]">
+                                <p className="text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed text-sm border-l-2 border-black dark:border-white pl-4 py-2 bg-zinc-50/50 dark:bg-white/5 rounded-r-lg">
                                     {selectedProperty.description || "Portfolio brief pending submission."}
                                 </p>
                             )}
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10">
+                        <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                             {isEditing ? (
                                 <>
                                     <button 
                                         onClick={handleSave} 
                                         disabled={isSaving}
-                                        className="flex-[2] bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-3xl shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-2"
+                                        className="flex-[2] bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
                                     >
-                                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                        Commit Lifecycle Updates
+                                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                        Update Asset
                                     </button>
                                     <button 
                                         onClick={() => { setIsEditing(false); setEditFormData(selectedProperty); }}
-                                        className="flex-1 glass-input text-zinc-900 dark:text-white font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-3xl hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                        className="flex-1 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center gap-2"
                                     >
-                                        <X size={18} /> Discard
+                                        <X size={16} /> Discard
                                     </button>
                                 </>
                             ) : (
@@ -1459,23 +1458,23 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                             {selectedProperty.status !== PropertyStatus.OCCUPIED ? (
                                                  <button 
                                                     onClick={() => setShowTenantPicker(true)}
-                                                    className="flex-1 bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-[2rem] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                    className="flex-1 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
                                                  >
-                                                    <UserPlus size={20} /> Initiate Tenancy
+                                                    <UserPlus size={18} /> Initiate Tenancy
                                                  </button>
                                             ) : (
-                                                 <div className="flex flex-col sm:flex-row gap-4 w-full">
+                                                 <div className="flex flex-col sm:flex-row gap-3 w-full">
                                                      <button 
                                                         onClick={() => setShowMaintenanceList(true)}
-                                                        className="flex-1 bg-white/10 text-zinc-900 dark:text-white border border-white/20 font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-[2rem] hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                        className="flex-1 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-800 font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center gap-3"
                                                      >
-                                                        <Wrench size={20} /> Maintenance
+                                                        <Wrench size={18} /> Maintenance
                                                      </button>
                                                      <button 
                                                         onClick={() => setShowNoticeForm(true)}
-                                                        className="flex-1 bg-rose-50 border-2 border-rose-100 text-rose-600 dark:bg-rose-900/10 dark:border-rose-900/30 dark:text-rose-400 font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-[2rem] hover:bg-rose-100 dark:hover:bg-rose-900/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                        className="flex-1 bg-rose-50 border border-rose-100 text-rose-600 dark:bg-rose-900/10 dark:border-rose-900/30 dark:text-rose-400 font-black uppercase tracking-[0.2em] text-[10px] py-4 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                                                      >
-                                                        <FileWarning size={20} /> Legal Notice
+                                                        <FileWarning size={18} /> Legal Notice
                                                      </button>
                                                  </div>
                                             )}
@@ -1486,9 +1485,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     {user.assignedPropertyIds?.includes(selectedProperty.id) && (
                                        <button 
                                           onClick={() => setShowMaintenanceForm(true)}
-                                          className="flex-1 bg-white/10 text-zinc-900 dark:text-white font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-[2rem] border border-white/20 hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                          className="flex-1 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white font-black uppercase tracking-[0.2em] text-[9px] py-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center gap-3"
                                        >
-                                          <Wrench size={20} className="lucide-wrench" /> Maintenance Request
+                                          <Wrench size={18} className="lucide-wrench" /> Maintenance Request
                                        </button>
                                     )}
                                 </>
@@ -1530,12 +1529,12 @@ const InputWrapper = ({ label, children }: { label: string, children?: React.Rea
 );
 
 const DetailCard = ({ icon: Icon, label, value }: any) => (
-  <div className="p-8 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 group hover:border-black dark:hover:border-white transition-colors shadow-xl">
-    <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
-        <Icon className="w-4 h-4 text-black dark:text-white" />
+  <div className="p-6 bg-zinc-50/50 dark:bg-white/5 rounded-lg border border-zinc-100 dark:border-zinc-800 group hover:border-black dark:hover:border-white transition-colors shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+        <p className="text-[8px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
+        <Icon className="w-3.5 h-3.5 text-black dark:text-white" />
     </div>
-    <p className="text-xl font-black text-zinc-900 dark:text-white tracking-tighter truncate leading-tight">{value}</p>
+    <p className="text-lg font-black text-zinc-900 dark:text-white tracking-tight truncate leading-tight uppercase">{value}</p>
   </div>
 );
 

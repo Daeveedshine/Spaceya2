@@ -72,7 +72,7 @@ const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
         </div>
       </div>
       
-      <p className="mt-8 text-[10px] text-zinc-400 font-bold uppercase tracking-[0.4em]">Development System • Status: Restricted</p>
+      <p className="mt-8 text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-[0.4em]">Development System • Status: Restricted</p>
     </div>
   );
 };
@@ -310,7 +310,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen text-zinc-900 dark:text-white transition-colors duration-300 overflow-hidden relative">
+    <div className="flex flex-col md:flex-row h-screen w-full text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden">
       {/* Mobile Backdrop Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -349,16 +349,19 @@ const App: React.FC = () => {
         border-none
         bg-zinc-50 dark:bg-black
         ${!isSidebarCollapsed ? 'md:w-80' : 'md:w-20'}
+        h-full overflow-y-auto custom-scrollbar
       `}>
-        <div className={`p-10 md:p-12 h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
-          <div className={`mb-16 ${isSidebarCollapsed ? 'text-center' : ''}`}>
+        <div className={`p-6 md:p-8 min-h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
+          <div className={`mb-8 ${isSidebarCollapsed ? 'text-center' : ''}`}>
             <div className={`inline-block transition-all ${isSidebarCollapsed ? '' : ''}`}>
-               <Logo size={isSidebarCollapsed ? 32 : 44} className="text-zinc-900 dark:text-white" />
+               <Logo size={isSidebarCollapsed ? 32 : 44} className="text-black dark:text-white" />
             </div>
             {!isSidebarCollapsed && (
-              <div className="mt-8">
-                <h1 className="text-3xl font-black tracking-[-0.05em] text-zinc-900 dark:text-white uppercase">Spaceya</h1>
-                <p className="text-[9px] text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">Executive Access</p>
+              <div className="mt-4">
+                <h1 className="text-3xl font-black tracking-[-0.05em] text-black dark:text-white uppercase">SPACEYA</h1>
+                <p className="text-[9px] text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">
+                  {user?.role === UserRole.AGENT ? 'Agent' : user?.role === UserRole.ADMIN ? 'Admin' : 'Tenant'} Account
+                </p>
               </div>
             )}
           </div>
@@ -371,8 +374,8 @@ const App: React.FC = () => {
                 onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
                 className={`
                   w-full flex items-center font-black rounded-full transition-all relative group
-                  ${isSidebarCollapsed ? 'justify-center p-4 mb-2' : 'px-8 py-5 text-[10px] uppercase tracking-widest'}
-                  ${view === item.id ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}
+                  ${isSidebarCollapsed ? 'justify-center p-3 mb-1.5' : 'px-6 py-3.5 text-[10px] uppercase tracking-widest'}
+                  ${view === item.id ? 'bg-black dark:bg-white text-white dark:text-black shadow-2xl' : 'text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white'}
                 `}
               >
                 <item.icon className={`${isSidebarCollapsed ? '' : 'mr-6'} h-4 w-4 shrink-0`} /> 
@@ -391,11 +394,11 @@ const App: React.FC = () => {
             ))}
           </nav>
 
-          <div className={`pt-6 border-t border-zinc-200 dark:border-white/10 mt-6 space-y-2 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+          <div className={`pt-4 border-t border-zinc-200 dark:border-white/10 mt-4 space-y-1.5 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
              <button 
                onClick={toggleTheme}
                title={isSidebarCollapsed ? "Toggle Theme" : ""}
-               className={`w-full flex items-center font-bold text-zinc-500 dark:text-zinc-400 hover:bg-white/10 dark:hover:bg-black/30 rounded-2xl transition-all ${isSidebarCollapsed ? 'justify-center p-3.5' : 'px-5 py-3.5 text-xs'}`}
+               className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/30 rounded-2xl transition-all ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
              >
                {theme === 'light' ? <Moon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> : <Sun className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} />}
                {!isSidebarCollapsed && "Toggle Theme"}
@@ -404,7 +407,7 @@ const App: React.FC = () => {
              <button 
                onClick={handleLogout} 
                title={isSidebarCollapsed ? "Sign Out" : ""}
-               className={`w-full flex items-center font-bold text-zinc-500 dark:text-zinc-400 hover:text-rose-500 rounded-2xl transition-colors ${isSidebarCollapsed ? 'justify-center p-3.5' : 'px-5 py-3.5 text-xs'}`}
+               className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:text-rose-500 rounded-2xl transition-colors ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
              >
                <LogOut className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> 
                {!isSidebarCollapsed && "Sign Out"}
@@ -413,7 +416,7 @@ const App: React.FC = () => {
              {/* Desktop Collapse Toggle */}
              <button 
                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-               className="hidden md:flex w-full items-center justify-center p-3.5 text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-2xl transition-all"
+               className="hidden md:flex w-full items-center justify-center p-3 text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-2xl transition-all"
              >
                {isSidebarCollapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-[10px] uppercase font-black tracking-widest">Collapse Menu</span></div>}
              </button>
@@ -428,11 +431,11 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-4 md:p-8 lg:p-10 print:p-0 transition-all duration-300 relative z-10 bg-white dark:bg-zinc-950">
-        <div className="max-w-7xl mx-auto h-full">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:p-6 print:p-0 transition-all duration-300 relative z-10 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+        <div className="max-w-7xl mx-auto min-h-full flex flex-col">
           <ErrorBoundary>
             <Suspense fallback={
-              <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-400">
+              <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-500 dark:text-zinc-400">
                  <div className="flex flex-col items-center gap-4 animate-pulse">
                    <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
                    <p className="tracking-widest font-bold uppercase text-xs">Loading Interface...</p>
