@@ -3,6 +3,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { User, UserRole, MaintenanceTicket, TicketStatus, TicketPriority, NotificationType } from '../types';
 import { getStore, saveStore, useAppStore } from '../store';
 import { Plus, CheckCircle2, Clock, AlertCircle, Wrench, X, ChevronDown, Camera, Image as ImageIcon, Sparkles, Loader2, Maximize2, Building } from 'lucide-react';
+import { compressImage } from '../lib/imageUtils';
 
 interface MaintenanceProps {
   user: User;
@@ -26,14 +27,17 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setNewImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image/')) {
+        try {
+            const compressed = await compressImage(file, 0.6, 800, 800);
+            setNewImage(compressed);
+        } catch (err) {
+             console.error(err);
+        }
+    }
   };
 
   const handleSubmit = async () => {

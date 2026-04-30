@@ -201,9 +201,10 @@ service cloud.firestore {
     match /tickets/{ticketId} {
       function isValidTicket(data) {
         return data.keys().hasAll(['id', 'tenantId', 'agentId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
-          && data.size() >= 8 && data.size() <= 20
           && data.id is string && data.id.size() <= 128
+          && data.tenantId is string && data.tenantId.size() <= 128
           && data.agentId is string && data.agentId.size() <= 128
+          && data.propertyId is string && data.propertyId.size() <= 128
           && data.status is string && data.status in ['OPEN', 'IN_PROGRESS', 'RESOLVED']
           && data.priority is string && data.priority in ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY'];
       }
@@ -302,7 +303,8 @@ service cloud.firestore {
       allow create: if isVerified() && isValidNotification(incoming()) && (
         incoming().userId == request.auth.uid || 
         isRole('AGENT') || 
-        isAdmin()
+        isAdmin() ||
+        (incoming().linkTo == 'maintenance' && exists(/databases/$(database)/documents/users/$(incoming().userId)) && get(/databases/$(database)/documents/users/$(incoming().userId)).data.role == 'AGENT')
       ); 
     }
 

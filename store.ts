@@ -220,7 +220,7 @@ export const saveStore = async (state: AppState) => {
       syncCollection('applications', sanitizedState.applications.filter(a => a.userId === user.uid || a.agentId === user.uid)),
       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
       syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
-      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid || userRole === 'AGENT' || userRole === 'ADMIN')),
+      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid || n.linkTo === 'maintenance' || n.title.includes('Legal Notice') || userRole === 'AGENT' || userRole === 'ADMIN')),
       syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
       syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
     ]);
