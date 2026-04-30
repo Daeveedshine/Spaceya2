@@ -381,50 +381,56 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     if (!selectedProperty || !maintenanceIssue) return;
     setIsSaving(true);
 
-    const newTicket: MaintenanceTicket = {
-      id: `t${Date.now()}`,
-      propertyId: selectedProperty.id,
-      tenantId: user.id,
-      agentId: selectedProperty.agentId,
-      issue: maintenanceIssue,
-      status: TicketStatus.OPEN,
-      priority: TicketPriority.MEDIUM,
-      createdAt: new Date().toISOString(),
-      imageUrl: maintenanceImage || undefined,
-      aiAssessment: undefined
-    };
+    try {
+      const newTicket: MaintenanceTicket = {
+        id: `t${Date.now()}`,
+        propertyId: selectedProperty.id,
+        tenantId: user.id,
+        agentId: selectedProperty.agentId,
+        issue: maintenanceIssue,
+        status: TicketStatus.OPEN,
+        priority: TicketPriority.MEDIUM,
+        createdAt: new Date().toISOString(),
+        imageUrl: maintenanceImage || undefined,
+        aiAssessment: undefined
+      };
 
-    const notification = {
-      id: `n_maint_${Date.now()}`,
-      userId: selectedProperty.agentId,
-      title: 'Maintenance Alert',
-      message: `A new repair request has been filed for ${selectedProperty.name}. Check Maintenance tab for details.`,
-      type: newTicket.priority === TicketPriority.EMERGENCY ? NotificationType.ERROR : NotificationType.WARNING,
-      timestamp: new Date().toISOString(),
-      isRead: false,
-      linkTo: 'maintenance'
-    };
+      const notification = {
+        id: `n_maint_${Date.now()}`,
+        userId: selectedProperty.agentId,
+        title: 'Maintenance Alert',
+        message: `A new repair request has been filed for ${selectedProperty.name}. Check Maintenance tab for details.`,
+        type: newTicket.priority === TicketPriority.EMERGENCY ? NotificationType.ERROR : NotificationType.WARNING,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        linkTo: 'maintenance'
+      };
 
-    const updatedStore = {
-      ...store,
-      tickets: [newTicket, ...store.tickets],
-      notifications: [notification, ...store.notifications]
-    };
+      const updatedStore = {
+        ...store,
+        tickets: [newTicket, ...store.tickets],
+        notifications: [notification, ...store.notifications]
+      };
 
-    saveStore(updatedStore);
-    setStore(updatedStore);
-    logger.action('maintenance_ticket_created', { ticketId: newTicket.id, propertyId: selectedProperty.id });
-    setIsSaving(false);
-    setShowMaintenanceForm(false);
-    setMaintenanceIssue('');
-    setMaintenanceImage(null);
+      await saveStore(updatedStore);
+      setStore(updatedStore);
+      
+      logger.action('maintenance_ticket_created', { ticketId: newTicket.id, propertyId: selectedProperty.id });
+      setShowMaintenanceForm(false);
+      setMaintenanceIssue('');
+      setMaintenanceImage(null);
+    } catch (error) {
+      console.error("Failed to submit maintenance:", error);
+    } finally {
+        setIsSaving(false);
+    }
   };
 
-  const handleSendNotice = () => {
+  const handleSendNotice = async () => {
     if (!selectedProperty || !selectedProperty.tenantId || !noticeMessage) return;
     setIsSaving(true);
 
-    setTimeout(() => {
+    try {
         const title = noticeType === 'RENT_INCREASE' ? 'Notice: Rent Adjustment' : 'Urgent: Notice to Quit';
         const type = noticeType === 'RENT_INCREASE' ? NotificationType.INFO : NotificationType.WARNING;
 
@@ -445,13 +451,17 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             notifications: [notification, ...store.notifications]
         };
 
-        saveStore(updatedStore);
+        await saveStore(updatedStore);
         setStore(updatedStore);
-        setIsSaving(false);
+        
         setShowNoticeForm(false);
         setNoticeFile(null);
         setNoticeFileName('');
-    }, 1500);
+    } catch (error) {
+        console.error("Failed to send notice:", error);
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const getStatusStyle = (status: PropertyStatus) => {
@@ -500,20 +510,24 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     setEditFormData({ ...editFormData, rentStartDate: start, rentExpiryDate: expiry });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedProperty) return;
     setIsSaving(true);
-    setTimeout(() => {
+    try {
       const updatedProperties = store.properties.map(p => 
         p.id === selectedProperty.id ? { ...p, ...editFormData } as Property : p
       );
       const updatedStore = { ...store, properties: updatedProperties };
+      await saveStore(updatedStore);
       setStore(updatedStore);
       setSelectedProperty({ ...selectedProperty, ...editFormData } as Property);
       logger.action('property_updated', { propertyId: selectedProperty.id });
       setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to save property:", error);
+    } finally {
       setIsSaving(false);
-    }, 800);
+    }
   };
 
   const handlePublishNew = () => {

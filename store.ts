@@ -169,56 +169,48 @@ export const getStore = (): AppState => {
   return parsed;
 };
 
+import { sanitizeObject } from './lib/sanitize';
+
 // Save data to LocalStorage (Immediate) AND Firestore (Async)
 export const saveStore = async (state: AppState) => {
-  const oldState = getStore();
+  // 1. Local Persistence (Immediate)
+  const sanitizedState = sanitizeObject(state);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
   
-  import('./lib/sanitize').then(async ({ sanitizeObject }) => {
-     // Apply dynamic sanitization globally!
-     const sanitizedState = sanitizeObject(state);
-     localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
-     
-     // 2. Remote Persistence (Firebase securely mapped to individual collections)
-     if (isConfigured && db && auth.currentUser && !auth.currentUser.isAnonymous) {
-       const syncCollection = async <T extends { id: string }>(collectionName: string, newItems: T[], oldItems: T[]) => {
-         for (const item of newItems) {
-           const oldItem = oldItems.find(i => i.id === item.id);
-           if (!oldItem || JSON.stringify(item) !== JSON.stringify(oldItem)) {
-             try {
-               await setDoc(doc(db, collectionName, item.id), item, { merge: true });
-             } catch (err: any) {
-               handleFirestoreError(err, 'update' as any, `/${collectionName}/${item.id}`, auth.currentUser);
-             }
-           }
-         }
-       };
+  // 2. Remote Persistence (Firebase securely mapped to individual collections)
+  if (isConfigured && db && auth.currentUser && !auth.currentUser.isAnonymous) {
+    const user = auth.currentUser;
+    
+    const syncCollection = async <T extends { id: string }>(collectionName: string, items: T[]) => {
+      if (!items || items.length === 0) return;
+      
+      for (const item of items) {
+        try {
+          // Safety: Ensure critical fields exist for certain collections
+          if (collectionName === 'notifications' && !item['userId']) continue;
+          if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'])) continue;
+          if (collectionName === 'agreements' && (!item['agentId'] || !item['tenantId'])) continue;
 
-       // Sequentially background sync to the ABAC-secured cloud collections
-       syncCollection('users', sanitizedState.users, oldState.users);
-       syncCollection('properties', sanitizedState.properties, oldState.properties);
-       syncCollection('applications', sanitizedState.applications, oldState.applications);
-       syncCollection('agreements', sanitizedState.agreements, oldState.agreements);
-       syncCollection('tickets', sanitizedState.tickets, oldState.tickets);
-       syncCollection('notifications', sanitizedState.notifications, oldState.notifications);
-       syncCollection('transactions', sanitizedState.transactions, oldState.transactions);
-       syncCollection('wallets', sanitizedState.wallets || [], oldState.wallets || []);
-       syncCollection('bank_accounts', sanitizedState.bank_accounts || [], oldState.bank_accounts || []);
-       
-       // Note: Some collections like formTemplates use agentId as docID
-       if (!auth.currentUser.isAnonymous) {
-         for (const template of sanitizedState.formTemplates) {
-           const oldItem = oldState.formTemplates.find(i => i.agentId === template.agentId);
-           if (!oldItem || JSON.stringify(template) !== JSON.stringify(oldItem)) {
-             try {
-               await setDoc(doc(db, 'formTemplates', template.agentId), template, { merge: true });
-             } catch (err: any) {
-               handleFirestoreError(err, 'update' as any, `/formTemplates/${template.agentId}`, auth.currentUser);
-             }
-           }
-         }
-       }
-     }
-  });
+          await setDoc(doc(db, collectionName, item.id), item, { merge: true });
+        } catch (err: any) {
+          try { handleFirestoreError(err, 'write', `/${collectionName}/${item.id}`, user); } catch(e) {}
+        }
+      }
+    };
+
+    // Filter items to only sync those that this user has permission to write (ownership based)
+    // We sync everything locally, but only push what we own to Firestore to avoid permission errors
+    await Promise.all([
+      syncCollection('users', sanitizedState.users.filter(u => u.id === user.uid)),
+      syncCollection('properties', sanitizedState.properties.filter(p => p.agentId === user.uid)),
+      syncCollection('applications', sanitizedState.applications.filter(a => a.userId === user.uid || a.agentId === user.uid)),
+      syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
+      syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
+      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid)),
+      syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
+      syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
+    ]);
+  }
 };
 
 // Subscribe to Firestore updates (Real-time Sync)

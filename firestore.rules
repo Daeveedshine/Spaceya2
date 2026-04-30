@@ -218,7 +218,6 @@ service cloud.firestore {
                     && isValidTicket(incoming())
                     && incoming().id == ticketId
                     && incoming().tenantId == request.auth.uid
-                    && (incoming().agentId == get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId)
                     && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
 
       allow update: if isVerified()

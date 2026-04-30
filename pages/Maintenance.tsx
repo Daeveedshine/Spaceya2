@@ -46,7 +46,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
     // Standard Triage (Defaulting to Medium without AI)
     const priority = TicketPriority.MEDIUM;
 
-    setTimeout(() => {
+    try {
       const property = store.properties.find(p => p.id === newPropertyId);
       
       const freshTicket: MaintenanceTicket = {
@@ -76,13 +76,18 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
             linkTo: 'maintenance'
           }, ...store.notifications]
       };
+      
+      await saveStore(newState);
       setStore(newState);
-      saveStore(newState);
+      
       setNewIssue('');
       setNewImage(null);
       setIsSubmitting(false);
       if (onUpdate) onUpdate();
-    }, 1000);
+    } catch (error) {
+      console.error("Failed to log maintenance:", error);
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdateStatus = (ticketId: string, newStatus: TicketStatus) => {
