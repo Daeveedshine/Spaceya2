@@ -5,6 +5,7 @@ import { doc, setDoc, onSnapshot, collection, query, where, or, getDoc } from 'f
 import { onAuthStateChanged } from 'firebase/auth';
 import { handleFirestoreError } from './lib/firebaseErrors';
 import { useState, useEffect } from 'react';
+import { sendSystemNotification } from './lib/notifications';
 
 const STORAGE_KEY = 'prop_lifecycle_data';
 
@@ -198,6 +199,10 @@ export const saveStore = async (state: AppState) => {
        syncCollection('applications', sanitizedState.applications, oldState.applications);
        syncCollection('agreements', sanitizedState.agreements, oldState.agreements);
        syncCollection('tickets', sanitizedState.tickets, oldState.tickets);
+       syncCollection('notifications', sanitizedState.notifications, oldState.notifications);
+       syncCollection('transactions', sanitizedState.transactions, oldState.transactions);
+       syncCollection('wallets', sanitizedState.wallets || [], oldState.wallets || []);
+       syncCollection('bank_accounts', sanitizedState.bank_accounts || [], oldState.bank_accounts || []);
        
        // Note: Some collections like formTemplates use agentId as docID
        if (!auth.currentUser.isAnonymous) {
@@ -316,12 +321,26 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
          unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('tenantId', '==', user.uid))));
       } else if (userRole === 'AGENT') {
           // Getting agent property IDs first
-          const agentProps = await getDoc(doc(db, 'users', user.uid));
-          const pIds = agentProps.exists() ? agentProps.data()?.assignedPropertyIds || [] : [];
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const pIds = userDoc.exists() ? userDoc.data()?.assignedPropertyIds || [] : [];
+          
+          // Agent sees tickets and agreements for their properties
           if (pIds.length > 0) {
-            unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('propertyId', 'in', pIds.slice(0, 10)))));
-            unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('propertyId', 'in', pIds.slice(0, 10)))));
+            // Firestore 'in' query supports up to 10-30 items depending on version, 
+            // but we'll stick to a reasonable chunk for this app.
+            const chunks = [];
+            for (let i = 0; i < pIds.length; i += 10) {
+              chunks.push(pIds.slice(i, i + 10));
+            }
+            
+            chunks.forEach(chunk => {
+              unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('propertyId', 'in', chunk))));
+              unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('propertyId', 'in', chunk))));
+            });
           }
+          
+          // Also listen for properties where user is agent directly (for those not in assignedPropertyIds)
+          unsubscribes.push(attachListener('properties', 'properties', query(collection(db, 'properties'), where('agentId', '==', user.uid))));
       } else if (userRole === 'ADMIN') {
           unsubscribes.push(attachListener('tickets', 'tickets', collection(db, 'tickets')));
           unsubscribes.push(attachListener('agreements', 'agreements', collection(db, 'agreements')));
@@ -336,6 +355,25 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
 
       // NOTIFICATIONS
       unsubscribes.push(attachListener('notifications', 'notifications', query(collection(db, 'notifications'), where('userId', '==', user.uid))));
+      
+      // Monitor notifications for new arrivals to trigger system notifications
+      let lastNotificationCount = getStore().notifications.filter(n => n.userId === user.uid).length;
+      const notificationsRef = query(collection(db, 'notifications'), where('userId', '==', user.uid));
+      onSnapshot(notificationsRef, (snap) => {
+          const currentNotifications = snap.docs.map(d => ({ ...d.data(), id: d.id } as Notification));
+          const unreadNew = currentNotifications.filter(n => !n.isRead);
+          
+          if (currentNotifications.length > lastNotificationCount) {
+             // Find the newest one
+             const newest = unreadNew.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+             if (newest) {
+                sendSystemNotification("SPACEYA: " + newest.title, {
+                  body: newest.message,
+                });
+             }
+          }
+          lastNotificationCount = currentNotifications.length;
+      });
 
       // TRANSACTIONS & WALLETS
       if (userRole === 'ADMIN') {

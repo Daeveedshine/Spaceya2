@@ -409,7 +409,6 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       notifications: [notification, ...store.notifications]
     };
 
-    saveStore(updatedStore);
     setStore(updatedStore);
     logger.action('maintenance_ticket_created', { ticketId: newTicket.id, propertyId: selectedProperty.id });
     setIsSaving(false);
@@ -443,7 +442,6 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             notifications: [notification, ...store.notifications]
         };
 
-        saveStore(updatedStore);
         setStore(updatedStore);
         setIsSaving(false);
         setShowNoticeForm(false);
@@ -506,7 +504,6 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         p.id === selectedProperty.id ? { ...p, ...editFormData } as Property : p
       );
       const updatedStore = { ...store, properties: updatedProperties };
-      saveStore(updatedStore);
       setStore(updatedStore);
       setSelectedProperty({ ...selectedProperty, ...editFormData } as Property);
       logger.action('property_updated', { propertyId: selectedProperty.id });

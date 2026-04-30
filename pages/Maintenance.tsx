@@ -37,7 +37,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
   };
 
   const handleSubmit = async () => {
-    if (!newIssue) return;
+    if (!newIssue || !newPropertyId) {
+      alert("Please select a property and describe the issue.");
+      return;
+    }
     setIsSubmitting(true);
     
     // Standard Triage (Defaulting to Medium without AI)
@@ -71,7 +74,6 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
             linkTo: 'maintenance'
           }, ...store.notifications]
       };
-      saveStore(newState);
       setStore(newState);
       setNewIssue('');
       setNewImage(null);
@@ -95,10 +97,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
             message: `Your request #${ticket.id} is now ${newStatus.replace('_', ' ')}.`,
             type: NotificationType.INFO,
             timestamp: new Date().toISOString(),
-            isRead: false
+            isRead: false,
+            linkTo: 'maintenance'
         }, ...store.notifications]
     };
-    saveStore(newState);
     setStore(newState);
     if (onUpdate) onUpdate();
   };

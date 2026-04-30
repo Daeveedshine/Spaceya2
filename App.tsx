@@ -23,6 +23,7 @@ import {
   User as UserIcon, Moon, Sun, ChevronLeft, ChevronRight, Settings as SettingsIcon, Cloud
 } from 'lucide-react';
 import { isConfigured, configurationError } from './firebaseConfig';
+import { requestNotificationPermission } from './lib/notifications';
 
 const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
   const isVercel = window.location.hostname.includes('vercel.app');
@@ -190,6 +191,7 @@ const App: React.FC = () => {
 
     // Initial sync
     syncVisualSettings();
+    requestNotificationPermission();
 
     let unsubscribe: () => void = () => {};
 
@@ -234,6 +236,7 @@ const App: React.FC = () => {
     store.currentUser = loggedUser;
     saveStore(store);
     setUser(loggedUser);
+    requestNotificationPermission();
     
     // Check if there is a pending referral action
     const pendingReferralId = localStorage.getItem('referral_agent_id');
