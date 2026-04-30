@@ -203,7 +203,9 @@ export const saveStore = async (state: AppState) => {
           if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'] || item['agentId'] === 'u1')) continue;
           if (collectionName === 'agreements' && (!item['agentId'] || !item['tenantId'])) continue;
 
-          await setDoc(doc(db, collectionName, item.id), item, { merge: true });
+          // Strip undefined values which cause Firebase SDK errors
+          const cleanItem = JSON.parse(JSON.stringify(item));
+          await setDoc(doc(db, collectionName, cleanItem.id), cleanItem, { merge: true });
         } catch (err: any) {
           try { handleFirestoreError(err, 'write', `/${collectionName}/${item.id}`, user); } catch(e) {}
         }
