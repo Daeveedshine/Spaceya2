@@ -292,12 +292,18 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       function isValidNotification(data) {
         return data.keys().hasAll(['id', 'userId', 'title', 'message', 'type', 'timestamp', 'isRead'])
-          && data.size() >= 7 && data.size() <= 15;
+          && data.size() >= 7 && data.size() <= 15
+          && data.id is string
+          && data.userId is string;
       }
       allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
       allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && isValidNotification(incoming()); 
+      allow create: if isVerified() && isValidNotification(incoming()) && (
+        incoming().userId == request.auth.uid || 
+        isRole('AGENT') || 
+        isAdmin()
+      ); 
     }
 
     // 8. FORM TEMPLATES

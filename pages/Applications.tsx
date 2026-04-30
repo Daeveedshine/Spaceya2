@@ -104,7 +104,13 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
   const [viewMode, setViewMode] = useState<'gate' | 'form' | 'history'>('gate');
   
   // Tenant State
-  const [targetAgentId, setTargetAgentId] = useState(localStorage.getItem('referral_agent_id') || '');
+  const [targetAgentId, setTargetAgentId] = useState(() => {
+    const id = localStorage.getItem('referral_agent_id') || '';
+    if (id) {
+      localStorage.removeItem('referral_agent_id');
+    }
+    return id;
+  });
   const [targetAgent, setTargetAgent] = useState<User | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);

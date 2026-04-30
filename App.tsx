@@ -17,6 +17,7 @@ import Screenings from './pages/Screenings';
 import AdminApplications from './pages/AdminApplications';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, Building2, Wrench, CreditCard, LogOut, Menu, X, Shield, 
   FileText, Bell, Table, Building, ClipboardCheck, UserPlus, 
@@ -269,22 +270,38 @@ const App: React.FC = () => {
   const renderView = () => {
     if (!user) return null;
     
+    let content: React.ReactNode;
     switch (view) {
-      case 'admin_dashboard': return <AdminDashboard user={user} onNavigate={setView} />;
-      case 'dashboard': return <Dashboard user={user} />;
-      case 'properties': return <Properties user={user} />;
-      case 'maintenance': return <Maintenance user={user} onUpdate={refreshBadges} />;
-      case 'payments': return <Payments user={user} />;
-      case 'agreements': return <Agreements user={user} />;
-      case 'notifications': return <Notifications user={user} onRefreshCount={refreshBadges} onNavigate={setView} />;
-      case 'reports': return <Reports user={user} />;
-      case 'applications': return <Applications user={user} onNavigate={setView} onUpdate={refreshBadges} />;
-      case 'screenings': return <Screenings user={user} onNavigate={setView} onUpdate={refreshBadges} />;
-      case 'admin_applications': return <AdminApplications user={user} onBack={() => setView('admin_dashboard')} />;
-      case 'profile': return <Profile user={user} onUserUpdate={setUser} />;
-      case 'settings': return <Settings user={user} onThemeChange={setTheme} onSettingsUpdate={syncVisualSettings} />;
-      default: return <Dashboard user={user} />;
+      case 'admin_dashboard': content = <AdminDashboard user={user} onNavigate={setView} />; break;
+      case 'dashboard': content = <Dashboard user={user} />; break;
+      case 'properties': content = <Properties user={user} />; break;
+      case 'maintenance': content = <Maintenance user={user} onUpdate={refreshBadges} />; break;
+      case 'payments': content = <Payments user={user} />; break;
+      case 'agreements': content = <Agreements user={user} />; break;
+      case 'notifications': content = <Notifications user={user} onRefreshCount={refreshBadges} onNavigate={setView} />; break;
+      case 'reports': content = <Reports user={user} />; break;
+      case 'applications': content = <Applications user={user} onNavigate={setView} onUpdate={refreshBadges} />; break;
+      case 'screenings': content = <Screenings user={user} onNavigate={setView} onUpdate={refreshBadges} />; break;
+      case 'admin_applications': content = <AdminApplications user={user} onBack={() => setView('admin_dashboard')} />; break;
+      case 'profile': content = <Profile user={user} onUserUpdate={setUser} />; break;
+      case 'settings': content = <Settings user={user} onThemeChange={setTheme} onSettingsUpdate={syncVisualSettings} />; break;
+      default: content = <Dashboard user={user} />; break;
     }
+
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full min-h-full"
+        >
+          {content}
+        </motion.div>
+      </AnimatePresence>
+    );
   };
 
   const navItems = [
@@ -306,151 +323,177 @@ const App: React.FC = () => {
     return <ConfigurationErrorScreen error={configurationError} />;
   }
 
-  if (isLoading) return <SplashScreen />;
-
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden">
-      {/* Mobile Backdrop Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] md:hidden transition-opacity duration-300"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+    <AnimatePresence mode="wait">
+      {isLoading ? (
+        <motion.div
+           key="splash"
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           transition={{ duration: 0.5 }}
+           className="fixed inset-0 z-[9999]"
+        >
+          <SplashScreen />
+        </motion.div>
+      ) : !user ? (
+        <motion.div
+           key="login"
+           initial={{ opacity: 0, scale: 1.05 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 0.95 }}
+           transition={{ duration: 0.5, ease: "easeOut" }}
+           className="w-full h-full"
+        >
+          <Login onLogin={handleLogin} />
+        </motion.div>
+      ) : (
+        <motion.div 
+          key="app"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col md:flex-row h-screen w-full text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden"
+        >
+          {/* Mobile Backdrop Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] md:hidden transition-opacity duration-300"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
 
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between glass-card p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
-        <div className="flex items-center gap-2">
-           <Logo size={24} className="text-black dark:text-white" />
-           <h1 className="font-bold text-lg tracking-tighter">SPACEYA</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={toggleTheme}
-            className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white active:scale-95 transition-transform"
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="p-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black active:scale-95 transition-transform"
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <aside className={`
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-        fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto glass-card text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
-        md:translate-x-0 md:static md:inset-auto print:hidden flex flex-col shrink-0
-        border-none
-        bg-zinc-50 dark:bg-black
-        ${!isSidebarCollapsed ? 'md:w-80' : 'md:w-20'}
-        h-full overflow-y-auto custom-scrollbar
-      `}>
-        <div className={`p-6 md:p-8 min-h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
-          <div className={`mb-8 ${isSidebarCollapsed ? 'text-center' : ''}`}>
-            <div className={`inline-block transition-all ${isSidebarCollapsed ? '' : ''}`}>
-               <Logo size={isSidebarCollapsed ? 32 : 44} className="text-black dark:text-white" />
+          {/* Mobile Header */}
+          <div className="md:hidden flex items-center justify-between glass-card p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
+            <div className="flex items-center gap-2">
+               <Logo size={24} className="text-black dark:text-white" />
+               <h1 className="font-bold text-lg tracking-tighter">SPACEYA</h1>
             </div>
-            {!isSidebarCollapsed && (
-              <div className="mt-4">
-                <h1 className="text-3xl font-black tracking-[-0.05em] text-black dark:text-white uppercase">SPACEYA</h1>
-                <p className="text-[9px] text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">
-                  {user?.role === UserRole.AGENT ? 'Agent' : user?.role === UserRole.ADMIN ? 'Admin' : 'Tenant'} Account
-                </p>
-              </div>
-            )}
-          </div>
-
-          <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1">
-            {navItems.filter(item => item.roles.includes(user?.role || UserRole.TENANT)).map(item => (
-              <button
-                key={item.id}
-                title={isSidebarCollapsed ? item.label : ''}
-                onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
-                className={`
-                  w-full flex items-center font-black rounded-full transition-all relative group
-                  ${isSidebarCollapsed ? 'justify-center p-3 mb-1.5' : 'px-6 py-3.5 text-[10px] uppercase tracking-widest'}
-                  ${view === item.id ? 'bg-black dark:bg-white text-white dark:text-black shadow-2xl' : 'text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white'}
-                `}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white active:scale-95 transition-transform"
               >
-                <item.icon className={`${isSidebarCollapsed ? '' : 'mr-6'} h-4 w-4 shrink-0`} /> 
-                {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
-                
-                {item.badge && item.badge > 0 ? (
-                  !isSidebarCollapsed ? (
-                    <span className="ml-auto bg-black dark:bg-white text-white dark:text-black text-[9px] px-2 py-0.5 rounded-full font-black border border-zinc-200 dark:border-zinc-800">
-                      {item.badge}
-                    </span>
-                  ) : (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-black dark:bg-white rounded-full border border-white dark:border-zinc-900"></span>
-                  )
-                ) : null}
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
               </button>
-            ))}
-          </nav>
-
-          <div className={`pt-4 border-t border-zinc-200 dark:border-white/10 mt-4 space-y-1.5 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
-             <button 
-               onClick={toggleTheme}
-               title={isSidebarCollapsed ? "Toggle Theme" : ""}
-               className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/30 rounded-2xl transition-all ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
-             >
-               {theme === 'light' ? <Moon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> : <Sun className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} />}
-               {!isSidebarCollapsed && "Toggle Theme"}
-             </button>
-             
-             <button 
-               onClick={handleLogout} 
-               title={isSidebarCollapsed ? "Sign Out" : ""}
-               className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:text-rose-500 rounded-2xl transition-colors ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
-             >
-               <LogOut className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> 
-               {!isSidebarCollapsed && "Sign Out"}
-             </button>
-
-             {/* Desktop Collapse Toggle */}
-             <button 
-               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-               className="hidden md:flex w-full items-center justify-center p-3 text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-2xl transition-all"
-             >
-               {isSidebarCollapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-[10px] uppercase font-black tracking-widest">Collapse Menu</span></div>}
-             </button>
-             
-             {!isSidebarCollapsed && isConfigured && (
-                <div className="flex items-center justify-center gap-2 pt-2 text-[9px] font-black text-black dark:text-white uppercase tracking-widest opacity-60">
-                    <Cloud size={10} /> Cloud Sync Active
-                </div>
-             )}
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                className="p-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black active:scale-95 transition-transform"
+              >
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
           </div>
-        </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:p-6 print:p-0 transition-all duration-300 relative z-10 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <div className="max-w-7xl mx-auto min-h-full flex flex-col">
-          <ErrorBoundary>
-            <Suspense fallback={
-              <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-500 dark:text-zinc-400">
-                 <div className="flex flex-col items-center gap-4 animate-pulse">
-                   <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
-                   <p className="tracking-widest font-bold uppercase text-xs">Loading Interface...</p>
-                 </div>
+          {/* Sidebar */}
+          <aside className={`
+            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
+            fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto glass-card text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
+            md:translate-x-0 md:static md:inset-auto print:hidden flex flex-col shrink-0
+            border-none
+            bg-zinc-50 dark:bg-black
+            ${!isSidebarCollapsed ? 'md:w-80' : 'md:w-20'}
+            h-full overflow-y-auto custom-scrollbar
+          `}>
+            <div className={`p-6 md:p-8 min-h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
+              <div className={`mb-8 ${isSidebarCollapsed ? 'text-center' : ''}`}>
+                <div className={`inline-block transition-all ${isSidebarCollapsed ? '' : ''}`}>
+                   <Logo size={isSidebarCollapsed ? 32 : 44} className="text-black dark:text-white" />
+                </div>
+                {!isSidebarCollapsed && (
+                  <div className="mt-4">
+                    <h1 className="text-3xl font-black tracking-[-0.05em] text-black dark:text-white uppercase">SPACEYA</h1>
+                    <p className="text-[9px] text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">
+                      {user?.role === UserRole.AGENT ? 'Agent' : user?.role === UserRole.ADMIN ? 'Admin' : 'Tenant'} Account
+                    </p>
+                  </div>
+                )}
               </div>
-            }>
-              {renderView()}
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-      </main>
-    </div>
+
+              <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1">
+                {navItems.filter(item => item.roles.includes(user?.role || UserRole.TENANT)).map(item => (
+                  <button
+                    key={item.id}
+                    title={isSidebarCollapsed ? item.label : ''}
+                    onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
+                    className={`
+                      w-full flex items-center font-black rounded-full transition-all relative group
+                      ${isSidebarCollapsed ? 'justify-center p-3 mb-1.5' : 'px-6 py-3.5 text-[10px] uppercase tracking-widest'}
+                      ${view === item.id ? 'bg-black dark:bg-white text-white dark:text-black shadow-2xl' : 'text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white'}
+                    `}
+                  >
+                    <item.icon className={`${isSidebarCollapsed ? '' : 'mr-6'} h-4 w-4 shrink-0`} /> 
+                    {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                    
+                    {item.badge && item.badge > 0 ? (
+                      !isSidebarCollapsed ? (
+                        <span className="ml-auto bg-black dark:bg-white text-white dark:text-black text-[9px] px-2 py-0.5 rounded-full font-black border border-zinc-200 dark:border-zinc-800">
+                          {item.badge}
+                        </span>
+                      ) : (
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-black dark:bg-white rounded-full border border-white dark:border-zinc-900"></span>
+                      )
+                    ) : null}
+                  </button>
+                ))}
+              </nav>
+
+              <div className={`pt-4 border-t border-zinc-200 dark:border-white/10 mt-4 space-y-1.5 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+                 <button 
+                   onClick={toggleTheme}
+                   title={isSidebarCollapsed ? "Toggle Theme" : ""}
+                   className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/30 rounded-2xl transition-all ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
+                 >
+                   {theme === 'light' ? <Moon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> : <Sun className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} />}
+                   {!isSidebarCollapsed && "Toggle Theme"}
+                 </button>
+                 
+                 <button 
+                   onClick={handleLogout} 
+                   title={isSidebarCollapsed ? "Sign Out" : ""}
+                   className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:text-rose-500 rounded-2xl transition-colors ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
+                 >
+                   <LogOut className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> 
+                   {!isSidebarCollapsed && "Sign Out"}
+                 </button>
+
+                 {/* Desktop Collapse Toggle */}
+                 <button 
+                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                   className="hidden md:flex w-full items-center justify-center p-3 text-black/60 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-2xl transition-all"
+                 >
+                   {isSidebarCollapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-[10px] uppercase font-black tracking-widest">Collapse Menu</span></div>}
+                 </button>
+                 
+                 {!isSidebarCollapsed && isConfigured && (
+                    <div className="flex items-center justify-center gap-2 pt-2 text-[9px] font-black text-black dark:text-white uppercase tracking-widest opacity-60">
+                        <Cloud size={10} /> Cloud Sync Active
+                    </div>
+                 )}
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:p-6 print:p-0 transition-all duration-300 relative z-10 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+            <div className="max-w-7xl mx-auto min-h-full flex flex-col">
+              <ErrorBoundary>
+                <Suspense fallback={
+                  <div className="flex h-full w-full items-center justify-center pt-24 text-zinc-500 dark:text-zinc-400">
+                     <div className="flex flex-col items-center gap-4 animate-pulse">
+                       <div className="w-10 h-10 border-4 border-zinc-200 dark:border-zinc-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
+                       <p className="tracking-widest font-bold uppercase text-xs">Loading Interface...</p>
+                     </div>
+                  </div>
+                }>
+                  {renderView()}
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          </main>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

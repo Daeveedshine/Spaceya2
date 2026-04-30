@@ -186,9 +186,21 @@ export const saveStore = async (state: AppState) => {
       
       for (const item of items) {
         try {
+          // Safety: Ensure valid agentId is present for shared collections
+          if (collectionName === 'tickets' && (!item['agentId'] || item['agentId'] === 'u1')) {
+             // Try to recover agentId from property if possible
+             const propertyId = item['propertyId'];
+             if (propertyId) {
+               const prop = sanitizedState.properties.find(p => p.id === propertyId);
+               if (prop && prop.agentId && prop.agentId !== 'u1') {
+                 (item as any).agentId = prop.agentId;
+               }
+             }
+          }
+
           // Safety: Ensure critical fields exist for certain collections
           if (collectionName === 'notifications' && !item['userId']) continue;
-          if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'])) continue;
+          if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'] || item['agentId'] === 'u1')) continue;
           if (collectionName === 'agreements' && (!item['agentId'] || !item['tenantId'])) continue;
 
           await setDoc(doc(db, collectionName, item.id), item, { merge: true });
@@ -200,13 +212,15 @@ export const saveStore = async (state: AppState) => {
 
     // Filter items to only sync those that this user has permission to write (ownership based)
     // We sync everything locally, but only push what we own to Firestore to avoid permission errors
+    const userRole = sanitizedState.users.find(u => u.id === user.uid)?.role || 'TENANT';
+    
     await Promise.all([
       syncCollection('users', sanitizedState.users.filter(u => u.id === user.uid)),
       syncCollection('properties', sanitizedState.properties.filter(p => p.agentId === user.uid)),
       syncCollection('applications', sanitizedState.applications.filter(a => a.userId === user.uid || a.agentId === user.uid)),
       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
       syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
-      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid)),
+      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid || userRole === 'AGENT' || userRole === 'ADMIN')),
       syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
       syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
     ]);
@@ -229,20 +243,30 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
     
     if (user) {
       // 1. Fetch User Role cleanly – using a race to prevent hanging on poor connections
-      let userRole = 'TENANT';
+      let userRole: string | null = null;
       try {
         const userDocPromise = getDoc(doc(db, 'users', user.uid));
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
         
         const userDoc: any = await Promise.race([userDocPromise, timeoutPromise]);
-        userRole = userDoc.exists() ? userDoc.data()?.role : 'TENANT';
+        if (userDoc.exists()) {
+          userRole = userDoc.data()?.role;
+        }
       } catch (err) {
         console.warn("User role fetch defaulted due to connection:", err);
-        // Fallback: check local storage for the last known role of this user
+      }
+
+      // Fallback 1: check local storage for the last known role of this user
+      if (!userRole) {
         const local = getStore();
         if (local.currentUser?.id === user.uid) {
           userRole = local.currentUser.role;
         }
+      }
+
+      // Fallback 2: Default to TENANT but log it
+      if (!userRole) {
+        userRole = 'TENANT';
       }
 
       // 2. State Merger for collections

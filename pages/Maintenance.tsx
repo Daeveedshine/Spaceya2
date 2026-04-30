@@ -48,12 +48,15 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
 
     try {
       const property = store.properties.find(p => p.id === newPropertyId);
+      if (!property) {
+        throw new Error("Property context not found. Please refresh and try again.");
+      }
       
       const freshTicket: MaintenanceTicket = {
         id: `t${Date.now()}`,
-        propertyId: newPropertyId || 'p1',
+        propertyId: newPropertyId,
         tenantId: user.id,
-        agentId: property?.agentId || 'u1',
+        agentId: property.agentId,
         issue: newIssue,
         status: TicketStatus.OPEN,
         priority: priority,
