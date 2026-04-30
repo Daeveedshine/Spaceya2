@@ -178,7 +178,7 @@ export const saveStore = async (state: AppState) => {
      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
      
      // 2. Remote Persistence (Firebase securely mapped to individual collections)
-     if (isConfigured && db && auth.currentUser) {
+     if (isConfigured && db && auth.currentUser && !auth.currentUser.isAnonymous) {
        const syncCollection = async <T extends { id: string }>(collectionName: string, newItems: T[], oldItems: T[]) => {
          for (const item of newItems) {
            const oldItem = oldItems.find(i => i.id === item.id);
@@ -186,7 +186,7 @@ export const saveStore = async (state: AppState) => {
              try {
                await setDoc(doc(db, collectionName, item.id), item, { merge: true });
              } catch (err: any) {
-                handleFirestoreError(err, 'update' as any, `/${collectionName}/${item.id}`);
+               handleFirestoreError(err, 'update' as any, `/${collectionName}/${item.id}`, auth.currentUser);
              }
            }
          }
@@ -200,13 +200,15 @@ export const saveStore = async (state: AppState) => {
        syncCollection('tickets', sanitizedState.tickets, oldState.tickets);
        
        // Note: Some collections like formTemplates use agentId as docID
-       for (const template of sanitizedState.formTemplates) {
-         const oldItem = oldState.formTemplates.find(i => i.agentId === template.agentId);
-         if (!oldItem || JSON.stringify(template) !== JSON.stringify(oldItem)) {
-           try {
-             await setDoc(doc(db, 'formTemplates', template.agentId), template, { merge: true });
-           } catch (err: any) {
-             handleFirestoreError(err, 'update' as any, `/formTemplates/${template.agentId}`);
+       if (!auth.currentUser.isAnonymous) {
+         for (const template of sanitizedState.formTemplates) {
+           const oldItem = oldState.formTemplates.find(i => i.agentId === template.agentId);
+           if (!oldItem || JSON.stringify(template) !== JSON.stringify(oldItem)) {
+             try {
+               await setDoc(doc(db, 'formTemplates', template.agentId), template, { merge: true });
+             } catch (err: any) {
+               handleFirestoreError(err, 'update' as any, `/formTemplates/${template.agentId}`, auth.currentUser);
+             }
            }
          }
        }

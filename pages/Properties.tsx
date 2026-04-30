@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { User, UserRole, Property, PropertyStatus, PropertyCategory, PropertyType, ApplicationStatus, Agreement, NotificationType, MaintenanceTicket, TicketStatus, TicketPriority, Notification, Transaction } from '../types';
 import { getStore, saveStore, formatCurrency, formatDate, useAppStore } from '../store';
 import { logger } from '../lib/logger';
+import { compressImage } from '../lib/imageUtils';
 import { 
   MapPin, Plus, Edit, X, Wrench, Info, ArrowRight, DollarSign, 
   UserPlus, Save, Loader2, Tag, Layout, Briefcase, UserCheck, 
@@ -301,28 +302,18 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     if (!files || files.length === 0) return;
 
     const newImages: string[] = [];
-    const readers: Promise<void>[] = [];
 
-    Array.from(files).forEach((file: File) => {
-      // Basic validation: must be image and < 5MB
-      if (!file.type.startsWith('image/')) return;
-      if (file.size > 5 * 1024 * 1024) return;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        try {
+            const compressed = await compressImage(file, 0.7, 1000, 1000);
+            newImages.push(compressed);
+        } catch (e) {
+            console.error("Compressing image failed", e);
+        }
+    }
 
-      const reader = new FileReader();
-      const promise = new Promise<void>((resolve) => {
-        reader.onloadend = () => {
-          if (reader.result) {
-            newImages.push(reader.result as string);
-          }
-          resolve();
-        };
-      });
-      reader.readAsDataURL(file);
-      readers.push(promise);
-    });
-
-    await Promise.all(readers);
-    
     setEditFormData(prev => ({
         ...prev,
         images: [...(prev.images || []), ...newImages]
@@ -345,25 +336,44 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setMaintenanceImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image/')) {
+        try {
+            const compressed = await compressImage(file, 0.6, 800, 800);
+            setMaintenanceImage(compressed);
+        } catch (err) {
+             console.error(err);
+        }
+    }
   };
 
-  const handleNoticeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNoticeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setNoticeFileName(file.name);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setNoticeFile(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    
+    if (file.type.startsWith('image/')) {
+        try {
+            const compressed = await compressImage(file, 0.6, 800, 800);
+            setNoticeFile(compressed);
+            setNoticeFileName(file.name);
+        } catch (err) {
+            console.error("Image compression failed", err);
+            alert("Image compression failed. Please try a different file.");
+        }
+    } else {
+        if (file.size > 800 * 1024) {
+            alert("File size must be under 800KB. Please compress your file.");
+            return;
+        }
+        setNoticeFileName(file.name);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setNoticeFile(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmitMaintenance = async () => {

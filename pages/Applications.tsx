@@ -4,6 +4,7 @@ import { User, TenantApplication, ApplicationStatus, NotificationType, UserRole,
 import { getStore, saveStore, useAppStore } from '../store';
 import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { compressImage } from '../lib/imageUtils';
 import { 
   CheckCircle, ArrowRight, ArrowLeft, Building, ShieldCheck, 
   Loader2, MapPin, UserCheck, Search, Camera, Fingerprint, 
@@ -213,14 +214,30 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleFileUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      handleInputChange(key, reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    
+    if (file.type.startsWith('image/')) {
+        try {
+            const compressedDataUrl = await compressImage(file, 0.6, 800, 800);
+            handleInputChange(key, compressedDataUrl);
+        } catch (error) {
+            console.error("Image compression failed", error);
+            alert("Failed to process image. Please try a different or smaller file.");
+        }
+    } else {
+        // For non-images (like PDF), just check size directly
+        if (file.size > 800 * 1024) {
+            alert("File is too large. Please keep the file size under 800KB to ensure successful submission.");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            handleInputChange(key, reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
   };
 
   // --- TENANT SUBMISSION LOGIC ---
@@ -400,6 +417,14 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
   if (viewMode === 'form' && activeTemplate) {
     const currentSection = activeTemplate.sections[currentStepIndex];
     const isLastStep = currentStepIndex === activeTemplate.sections.length - 1;
+    const canProceed = currentSection.fields.every(f => {
+      if (!f.required) return true;
+      const val = formData[f.key];
+      if (val === undefined || val === null) return false;
+      if (typeof val === 'string') return val.trim().length > 0;
+      if (typeof val === 'number') return !isNaN(val);
+      return true;
+    });
 
     return (
       <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
@@ -497,14 +522,18 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                   {isLastStep ? (
                      <button 
                         onClick={handleSubmitApplication}
-                        disabled={isSubmitting}
-                        className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                        disabled={isSubmitting || !canProceed}
+                        className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                      >
                         {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle size={20} />}
                         Submit Application
                      </button>
                   ) : (
-                     <button onClick={() => setCurrentStepIndex(prev => prev + 1)} className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3">
+                     <button 
+                        onClick={() => setCurrentStepIndex(prev => prev + 1)} 
+                        disabled={!canProceed}
+                        className="flex-[2] bg-black dark:bg-white text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                     >
                         Next Step <ArrowRight size={18} />
                      </button>
                   )}

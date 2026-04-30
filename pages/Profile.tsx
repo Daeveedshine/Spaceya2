@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole, FormTemplate, FormSection, FormField, FieldType } from '../types';
 import { getStore, saveStore, UserSettings } from '../store';
+import { compressImage } from '../lib/imageUtils';
 import { 
   User as UserIcon, Mail, Phone, Shield, Save, CheckCircle2, 
   AlertCircle, Copy, Check, Link as LinkIcon, FileText, 
@@ -110,14 +111,21 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
 
   // --- GENERAL PROFILE HANDLERS ---
 
-  const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfilePic(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImage(file, 0.6, 400, 400); // Avatar doesn't need to be huge
+      setProfilePic(compressed);
+    } catch (err) {
+      console.error("Profile pic compression failed", err);
+      // Fallback
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePic(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUpdate = (e: React.FormEvent) => {

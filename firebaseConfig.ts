@@ -4,41 +4,19 @@ import { initializeApp } from 'firebase/app';
 import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { logger } from './lib/logger';
+import firebaseAppletConfig from './firebase-applet-config.json';
 
-const envConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  firestoreDatabaseId: import.meta.env.VITE_FIRESTORE_DATABASE_ID,
+const activeConfig: any = {
+  ...firebaseAppletConfig
 };
 
-const envVarNames: Record<string, string> = {
-  apiKey: 'VITE_FIREBASE_API_KEY',
-  authDomain: 'VITE_FIREBASE_AUTH_DOMAIN',
-  projectId: 'VITE_FIREBASE_PROJECT_ID',
-  appId: 'VITE_FIREBASE_APP_ID'
-};
-
-// We cannot rely on require in a Vite environment.
-let activeConfig = envConfig;
-
-// Attempt to load from window.FIREBASE_CONFIG if injected and valid, else fall back to envConfig
-if (typeof window !== 'undefined' && (window as any).FIREBASE_CONFIG && (window as any).FIREBASE_CONFIG.apiKey) {
-  activeConfig = (window as any).FIREBASE_CONFIG;
-}
-
-const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'] as const;
 let configurationError = null;
+const requiredKeys = ['apiKey', 'authDomain', 'projectId'] as const;
 
 for (const key of requiredKeys) {
-  if (!activeConfig[key as keyof typeof activeConfig]) {
-    const varName = envVarNames[key] || key;
-    configurationError = `Missing required environment variable: ${varName}`;
-    break;
+  if (!activeConfig[key]) {
+     configurationError = `Missing required environment variable: ${key}`;
+     break;
   }
 }
 

@@ -166,14 +166,15 @@ service cloud.firestore {
     match /agreements/{agreementId} {
       function isValidAgreement(data) {
         return data.keys().hasAll(['id', 'propertyId', 'tenantId', 'startDate', 'endDate', 'status', 'version'])
-          && data.size() >= 6 && data.size() <= 12
+          && data.size() >= 7 && data.size() <= 12
           && data.id is string && data.id.size() <= 128
           && data.propertyId is string && data.propertyId.size() <= 128
-          && data.tenantId is string && data.tenantId.size() <= 128;
+          && data.tenantId is string && data.tenantId.size() <= 128
+          && data.status in ['active', 'expired', 'terminated'];
       }
 
       // Secure Read: only participants can see the agreement
-      allow read: if isSignedIn() && (
+      allow read, list: if isSignedIn() && (
         resource.data.tenantId == request.auth.uid 
         || get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid
         || isAdmin()
@@ -182,6 +183,16 @@ service cloud.firestore {
       allow create: if isVerified() 
                     && isValidAgreement(incoming())
                     && (isAdmin() || get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId == request.auth.uid);
+
+      allow update: if isVerified()
+                    && isValidAgreement(incoming())
+                    && incoming().id == existing().id
+                    && incoming().propertyId == existing().propertyId
+                    && incoming().tenantId == existing().tenantId
+                    && (
+                      isAdmin() ||
+                      get(/databases/$(database)/documents/properties/$(existing().propertyId)).data.agentId == request.auth.uid
+                    );
     }
 
     // 5. MAINTENANCE TICKETS
