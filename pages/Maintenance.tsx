@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { User, UserRole, MaintenanceTicket, TicketStatus, TicketPriority, NotificationType } from '../types';
 import { getStore, saveStore, useAppStore } from '../store';
 import { Plus, CheckCircle2, Clock, AlertCircle, Wrench, X, ChevronDown, Camera, Image as ImageIcon, Sparkles, Loader2, Maximize2, Building } from 'lucide-react';
@@ -16,7 +16,11 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
       : store.tickets.filter(t => t.tenantId === user.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newIssue, setNewIssue] = useState('');
-  const [newPropertyId, setNewPropertyId] = useState(user.assignedPropertyIds?.[0] || '');
+  const myProperties = useMemo(() => {
+    return store.properties.filter(p => user.assignedPropertyIds?.includes(p.id) || p.tenantId === user.id);
+  }, [store.properties, user]);
+
+  const [newPropertyId, setNewPropertyId] = useState(myProperties[0]?.id || user.assignedPropertyIds?.[0] || '');
   const [newImage, setNewImage] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
@@ -138,10 +142,10 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                         value={newPropertyId}
                         onChange={e => setNewPropertyId(e.target.value)}
                       >
-                         {user.assignedPropertyIds?.map(pid => {
-                            const p = store.properties.find(prop => prop.id === pid);
-                            return <option key={pid} value={pid}>{p?.name || pid}</option>;
-                         })}
+                         <option value="">Select Asset...</option>
+                         {myProperties.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                         ))}
                       </select>
                       <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
                    </div>

@@ -35,7 +35,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         walletBalance: formatCurrency(userWallet?.balance || 0, settings)
       };
     } else {
-      const myProperties = store.properties.filter(p => user.assignedPropertyIds?.includes(p.id));
+      const myProperties = store.properties.filter(p => user.assignedPropertyIds?.includes(p.id) || p.tenantId === user.id);
       const myTickets = store.tickets.filter(t => t.tenantId === user.id);
       const myPayments = store.payments.filter(p => p.tenantId === user.id);
       const myAgreements = store.agreements.filter(a => a.tenantId === user.id);

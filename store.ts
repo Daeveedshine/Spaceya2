@@ -293,7 +293,11 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
       } else {
         unsubscribes.push(attachListener('properties', 'properties', query(
            collection(db, 'properties'), 
-           or(where('status', 'in', ['LISTED', 'VACANT']), where('agentId', '==', user.uid))
+           or(
+             where('status', 'in', ['LISTED', 'VACANT']), 
+             where('agentId', '==', user.uid),
+             where('tenantId', '==', user.uid)
+           )
         )));
       }
 

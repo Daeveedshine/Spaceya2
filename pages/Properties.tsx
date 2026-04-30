@@ -147,7 +147,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     } else if (user.role === UserRole.AGENT) {
       list = [...store.properties.filter(p => p.agentId === user.id)];
     } else {
-      list = [...store.properties.filter(p => user.assignedPropertyIds?.includes(p.id))];
+      list = [...store.properties.filter(p => user.assignedPropertyIds?.includes(p.id) || p.tenantId === user.id)];
     }
 
     // Apply Filters
