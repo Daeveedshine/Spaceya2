@@ -178,6 +178,7 @@ export interface Agreement {
   id: string;
   propertyId: string;
   tenantId: string;
+  agentId: string;
   version: number;
   startDate: string;
   endDate: string;
@@ -197,6 +198,7 @@ export interface Payment {
 export interface MaintenanceTicket {
   id: string;
   tenantId: string;
+  agentId: string;
   propertyId: string;
   issue: string;
   status: TicketStatus;

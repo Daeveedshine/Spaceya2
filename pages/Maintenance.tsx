@@ -47,10 +47,13 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
     const priority = TicketPriority.MEDIUM;
 
     setTimeout(() => {
+      const property = store.properties.find(p => p.id === newPropertyId);
+      
       const freshTicket: MaintenanceTicket = {
         id: `t${Date.now()}`,
         propertyId: newPropertyId || 'p1',
         tenantId: user.id,
+        agentId: property?.agentId || 'u1',
         issue: newIssue,
         status: TicketStatus.OPEN,
         priority: priority,
@@ -59,13 +62,12 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
         aiAssessment: undefined
       };
 
-      const property = store.properties.find(p => p.id === freshTicket.propertyId);
       const newState = { 
           ...store, 
           tickets: [freshTicket, ...store.tickets],
           notifications: [{
             id: `n_t_${Date.now()}`,
-            userId: property?.agentId || 'u1', 
+            userId: freshTicket.agentId, 
             title: 'Maintenance Request Logged',
             message: `A new repair request has been filed for ${property?.name || freshTicket.propertyId}. Evidence attached.`,
             type: NotificationType.INFO,
@@ -75,6 +77,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
           }, ...store.notifications]
       };
       setStore(newState);
+      saveStore(newState);
       setNewIssue('');
       setNewImage(null);
       setIsSubmitting(false);
@@ -101,6 +104,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
             linkTo: 'maintenance'
         }, ...store.notifications]
     };
+    saveStore(newState);
     setStore(newState);
     if (onUpdate) onUpdate();
   };

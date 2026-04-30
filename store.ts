@@ -285,65 +285,30 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
       };
 
       // 3. Dynamic Queries mapped perfectly to Firestore Rule conditions
-      // USERS: Admins/Agents can see all. Tenants can see only themselves.
-      if (userRole === 'ADMIN' || userRole === 'AGENT') {
+      if (userRole === 'ADMIN') {
         unsubscribes.push(attachListener('users', 'users', collection(db, 'users')));
+        unsubscribes.push(attachListener('properties', 'properties', collection(db, 'properties')));
+        unsubscribes.push(attachListener('applications', 'applications', collection(db, 'applications')));
+        unsubscribes.push(attachListener('tickets', 'tickets', collection(db, 'tickets')));
+        unsubscribes.push(attachListener('agreements', 'agreements', collection(db, 'agreements')));
+      } else if (userRole === 'AGENT') {
+        unsubscribes.push(attachListener('users', 'users', collection(db, 'users')));
+        unsubscribes.push(attachListener('properties', 'properties', query(collection(db, 'properties'), where('agentId', '==', user.uid))));
+        unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('agentId', '==', user.uid))));
+        unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('agentId', '==', user.uid))));
+        unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('agentId', '==', user.uid))));
       } else {
         unsubscribes.push(attachListener('users', 'users', query(collection(db, 'users'), where('id', '==', user.uid))));
-      }
-
-      // PROPERTIES: Admins see all. Agents/Tenants see LISTED/VACANT OR their own.
-      if (userRole === 'ADMIN') {
-        unsubscribes.push(attachListener('properties', 'properties', collection(db, 'properties')));
-      } else {
         unsubscribes.push(attachListener('properties', 'properties', query(
            collection(db, 'properties'), 
            or(
              where('status', 'in', ['LISTED', 'VACANT']), 
-             where('agentId', '==', user.uid),
              where('tenantId', '==', user.uid)
            )
         )));
-      }
-
-      // APPLICATIONS: Admins see all. Agents/Tenants see applications where they are the agent or tenant.
-      if (userRole === 'ADMIN') {
-        unsubscribes.push(attachListener('applications', 'applications', collection(db, 'applications')));
-      } else if (userRole === 'AGENT') {
-        unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('agentId', '==', user.uid))));
-      } else {
         unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('userId', '==', user.uid))));
-      }
-
-      // TICKETS & AGREEMENTS: Tenants see their own
-      if (userRole === 'TENANT') {
-         unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('tenantId', '==', user.uid))));
-         unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('tenantId', '==', user.uid))));
-      } else if (userRole === 'AGENT') {
-          // Getting agent property IDs first
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          const pIds = userDoc.exists() ? userDoc.data()?.assignedPropertyIds || [] : [];
-          
-          // Agent sees tickets and agreements for their properties
-          if (pIds.length > 0) {
-            // Firestore 'in' query supports up to 10-30 items depending on version, 
-            // but we'll stick to a reasonable chunk for this app.
-            const chunks = [];
-            for (let i = 0; i < pIds.length; i += 10) {
-              chunks.push(pIds.slice(i, i + 10));
-            }
-            
-            chunks.forEach(chunk => {
-              unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('propertyId', 'in', chunk))));
-              unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('propertyId', 'in', chunk))));
-            });
-          }
-          
-          // Also listen for properties where user is agent directly (for those not in assignedPropertyIds)
-          unsubscribes.push(attachListener('properties', 'properties', query(collection(db, 'properties'), where('agentId', '==', user.uid))));
-      } else if (userRole === 'ADMIN') {
-          unsubscribes.push(attachListener('tickets', 'tickets', collection(db, 'tickets')));
-          unsubscribes.push(attachListener('agreements', 'agreements', collection(db, 'agreements')));
+        unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('tenantId', '==', user.uid))));
+        unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('tenantId', '==', user.uid))));
       }
 
       // FORM TEMPLATES: Admins see all.

@@ -96,6 +96,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
         id: `a${Date.now()}`,
         propertyId: propertyId,
         tenantId: selectedApp.userId,
+        agentId: user.id, // The current agent performing the routing
         version: 1,
         startDate,
         endDate,

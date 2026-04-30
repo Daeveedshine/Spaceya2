@@ -165,49 +165,52 @@ service cloud.firestore {
     // 4. AGREEMENTS
     match /agreements/{agreementId} {
       function isValidAgreement(data) {
-        return data.keys().hasAll(['id', 'propertyId', 'tenantId', 'startDate', 'endDate', 'status', 'version'])
-          && data.size() >= 7 && data.size() <= 12
+        return data.keys().hasAll(['id', 'propertyId', 'tenantId', 'agentId', 'startDate', 'endDate', 'status', 'version'])
+          && data.size() >= 8 && data.size() <= 15
           && data.id is string && data.id.size() <= 128
           && data.propertyId is string && data.propertyId.size() <= 128
           && data.tenantId is string && data.tenantId.size() <= 128
+          && data.agentId is string && data.agentId.size() <= 128
           && data.status in ['active', 'expired', 'terminated'];
       }
 
       // Secure Read: only participants can see the agreement
       allow read, list: if isSignedIn() && (
         resource.data.tenantId == request.auth.uid 
-        || get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid
+        || resource.data.agentId == request.auth.uid
         || isAdmin()
       );
       
       allow create: if isVerified() 
                     && isValidAgreement(incoming())
-                    && (isAdmin() || get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId == request.auth.uid);
+                    && (isAdmin() || incoming().agentId == request.auth.uid);
 
       allow update: if isVerified()
                     && isValidAgreement(incoming())
                     && incoming().id == existing().id
                     && incoming().propertyId == existing().propertyId
                     && incoming().tenantId == existing().tenantId
+                    && incoming().agentId == existing().agentId
                     && (
                       isAdmin() ||
-                      get(/databases/$(database)/documents/properties/$(existing().propertyId)).data.agentId == request.auth.uid
+                      existing().agentId == request.auth.uid
                     );
     }
 
     // 5. MAINTENANCE TICKETS
     match /tickets/{ticketId} {
       function isValidTicket(data) {
-        return data.keys().hasAll(['id', 'tenantId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
-          && data.size() >= 7 && data.size() <= 15
+        return data.keys().hasAll(['id', 'tenantId', 'agentId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
+          && data.size() >= 8 && data.size() <= 20
           && data.id is string && data.id.size() <= 128
+          && data.agentId is string && data.agentId.size() <= 128
           && data.status is string && data.status in ['OPEN', 'IN_PROGRESS', 'RESOLVED']
           && data.priority is string && data.priority in ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY'];
       }
 
-      allow read: if isSignedIn() && (
+      allow read, list: if isSignedIn() && (
         resource.data.tenantId == request.auth.uid 
-        || get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.agentId == request.auth.uid
+        || resource.data.agentId == request.auth.uid
         || isAdmin()
       );
       
@@ -215,6 +218,7 @@ service cloud.firestore {
                     && isValidTicket(incoming())
                     && incoming().id == ticketId
                     && incoming().tenantId == request.auth.uid
+                    && (incoming().agentId == get(/databases/$(database)/documents/properties/$(incoming().propertyId)).data.agentId)
                     && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
 
       allow update: if isVerified()
@@ -222,12 +226,13 @@ service cloud.firestore {
                     && incoming().id == existing().id
                     && incoming().tenantId == existing().tenantId
                     && incoming().propertyId == existing().propertyId
+                    && incoming().agentId == existing().agentId
                     && (
                       isAdmin() ||
                       // Action: Tenant edit description
                       (request.auth.uid == existing().tenantId && incoming().diff(existing()).affectedKeys().hasOnly(['issue', 'imageUrl'])) ||
                       // Action: Agent update status/priority
-                      (request.auth.uid == get(/databases/$(database)/documents/properties/$(existing().propertyId)).data.agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'priority', 'aiAssessment']))
+                      (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'priority', 'aiAssessment']))
                     );
     }
 
@@ -288,9 +293,9 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       function isValidNotification(data) {
         return data.keys().hasAll(['id', 'userId', 'title', 'message', 'type', 'timestamp', 'isRead'])
-          && data.size() >= 7 && data.size() <= 12;
+          && data.size() >= 7 && data.size() <= 15;
       }
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
       allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && isValidNotification(incoming()); 
@@ -298,7 +303,7 @@ service cloud.firestore {
 
     // 8. FORM TEMPLATES
     match /formTemplates/{templateId} {
-      allow read: if isSignedIn();
+      allow read, list: if isSignedIn() && (request.auth.uid == templateId || resource.data.agentId == request.auth.uid || isAdmin());
       allow create, update: if isVerified() && (request.auth.uid == templateId || isAdmin());
     }
 

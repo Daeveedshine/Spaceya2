@@ -257,6 +257,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         id: `a${Date.now()}`,
         propertyId: selectedProperty.id,
         tenantId: pendingTenant.id,
+        agentId: selectedProperty.agentId,
         version: 1,
         startDate,
         endDate,
@@ -384,6 +385,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       id: `t${Date.now()}`,
       propertyId: selectedProperty.id,
       tenantId: user.id,
+      agentId: selectedProperty.agentId,
       issue: maintenanceIssue,
       status: TicketStatus.OPEN,
       priority: TicketPriority.MEDIUM,
@@ -409,6 +411,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       notifications: [notification, ...store.notifications]
     };
 
+    saveStore(updatedStore);
     setStore(updatedStore);
     logger.action('maintenance_ticket_created', { ticketId: newTicket.id, propertyId: selectedProperty.id });
     setIsSaving(false);
@@ -442,6 +445,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             notifications: [notification, ...store.notifications]
         };
 
+        saveStore(updatedStore);
         setStore(updatedStore);
         setIsSaving(false);
         setShowNoticeForm(false);
