@@ -199,16 +199,6 @@ service cloud.firestore {
 
     // 5. MAINTENANCE TICKETS
     match /tickets/{ticketId} {
-      function isValidTicket(data) {
-        return data.keys().hasAll(['id', 'tenantId', 'agentId', 'propertyId', 'issue', 'status', 'priority', 'createdAt'])
-          && data.id is string && data.id.size() <= 128
-          && data.tenantId is string && data.tenantId.size() <= 128
-          && data.agentId is string && data.agentId.size() <= 128
-          && data.propertyId is string && data.propertyId.size() <= 128
-          && data.status is string && data.status in ['OPEN', 'IN_PROGRESS', 'RESOLVED']
-          && data.priority is string && data.priority in ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY'];
-      }
-
       allow read, list: if isSignedIn() && (
         resource.data.tenantId == request.auth.uid 
         || resource.data.agentId == request.auth.uid
@@ -216,23 +206,16 @@ service cloud.firestore {
       );
       
       allow create: if isVerified() 
-                    && isValidTicket(incoming())
                     && incoming().id == ticketId
-                    && incoming().tenantId == request.auth.uid
-                    && exists(/databases/$(database)/documents/properties/$(incoming().propertyId));
+                    && incoming().tenantId == request.auth.uid;
 
       allow update: if isVerified()
-                    && isValidTicket(incoming())
                     && incoming().id == existing().id
-                    && incoming().tenantId == existing().tenantId
                     && incoming().propertyId == existing().propertyId
-                    && incoming().agentId == existing().agentId
                     && (
                       isAdmin() ||
-                      // Action: Tenant edit description
-                      (request.auth.uid == existing().tenantId && incoming().diff(existing()).affectedKeys().hasOnly(['issue', 'imageUrl'])) ||
-                      // Action: Agent update status/priority
-                      (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'priority', 'aiAssessment']))
+                      request.auth.uid == existing().tenantId ||
+                      request.auth.uid == existing().agentId
                     );
     }
 
