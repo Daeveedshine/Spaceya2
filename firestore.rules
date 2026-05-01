@@ -270,6 +270,12 @@ service cloud.firestore {
         incoming().user_id == 0 || 
         isAdmin()
       );
+      allow update: if isVerified() && (
+        existing().user_id == request.auth.uid || 
+        existing().userId == request.auth.uid ||
+        existing().user_id == 0 ||
+        isAdmin()
+      );
     }
 
     // 7. NOTIFICATIONS

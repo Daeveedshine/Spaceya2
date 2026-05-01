@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, UserRole, Property, Agreement } from '../types';
 import { getStore } from '../store';
-import { Download, Search, Phone, Calendar, Building, User as UserIcon, DollarSign, Filter, MoreHorizontal, AlertCircle, Table, MapPin, Tag } from 'lucide-react';
+import { Download, Search, Phone, Calendar, Building, User as UserIcon, DollarSign, Filter, MoreHorizontal, AlertCircle, Table, MapPin, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ReportsProps {
   user: User;
@@ -23,65 +23,66 @@ interface ReportRow {
 const Reports: React.FC<ReportsProps> = ({ user }) => {
   const store = getStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
   const reportData = useMemo(() => {
-    // 1. Get base tenants
-    let tenants = store.users.filter(u => u.role === UserRole.TENANT);
-    
-    // 2. Filter tenants based on Agent's own properties
+    // 1. Get properties
+    let properties = store.properties;
     if (user.role === UserRole.AGENT) {
-      const myPropertyIds = store.properties
-        .filter(p => p.agentId === user.id)
-        .map(p => p.id);
-      
-      tenants = tenants.filter(t => t.assignedPropertyIds?.some(pid => myPropertyIds.includes(pid)));
+      properties = properties.filter(p => p.agentId === user.id);
     }
-
-    // 3. Map to report rows
-    const rows: ReportRow[] = tenants.flatMap(tenant => {
-      const assignedIds = tenant.assignedPropertyIds || [];
+    
+    // 2. Map properties to report rows
+    const rows: ReportRow[] = properties.flatMap(property => {
+      const assignedTenants = store.users.filter(u => u.role === UserRole.TENANT && u.assignedPropertyIds?.includes(property.id));
       
-      // If no properties assigned, return one unassigned row
-      if (assignedIds.length === 0) {
+      if (assignedTenants.length === 0) {
         return [{
-          tenantName: tenant.name,
-          tenantPhone: tenant.phone || 'No phone provided',
-          propertyName: 'Unassigned',
-          propertyType: 'N/A',
-          propertyAddress: 'N/A',
-          rentAmount: 0,
+          tenantName: 'Vacant',
+          tenantPhone: 'N/A',
+          propertyName: property.name,
+          propertyType: property.type,
+          propertyAddress: property.location,
+          rentAmount: property.rent || 0,
           expiryDate: 'N/A',
-          status: 'No active lease',
+          status: 'Inactive',
           daysRemaining: 999
         }];
       }
-
-      return assignedIds.map(pid => {
-        const property = store.properties.find(p => p.id === pid);
-        const agreement = store.agreements.find(a => a.tenantId === tenant.id && a.propertyId === pid && a.status === 'active');
+      
+      return assignedTenants.map(tenant => {
+        const agreement = store.agreements.find(a => a.tenantId === tenant.id && a.propertyId === property.id && a.status === 'active');
         
         let daysRemaining = 999;
-        if (agreement?.endDate) {
-          const expiry = new Date(agreement.endDate);
+        const expiryDateStr = agreement?.endDate || property?.rentExpiryDate;
+        
+        if (expiryDateStr) {
+          const expiry = new Date(expiryDateStr);
           const today = new Date();
           daysRemaining = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        let calculatedStatus = 'Active';
+        if (daysRemaining <= 0) {
+          calculatedStatus = 'Inactive';
         }
 
         return {
           tenantName: tenant.name,
           tenantPhone: tenant.phone || 'No phone provided',
-          propertyName: property?.name || 'Unknown',
-          propertyType: property?.type || 'N/A',
-          propertyAddress: property?.location || 'N/A',
-          rentAmount: property?.rent || 0,
-          expiryDate: agreement?.endDate || 'N/A',
-          status: agreement?.status || 'No active lease',
+          propertyName: property.name,
+          propertyType: property.type,
+          propertyAddress: property.location,
+          rentAmount: property.rent || 0,
+          expiryDate: expiryDateStr ? new Date(expiryDateStr).toLocaleDateString() : 'N/A',
+          status: calculatedStatus,
           daysRemaining
         };
       });
     });
 
-    // 4. Apply search term
+    // 3. Apply search term
     return rows.filter(row => 
       row.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       row.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,6 +90,16 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
       row.tenantPhone.includes(searchTerm)
     );
   }, [store, searchTerm, user]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(reportData.length / rowsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return reportData.slice(start, start + rowsPerPage);
+  }, [reportData, currentPage, rowsPerPage]);
 
   const handleExport = () => {
     const headers = ['Tenant', 'Phone', 'Property Name', 'Rent Type', 'Address', 'Annual Rent (Naira)', 'Expiry Date'];
@@ -122,7 +133,7 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Active Leases</p>
-          <p className="text-2xl font-black text-black dark:text-white">{reportData.filter(r => r.status === 'active').length}</p>
+          <p className="text-2xl font-black text-black dark:text-white">{reportData.filter(r => r.status === 'Active').length}</p>
         </div>
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Gross Annual Rent</p>
@@ -130,7 +141,7 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
         </div>
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Expiring Soon (&lt;30d)</p>
-          <p className="text-2xl font-black text-black dark:text-white">{reportData.filter(r => r.daysRemaining <= 30 && r.status === 'active').length}</p>
+          <p className="text-2xl font-black text-black dark:text-white">{reportData.filter(r => r.daysRemaining <= 30 && r.daysRemaining > 0 && r.status === 'Active').length}</p>
         </div>
       </div>
 
@@ -165,7 +176,7 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {reportData.length > 0 ? reportData.map((row, idx) => (
+              {paginatedData.length > 0 ? paginatedData.map((row, idx) => (
                 <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-black transition-colors group">
                   <td className="px-6 py-5">
                     <div className="flex flex-col">
@@ -191,22 +202,24 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
                     <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{row.tenantPhone}</span>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="text-sm font-black text-black dark:text-white">₦{row.rentAmount.toLocaleString()}</span>
+                    <span className="text-sm font-black text-green-600 dark:text-green-500">₦{row.rentAmount.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-black ${row.daysRemaining <= 30 && row.status === 'active' ? 'text-black dark:text-white underline underline-offset-4 decoration-black dark:decoration-white' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                      <span className={`text-xs font-black text-red-600 dark:text-red-500 ${row.daysRemaining <= 30 && row.status === 'Active' ? 'underline underline-offset-4 decoration-red-600 dark:decoration-red-500' : ''}`}>
                         {row.expiryDate}
                       </span>
-                      {row.daysRemaining <= 30 && row.status === 'active' && (
-                        <AlertCircle className="w-3.5 h-3.5 text-black dark:text-white animate-pulse" />
+                      {row.daysRemaining <= 30 && row.daysRemaining > 0 && row.status === 'Active' && (
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-500 animate-pulse" />
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex justify-center">
                       <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                        row.status === 'active' ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500'
+                        row.status === 'Active' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 
+                        row.status === 'Inactive' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-500' :
+                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500'
                       }`}>
                         {row.status}
                       </span>
@@ -233,8 +246,27 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
           </table>
         </div>
         
-        <div className="p-4 bg-zinc-50 dark:bg-black border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[9px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.2em]">
-          <span>Total Rows: {reportData.length}</span>
+        <div className="p-4 bg-zinc-50 dark:bg-black border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-4 justify-between items-center text-[9px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.2em]">
+          <span>Showing {Math.min((currentPage - 1) * rowsPerPage + 1, reportData.length)} - {Math.min(currentPage * rowsPerPage, reportData.length)} of {reportData.length}</span>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-2">Page {currentPage} of {Math.max(1, totalPages)}</span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
           <span>Generated on {new Date().toLocaleDateString()}</span>
         </div>
       </div>

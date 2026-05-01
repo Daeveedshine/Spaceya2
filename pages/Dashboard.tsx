@@ -41,11 +41,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       const myAgreements = store.agreements.filter(a => a.tenantId === user.id);
       const latestAgreement = [...myAgreements].sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime())[0];
       
+      const expiryDateStr = latestAgreement?.endDate || myProperties[0]?.rentExpiryDate;
+
       return {
         propertyName: myProperties.length > 1 ? `${myProperties.length} Assets` : (myProperties[0]?.name || 'N/A'),
         rentStatus: myPayments.find(p => p.status === 'pending') ? 'Pending' : 'Paid',
         activeTickets: myTickets.filter(t => t.status !== TicketStatus.RESOLVED).length,
-        leaseExpiry: latestAgreement ? formatDate(latestAgreement.endDate, settings) : 'N/A'
+        leaseExpiry: expiryDateStr ? formatDate(expiryDateStr, settings) : 'N/A'
       };
     }
   }, [user, store, settings]);
