@@ -385,9 +385,17 @@ const App: React.FC = () => {
                 {!isSidebarCollapsed && (
                   <div className="mt-4 flex flex-col items-center">
                     <h1 className="text-3xl font-black tracking-[-0.05em] text-black dark:text-white uppercase">SPACEYA</h1>
-                    <p className="text-[9px] text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">
-                      {user?.role === UserRole.AGENT ? 'Agent' : user?.role === UserRole.ADMIN ? 'Admin' : 'Tenant'} Account
-                    </p>
+                    <div className="mt-2.5">
+                      {user?.role === UserRole.AGENT && (
+                        <span className="px-2 py-1 bg-purple-500/10 text-purple-500 border border-purple-500/20 rounded-md text-[9px] font-black uppercase tracking-[0.2em]">Agent</span>
+                      )}
+                      {user?.role === UserRole.TENANT && (
+                        <span className="px-2 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-md text-[9px] font-black uppercase tracking-[0.2em]">Tenant</span>
+                      )}
+                      {user?.role === UserRole.ADMIN && (
+                        <span className="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-md text-[9px] font-black uppercase tracking-[0.2em]">Admin</span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
