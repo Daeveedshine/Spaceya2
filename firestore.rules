@@ -154,11 +154,12 @@ service cloud.firestore {
                     && incoming().id == existing().id
                     && incoming().userId == existing().userId
                     && (
+                      incoming().diff(existing()).affectedKeys().size() == 0 ||
                       isAdmin() ||
                       // Action: Agent review and route property
                       (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'propertyId', 'riskScore', 'aiRecommendation', 'customResponses'])) ||
                       // Action: Tenant edit
-                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED'))
+                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED') && !incoming().diff(existing()).affectedKeys().hasAny(['status', 'agentId', 'propertyId', 'riskScore']))
                     );
     }
 

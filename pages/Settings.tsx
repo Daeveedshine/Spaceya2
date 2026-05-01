@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { getStore, saveStore, UserSettings } from '../store';
 import { 
-  Bell, Moon, Sun, Smartphone, Layout, 
+  Bell, Smartphone, Layout, 
   Globe, Shield, Eye, Save, CheckCircle2, 
   ToggleLeft, ToggleRight, Type, CreditCard,
   Wrench, Activity, ChevronRight, Info
@@ -10,14 +10,12 @@ import {
 
 interface SettingsProps {
   user: User;
-  onThemeChange: (theme: 'light' | 'dark') => void;
   onSettingsUpdate: () => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpdate }) => {
+const Settings: React.FC<SettingsProps> = ({ user, onSettingsUpdate }) => {
   const store = getStore();
   const [settings, setSettings] = useState<UserSettings>(store.settings);
-  const [theme, setTheme] = useState<'light' | 'dark'>(store.theme);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
 
@@ -41,20 +39,13 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
     }));
   };
 
-  const handleThemeSwitch = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
-    onThemeChange(newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-  };
-
   const handleSave = () => {
     setIsSaving(true);
     setTimeout(() => {
       const currentStore = getStore();
       const newState = { 
         ...currentStore, 
-        settings, 
-        theme 
+        settings 
       };
       saveStore(newState);
       onSettingsUpdate(); // Trigger global class synchronization
@@ -98,27 +89,6 @@ const Settings: React.FC<SettingsProps> = ({ user, onThemeChange, onSettingsUpda
            </div>
            
            <div className="glass-card p-8 rounded-[2.5rem] space-y-8 border border-white/20 dark:border-white/5">
-              <div className="flex items-center justify-between">
-                 <div className="space-y-1">
-                    <p className="text-sm font-bold text-black dark:text-white">Active Theme</p>
-                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Select your interface atmosphere.</p>
-                 </div>
-                 <div className="flex p-1 bg-zinc-100 dark:bg-black rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <button 
-                      onClick={() => handleThemeSwitch('light')}
-                      className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-white text-black shadow-sm' : 'text-zinc-400'}`}
-                    >
-                       <Sun size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleThemeSwitch('dark')}
-                      className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-400'}`}
-                    >
-                       <Moon size={18} />
-                    </button>
-                 </div>
-              </div>
-
               <div className="flex items-center justify-between">
                  <div className="space-y-1">
                     <p className="text-sm font-bold text-black dark:text-white">Display Density</p>

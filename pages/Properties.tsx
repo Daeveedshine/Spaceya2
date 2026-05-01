@@ -826,8 +826,8 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       </div>
 
       {selectedProperty && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto pt-20 pb-20">
-          <div className="bg-white dark:bg-zinc-950 w-full max-w-xl rounded-xl shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col relative transition-all duration-500">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto pt-16 pb-16 md:pt-24 md:pb-24">
+          <div className="bg-white dark:bg-zinc-950 w-full max-w-xl rounded-xl shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col relative transition-all duration-500 mt-4 md:mt-8">
              
              {/* CAROUSEL SECTION - NOW TOP POSITIONED */}
              <div 

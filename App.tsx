@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, Building2, Wrench, CreditCard, LogOut, Menu, X, Shield, 
   FileText, Bell, Table, Building, ClipboardCheck, UserPlus, 
-  User as UserIcon, Moon, Sun, ChevronLeft, ChevronRight, Settings as SettingsIcon, Cloud
+  User as UserIcon, ChevronLeft, ChevronRight, Settings as SettingsIcon, Cloud
 } from 'lucide-react';
 import { isConfigured, configurationError } from './firebaseConfig';
 import { requestNotificationPermission } from './lib/notifications';
@@ -137,7 +137,6 @@ const App: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [badges, setBadges] = useState({ notifications: 0, maintenance: 0, screenings: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [synced, setSynced] = useState(false);
 
   // Sync Settings Function
@@ -177,9 +176,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const store = getStore();
-    const savedTheme = store.theme || 'dark';
-    setTheme(savedTheme);
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    document.documentElement.classList.add('dark');
     
     // Check for Referral Link in URL
     const params = new URLSearchParams(window.location.search);
@@ -223,15 +220,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    const store = getStore();
-    store.theme = newTheme;
-    saveStore(store);
-  };
-
   const handleLogin = (loggedUser: User) => {
     const store = getStore();
     store.currentUser = loggedUser;
@@ -273,7 +261,7 @@ const App: React.FC = () => {
     let content: React.ReactNode;
     switch (view) {
       case 'admin_dashboard': content = <AdminDashboard user={user} onNavigate={setView} />; break;
-      case 'dashboard': content = <Dashboard user={user} />; break;
+      case 'dashboard': content = <Dashboard user={user} onNavigate={setView} />; break;
       case 'properties': content = <Properties user={user} />; break;
       case 'maintenance': content = <Maintenance user={user} onUpdate={refreshBadges} />; break;
       case 'payments': content = <Payments user={user} />; break;
@@ -284,8 +272,8 @@ const App: React.FC = () => {
       case 'screenings': content = <Screenings user={user} onNavigate={setView} onUpdate={refreshBadges} />; break;
       case 'admin_applications': content = <AdminApplications user={user} onBack={() => setView('admin_dashboard')} />; break;
       case 'profile': content = <Profile user={user} onUserUpdate={setUser} />; break;
-      case 'settings': content = <Settings user={user} onThemeChange={setTheme} onSettingsUpdate={syncVisualSettings} />; break;
-      default: content = <Dashboard user={user} />; break;
+      case 'settings': content = <Settings user={user} onSettingsUpdate={syncVisualSettings} />; break;
+      default: content = <Dashboard user={user} onNavigate={setView} />; break;
     }
 
     return (
@@ -371,12 +359,6 @@ const App: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <button 
-                onClick={toggleTheme}
-                className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white active:scale-95 transition-transform"
-              >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
-              <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
                 className="p-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black active:scale-95 transition-transform"
               >
@@ -396,12 +378,12 @@ const App: React.FC = () => {
             h-full overflow-y-auto custom-scrollbar
           `}>
             <div className={`p-6 md:p-8 min-h-full flex flex-col ${isSidebarCollapsed ? 'items-center' : ''}`}>
-              <div className={`mb-8 ${isSidebarCollapsed ? 'text-center' : ''}`}>
-                <div className={`inline-block transition-all ${isSidebarCollapsed ? '' : ''}`}>
+              <div className="mb-8 text-center flex flex-col items-center">
+                <div className="inline-block transition-all">
                    <Logo size={isSidebarCollapsed ? 32 : 44} className="text-black dark:text-white" />
                 </div>
                 {!isSidebarCollapsed && (
-                  <div className="mt-4">
+                  <div className="mt-4 flex flex-col items-center">
                     <h1 className="text-3xl font-black tracking-[-0.05em] text-black dark:text-white uppercase">SPACEYA</h1>
                     <p className="text-[9px] text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.4em] font-black mt-2">
                       {user?.role === UserRole.AGENT ? 'Agent' : user?.role === UserRole.ADMIN ? 'Admin' : 'Tenant'} Account
@@ -439,15 +421,6 @@ const App: React.FC = () => {
               </nav>
 
               <div className={`pt-4 border-t border-zinc-200 dark:border-white/10 mt-4 space-y-1.5 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
-                 <button 
-                   onClick={toggleTheme}
-                   title={isSidebarCollapsed ? "Toggle Theme" : ""}
-                   className={`w-full flex items-center font-bold text-black dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/30 rounded-2xl transition-all ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs'}`}
-                 >
-                   {theme === 'light' ? <Moon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} /> : <Sun className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5`} />}
-                   {!isSidebarCollapsed && "Toggle Theme"}
-                 </button>
-                 
                  <button 
                    onClick={handleLogout} 
                    title={isSidebarCollapsed ? "Sign Out" : ""}

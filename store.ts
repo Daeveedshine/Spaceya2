@@ -67,7 +67,6 @@ interface AppState {
   wallets?: any[];
   bank_accounts?: any[];
   currentUser: User | null;
-  theme: 'light' | 'dark';
   settings: UserSettings;
 }
 
@@ -131,7 +130,6 @@ const initialData: AppState = {
   formTemplates: [],
   transactions: [],
   currentUser: null,
-  theme: 'dark',
   settings: initialSettings,
 };
 
@@ -316,7 +314,7 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
         unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('agentId', '==', user.uid))));
         unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('agentId', '==', user.uid))));
       } else {
-        unsubscribes.push(attachListener('users', 'users', query(collection(db, 'users'), where('id', '==', user.uid))));
+        unsubscribes.push(attachListener('users', 'users', query(collection(db, 'users'), or(where('id', '==', user.uid), where('role', '==', 'AGENT')))));
         unsubscribes.push(attachListener('properties', 'properties', query(
            collection(db, 'properties'), 
            or(

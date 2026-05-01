@@ -12,7 +12,7 @@ import {
   UserPlus, Download, Trash2, Edit3, Image as ImageIcon, AlertCircle, ChevronDown, User as UserIcon, Printer, X, Maximize2, Check,
   Info, Settings, Plus, GripVertical, Save
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -343,37 +343,44 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     }
 
     try {
-        const canvas = await html2canvas(input, {
-            scale: 2,
+        const dataUrl = await htmlToImage.toPng(input, {
+            quality: 1,
+            pixelRatio: 2,
             backgroundColor: '#ffffff',
-            useCORS: true
+            fontEmbedCSS: '',
+            style: {
+                transform: 'none',
+            }
         });
-        const imgData = canvas.toDataURL('image/png');
+        
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
             format: 'a4'
         });
 
-        const imgWidth = 210;
-        const pageHeight = 297;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
+        const imgProps = pdf.getImageProperties(dataUrl);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        let heightLeft = pdfHeight;
         let position = 0;
+        const pageHeight = pdf.internal.pageSize.getHeight();
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
         heightLeft -= pageHeight;
 
         while (heightLeft >= 0) {
-            position = heightLeft - imgHeight;
+            position = heightLeft - pdfHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
             heightLeft -= pageHeight;
         }
 
         pdf.save(`SPACEYA_Application_${app.id}.pdf`);
     } catch (err) {
         console.error("PDF Generation failed", err);
+        // Fallback to print if it still fails
+        window.print();
     } finally {
         setIsDownloading(false);
     }
@@ -578,6 +585,9 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                      <span className="text-[9px] font-black text-zinc-500 uppercase">Risk Index: {app.riskScore}%</span>
                      <span className="text-[9px] font-black text-black dark:text-white uppercase">Status: {app.status}</span>
                   </div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-2">
+                    Submitted to: <span className="text-blue-600 dark:text-blue-400">{store.users.find(u => u.id === app.agentId)?.name || 'Unknown Agent'}</span>
+                  </p>
                 </div>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -670,6 +680,9 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         <span className="px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-zinc-200 dark:border-zinc-700">{viewingApp.status}</span>
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-500 font-black uppercase tracking-[0.2em]">Filed: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>
                       </div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-3">
+                         Submitted to: <span className="text-blue-600 dark:text-blue-400">{store.users.find(u => u.id === viewingApp.agentId)?.name || 'Unknown Agent'}</span>
+                      </p>
                    </div>
                 </div>
 

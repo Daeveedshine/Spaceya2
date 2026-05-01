@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { User, UserRole, PropertyStatus, TicketStatus, NotificationType, ApplicationStatus } from '../types';
 import { getStore, formatCurrency, formatDate, useAppStore } from '../store';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -7,11 +7,12 @@ import { Building, Users, AlertTriangle, TrendingUp, Clock, FileText, Wrench, Be
 
 interface DashboardProps {
   user: User;
+  onNavigate?: (view: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
   const [store] = useAppStore();
-  const isDark = store.theme === 'dark';
+  const [leaseFilter, setLeaseFilter] = useState<'nearest' | 'furthest' | 'expiring_30_days'>('nearest');
   const { settings } = store;
 
   const stats = useMemo(() => {
@@ -52,6 +53,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   }, [user, store, settings]);
 
+  const tenantLeases = useMemo(() => {
+    if (user.role === UserRole.AGENT) return [];
+    const myProperties = store.properties.filter(p => user.assignedPropertyIds?.includes(p.id) || p.tenantId === user.id);
+    const leases = myProperties.map(p => {
+      const agreement = store.agreements.find(a => a.propertyId === p.id && a.tenantId === user.id && a.status === 'active');
+      const expiryDateStr = agreement?.endDate || p.rentExpiryDate;
+      let daysRemaining = 999;
+      if (expiryDateStr) {
+        const expiry = new Date(expiryDateStr);
+        const today = new Date();
+        daysRemaining = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return {
+        property: p,
+        expiryDateStr,
+        daysRemaining
+      };
+    });
+    
+    let filteredLeases = leases;
+    if (leaseFilter === 'expiring_30_days') {
+      filteredLeases = leases.filter(l => l.daysRemaining <= 30 && l.daysRemaining >= 0);
+    }
+    
+    return filteredLeases.sort((a, b) => leaseFilter === 'furthest' ? b.daysRemaining - a.daysRemaining : a.daysRemaining - b.daysRemaining);
+  }, [user, store, leaseFilter]);
   const recentNotifications = useMemo(() => {
     return store.notifications
       .filter(n => n.userId === user.id)
@@ -96,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         </div>
       </header>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 ${user.role === UserRole.AGENT ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4`}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {user.role === UserRole.AGENT ? (
           <>
             <StatCard label="Portfolio" value={stats.totalProperties} icon={Building} color="zinc" />
@@ -108,31 +135,88 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <StatCard label="Asset" value={stats.propertyName} icon={Building} color="zinc" />
             <StatCard label="Cycle" value={stats.rentStatus} icon={Clock} color="zinc" />
             <StatCard label="Tickets" value={stats.activeTickets} icon={Wrench} color="zinc" />
-            <StatCard label="Expiry" value={stats.leaseExpiry} icon={FileText} color="zinc" />
           </>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-zinc-50/50 dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">Yield Analytics</h3>
-            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-full">Currency: {settings.localization.currency}</div>
-          </div>
-          <div className="h-64 sm:h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={paymentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="0" vertical={false} stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: isDark ? '#444' : '#999', fontSize: 9, fontWeight: '900'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: isDark ? '#444' : '#999', fontSize: 9, fontWeight: '900'}} />
-                <Tooltip 
-                  cursor={{fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}}
-                  contentStyle={{backgroundColor: isDark ? '#000' : '#FFF', border: '1px solid #333', borderRadius: '12px', padding: '12px'}}
-                />
-                <Bar dataKey="amount" fill={isDark ? "#FFF" : "#000"} radius={[2, 2, 0, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {user.role === UserRole.AGENT ? (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">Yield Analytics</h3>
+                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-full">Currency: {settings.localization.currency}</div>
+              </div>
+              <div className="h-64 sm:h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={paymentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#444', fontSize: 9, fontWeight: '900'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#444', fontSize: 9, fontWeight: '900'}} />
+                    <Tooltip 
+                      cursor={{fill: 'rgba(255,255,255,0.03)'}}
+                      contentStyle={{backgroundColor: '#000', border: '1px solid #333', borderRadius: '12px', padding: '12px'}}
+                    />
+                    <Bar dataKey="amount" fill="#FFF" radius={[2, 2, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">Property Leases</h3>
+                <select
+                  value={leaseFilter}
+                  onChange={(e) => setLeaseFilter(e.target.value as 'nearest' | 'furthest' | 'expiring_30_days')}
+                  className="bg-transparent border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 px-3 py-1.5 rounded-lg outline-none cursor-pointer"
+                >
+                  <option value="nearest">Nearest Expiry</option>
+                  <option value="furthest">Furthest Expiry</option>
+                  <option value="expiring_30_days">Expiring &lt; 30 Days</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                {tenantLeases.length > 0 ? tenantLeases.map((lease, idx) => (
+                  <div key={idx} className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-black/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-black text-black dark:text-white mb-1">{lease.property.name}</h4>
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+                        <span>{lease.property.location}</span>
+                        <span>•</span>
+                        <span>{lease.property.type}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Expiry Date</div>
+                        <div className={`text-sm font-black ${lease.daysRemaining <= 30 && lease.daysRemaining > 0 ? 'text-red-600 dark:text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 'text-black dark:text-white'}`}>
+                          {lease.expiryDateStr ? new Date(lease.expiryDateStr).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                      {lease.daysRemaining <= 30 && lease.daysRemaining > 0 ? (
+                        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-500 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                          <AlertTriangle className="w-3 h-3" /> Expiring Soon
+                        </div>
+                      ) : lease.daysRemaining <= 0 ? (
+                        <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-500 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                          <AlertTriangle className="w-3 h-3" /> Expired
+                        </div>
+                      ) : (
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-500 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                           Active
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-12 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    No active property leases found
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="bg-zinc-50/50 dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 flex flex-col">
@@ -155,8 +239,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 </div>
             )}
           </div>
-          <button className="w-full mt-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl text-[9px] font-black uppercase tracking-[0.4em] hover:opacity-80 transition-all">
-              Archival Center
+          <button 
+            className="w-full mt-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl text-[9px] font-black uppercase tracking-[0.4em] hover:opacity-80 transition-all"
+            onClick={() => onNavigate && onNavigate('notifications')}
+          >
+              Notifications
           </button>
         </div>
       </div>
