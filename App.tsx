@@ -1,5 +1,57 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
+import { Toaster, toast } from 'sonner';
+
+const TopLoadingBar: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let progressInterval: number;
+    let hideTimeout: number;
+
+    const handleStart = () => {
+      setLoading(true);
+      setProgress(10);
+      clearInterval(progressInterval);
+      clearTimeout(hideTimeout);
+      progressInterval = window.setInterval(() => {
+        setProgress(p => (p < 85 ? p + Math.random() * 15 : p));
+      }, 200);
+    };
+
+    const handleEnd = () => {
+      clearInterval(progressInterval);
+      setProgress(100);
+      hideTimeout = window.setTimeout(() => {
+        setLoading(false);
+        setTimeout(() => setProgress(0), 200); // reset after hidden
+      }, 300);
+    };
+
+    window.addEventListener('sync-start', handleStart);
+    window.addEventListener('sync-end', handleEnd);
+
+    return () => {
+      window.removeEventListener('sync-start', handleStart);
+      window.removeEventListener('sync-end', handleEnd);
+      clearInterval(progressInterval);
+      clearTimeout(hideTimeout);
+    };
+  }, []);
+
+  if (!loading && progress === 0) return null;
+
+  return (
+    <div className="fixed top-0 left-0 w-full h-1 z-[10000] overflow-hidden pointer-events-none">
+      <div 
+        className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.7)] transition-all duration-200 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+};
+
 import { User, UserRole, TicketStatus, ApplicationStatus } from './types';
 import { getStore, saveStore, initFirebaseSync } from './store';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -111,24 +163,74 @@ export const Logo: React.FC<{ size?: number, className?: string }> = ({ size = 2
   </svg>
 );
 
-const SplashScreen: React.FC = () => (
-  <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center text-white transition-opacity duration-1000 overflow-hidden">
-    <video 
-      autoPlay muted loop playsInline 
-      className="absolute inset-0 w-full h-full object-cover scale-105 opacity-40"
-    >
-      <source src="https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-mansion-with-a-pool-and-garden-4286-large.mp4" type="video/mp4" />
-    </video>
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
-    <div className="relative z-10 animate-pulse-gentle flex flex-col items-center text-center px-6">
-      <div className="bg-white/10 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl mb-8 transform hover:scale-105 transition-transform duration-500">
-        <Logo size={64} className="text-white" />
-      </div>
-      <h1 className="text-6xl font-semibold tracking-tighter mb-2 drop-shadow-xl text-white">SPACEYA</h1>
-      <p className="text-white opacity-60 font-playfair tracking-widest text-lg italic">Your Space, Handled</p>
+const SkeletonLoadingScreen: React.FC = () => {
+  return (
+    <div className="flex flex-col md:flex-row h-screen w-full bg-white dark:bg-zinc-950 overflow-hidden z-[9999] relative">
+      {/* Sidebar Skeleton */}
+      <aside className="hidden md:flex flex-col w-72 bg-zinc-50 dark:bg-black border-r border-zinc-200 dark:border-zinc-900 p-8 h-full shrink-0">
+        <div className="flex flex-col items-center mb-12">
+          <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-3xl animate-pulse mb-4"></div>
+          <div className="w-32 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse"></div>
+        </div>
+        <div className="space-y-6 w-full">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-4 px-2">
+              <div className="w-6 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse shrink-0"></div>
+              <div className="w-full text-left h-4 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* Main Content Skeleton */}
+      <main className="flex-1 p-6 md:p-10 flex flex-col h-full bg-white dark:bg-zinc-950">
+        {/* Mobile Header Skeleton */}
+        <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-zinc-100 dark:border-zinc-900">
+           <div className="w-10 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
+           <div className="w-24 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse"></div>
+        </div>
+
+        {/* Dashboard Header Skeleton */}
+        <div className="mb-10 flex justify-between items-end">
+          <div className="space-y-4 w-full max-w-md">
+            <div className="w-24 h-3 bg-zinc-200 dark:bg-zinc-800 rounded-sm animate-pulse"></div>
+            <div className="w-2/3 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse"></div>
+          </div>
+          <div className="hidden md:block w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse shrink-0"></div>
+        </div>
+
+        {/* Top Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50 rounded-3xl p-6 h-36 flex flex-col justify-between">
+               <div className="w-10 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
+               <div className="space-y-2">
+                 <div className="w-1/3 h-3 bg-zinc-200 dark:bg-zinc-800 rounded-sm animate-pulse"></div>
+                 <div className="w-2/3 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse"></div>
+               </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main List Skeleton */}
+        <div className="flex-1 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50 rounded-3xl p-6 md:p-8 flex flex-col">
+           <div className="w-1/4 h-5 bg-zinc-200 dark:bg-zinc-800 rounded-md mb-8 animate-pulse"></div>
+           <div className="space-y-4 flex-1">
+               {[1, 2, 3, 4].map(i => (
+                 <div key={i} className="w-full h-20 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 animate-pulse flex items-center p-4 gap-4">
+                    <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-xl shrink-0"></div>
+                    <div className="space-y-2 flex-1">
+                      <div className="w-1/3 h-4 bg-zinc-200 dark:bg-zinc-800 rounded-md"></div>
+                      <div className="w-1/4 h-3 bg-zinc-200 dark:bg-zinc-800 rounded-sm"></div>
+                    </div>
+                 </div>
+               ))}
+           </div>
+        </div>
+      </main>
     </div>
-  </div>
-);
+  );
+};
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -212,7 +314,7 @@ const App: React.FC = () => {
         refreshBadges();
       }
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
     
     return () => {
       clearTimeout(timer);
@@ -322,7 +424,7 @@ const App: React.FC = () => {
            transition={{ duration: 0.5 }}
            className="fixed inset-0 z-[9999]"
         >
-          <SplashScreen />
+          <SkeletonLoadingScreen />
         </motion.div>
       ) : !user ? (
         <motion.div

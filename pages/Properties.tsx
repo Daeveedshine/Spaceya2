@@ -14,6 +14,7 @@ import {
   Upload, Send, FileWarning, AlertOctagon, AlertCircle, Trash2, ChevronLeft, ChevronRight, Filter
 } from 'lucide-react';
 import { extractErrorMessage } from '../lib/firebaseErrors';
+import { toast } from 'sonner';
 
 interface PropertiesProps {
   user: User;
@@ -41,6 +42,15 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
   const [showNoticeForm, setShowNoticeForm] = useState(false);
   const [tenantSearch, setTenantSearch] = useState('');
   const [editFormData, setEditFormData] = useState<Partial<Property>>({});
+  
+  // Skeleton Loading State
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    setIsFetching(true);
+    const t = setTimeout(() => setIsFetching(false), 600);
+    return () => clearTimeout(t);
+  }, []);
   
   // Carousel State
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -195,17 +205,19 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
   const handleAssignTenant = (tenant: User) => {
     if (!selectedProperty) return;
     setPendingTenant(tenant);
+    setShowTenantPicker(false);
     setShowPaymentModal(true);
   };
 
   const handleTopUp = async () => {
     setIsSaving(true);
+    const toastId = toast.loading('Simulating fund transfer...');
     const { simulateFundWallet } = await import('../services/simulationEngine');
     const result = await simulateFundWallet(user.id, 5000);
     if (result.status === 'success') {
-      alert('Wallet funded via simulation.');
+      toast.success('Wallet funded via simulation.', { id: toastId });
     } else {
-      alert('Error: ' + result.message);
+      toast.error('Error: ' + result.message, { id: toastId });
     }
     setIsSaving(false);
   };
@@ -215,13 +227,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     
     setIsSaving(true);
     setShowPaymentModal(false);
+    const toastId = toast.loading('Processing payment & assignment...');
 
     try {
       const { simulateTenantAssignment } = await import('../services/simulationEngine');
       const assignResult = await simulateTenantAssignment(user.id, pendingTenant.id, selectedProperty.id);
 
       if (assignResult.status !== 'success') {
-         alert('Payment Failed: ' + assignResult.message);
+         toast.error('Payment Failed: ' + assignResult.message, { id: toastId });
          setIsSaving(false);
          setPendingTenant(null);
          return;
@@ -276,6 +289,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         linkTo: 'dashboard'
       };
 
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+      } catch (err) {
+        console.error('Failed to create notification', err);
+      }
+
       const updatedStore = { 
         ...store, 
         properties: updatedProperties, 
@@ -288,9 +309,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       setStore(updatedStore);
       logger.action('tenant_assigned_to_property', { propertyId: selectedProperty.id, tenantId: pendingTenant.id });
       setSelectedProperty(updatedProperties.find(p => p.id === selectedProperty.id) || null);
+      toast.success('Tenant successfully assigned and payment completed.', { id: toastId });
       
     } catch (e: any) {
-      alert('Error during assignment: ' + extractErrorMessage(e));
+      toast.error('Error during assignment: ' + extractErrorMessage(e), { id: toastId });
     }
 
     setIsSaving(false);
@@ -381,6 +403,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
   const handleSubmitMaintenance = async () => {
     if (!selectedProperty || !maintenanceIssue) return;
     setIsSaving(true);
+    const toastId = toast.loading('Submitting maintenance ticket...');
 
     try {
       const newTicket: MaintenanceTicket = {
@@ -407,6 +430,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         linkTo: 'maintenance'
       };
 
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+      } catch (err) {
+        console.error('Failed to create maintenance notice', err);
+      }
+
       const updatedStore = {
         ...store,
         tickets: [newTicket, ...store.tickets],
@@ -420,8 +451,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       setShowMaintenanceForm(false);
       setMaintenanceIssue('');
       setMaintenanceImage(null);
+      toast.success('Maintenance ticket submitted', { id: toastId });
     } catch (error) {
       console.error("Failed to submit maintenance:", error);
+      toast.error('Failed to submit maintenance ticket', { id: toastId });
     } finally {
         setIsSaving(false);
     }
@@ -430,6 +463,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
   const handleSendNotice = async () => {
     if (!selectedProperty || !selectedProperty.tenantId || !noticeMessage) return;
     setIsSaving(true);
+    const toastId = toast.loading('Sending notice...');
 
     try {
         const title = noticeType === 'RENT_INCREASE' ? 'Notice: Rent Adjustment' : 'Urgent: Notice to Quit';
@@ -447,6 +481,14 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             attachmentUrl: noticeFile || undefined
         };
 
+        try {
+            const { doc, setDoc } = await import('firebase/firestore');
+            const { db } = await import('../firebaseConfig');
+            await setDoc(doc(db, 'notifications', notification.id), JSON.parse(JSON.stringify(notification)));
+        } catch (err) {
+            console.error('Failed to create notification', err);
+        }
+
         const updatedStore = {
             ...store,
             notifications: [notification, ...store.notifications]
@@ -458,8 +500,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         setShowNoticeForm(false);
         setNoticeFile(null);
         setNoticeFileName('');
+        toast.success('Notice sent successfully', { id: toastId });
     } catch (error) {
         console.error("Failed to send notice:", error);
+        toast.error('Failed to send notice', { id: toastId });
     } finally {
         setIsSaving(false);
     }
@@ -514,6 +558,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
   const handleSave = async () => {
     if (!selectedProperty) return;
     setIsSaving(true);
+    const toastId = toast.loading('Saving property...');
     try {
       const updatedProperties = store.properties.map(p => 
         p.id === selectedProperty.id ? { ...p, ...editFormData } as Property : p
@@ -524,8 +569,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       setSelectedProperty({ ...selectedProperty, ...editFormData } as Property);
       logger.action('property_updated', { propertyId: selectedProperty.id });
       setIsEditing(false);
+      toast.success('Property saved', { id: toastId });
     } catch (error) {
       console.error("Failed to save property:", error);
+      toast.error('Failed to save property', { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -717,7 +764,21 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 transition-all duration-500">
-        {properties.length > 0 ? properties.map(property => {
+        {isFetching ? (
+          [1, 2, 3, 4, 5].map(i => (
+             <div key={i} className="glass-card overflow-hidden h-[450px] flex flex-col justify-between p-6 animate-pulse border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40">
+                <div className="w-full h-48 bg-zinc-200 dark:bg-zinc-800 rounded-3xl mb-6"></div>
+                <div className="space-y-4 mb-8">
+                   <div className="w-3/4 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-md"></div>
+                   <div className="w-1/2 h-4 bg-zinc-200 dark:bg-zinc-800 rounded-md"></div>
+                </div>
+                <div className="flex justify-between items-center mt-auto border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                   <div className="w-1/3 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
+                   <div className="w-1/4 h-4 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
+                </div>
+             </div>
+          ))
+        ) : properties.length > 0 ? properties.map(property => {
           const propertyAgent = store.users.find(u => u.id === property.agentId);
           const activeTickets = store.tickets.filter(t => t.propertyId === property.id && t.status !== TicketStatus.RESOLVED);
           
@@ -1119,80 +1180,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                   </div>
                 ) : (
                   <>
-                    <AnimatePresence>
-                        {showPaymentModal && (
-                            <motion.div 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6"
-                            >
-                                    <motion.div 
-                                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                                    className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl relative overflow-hidden"
-                                >
-                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400" />
-                                    
-                                    <div className="flex justify-center mb-6">
-                                        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-900 rounded-lg flex items-center justify-center text-black dark:text-white">
-                                            <CreditCard size={32} />
-                                        </div>
-                                    </div>
 
-                                    <div className="text-center space-y-2 mb-8">
-                                        <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Service Fee</h3>
-                                        <p className="text-zinc-500 font-medium text-[10px] uppercase tracking-wide">
-                                            Admin fee of <span className="text-zinc-900 dark:text-white font-black">₦1,000</span> required.
-                                        </p>
-                                    </div>
-
-                                    <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800 mb-6 space-y-3">
-                                        <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
-                                            <span>Wallet</span>
-                                            <span className="text-zinc-900 dark:text-white">{formatCurrency(store.users.find(u => u.id === user.id)?.walletBalance || 0, settings)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
-                                            <span>Fee</span>
-                                            <span className="text-black dark:text-white font-black">- ₦1,000</span>
-                                        </div>
-                                        <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
-                                        <div className="flex justify-between items-center text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-widest">
-                                            <span>Total</span>
-                                            <span>{formatCurrency((store.users.find(u => u.id === user.id)?.walletBalance || 0) - 1000, settings)}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-3">
-                                        {(store.users.find(u => u.id === user.id)?.walletBalance || 0) >= 1000 ? (
-                                            <button 
-                                                onClick={confirmAssignmentWithPayment}
-                                                disabled={isSaving}
-                                                className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                                            >
-                                                {isSaving ? <Loader2 className="animate-spin mx-auto w-4 h-4" /> : 'Confirm Payment'}
-                                            </button>
-                                        ) : (
-                                            <button 
-                                                onClick={handleTopUp}
-                                                disabled={isSaving}
-                                                className="w-full py-4 bg-white dark:bg-zinc-900 text-black dark:text-white border border-zinc-950 dark:border-white font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                                            >
-                                                {isSaving ? <Loader2 className="animate-spin mx-auto w-4 h-4" /> : 'Add Funds (₦5,000)'}
-                                            </button>
-                                        )}
-                                        <button 
-                                            onClick={() => { setShowPaymentModal(false); setPendingTenant(null); }}
-                                            className="w-full py-2 text-zinc-400 font-black uppercase tracking-[0.2em] text-[8px] hover:text-rose-500 transition-colors"
-                                        >
-                                            Abort
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
 
                     <div className="flex justify-between items-start mb-8">
                       <div className="space-y-4 flex-1 min-w-0">
@@ -1524,6 +1512,69 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                 )}
              </div>
           </div>
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400" />
+                
+                <div className="flex justify-center mb-6">
+                    <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-900 rounded-lg flex items-center justify-center text-black dark:text-white">
+                        <CreditCard size={32} />
+                    </div>
+                </div>
+
+                <div className="text-center space-y-2 mb-8">
+                    <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Service Fee</h3>
+                    <p className="text-zinc-500 font-medium text-[10px] uppercase tracking-wide">
+                        Admin fee of <span className="text-zinc-900 dark:text-white font-black">₦1,000</span> required.
+                    </p>
+                </div>
+
+                <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800 mb-6 space-y-3">
+                    <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
+                        <span>Wallet</span>
+                        <span className="text-zinc-900 dark:text-white">{formatCurrency(store.users.find(u => u.id === user.id)?.walletBalance || 0, settings)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-zinc-400">
+                        <span>Fee</span>
+                        <span className="text-black dark:text-white font-black">- ₦1,000</span>
+                    </div>
+                    <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="flex justify-between items-center text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-widest">
+                        <span>Total</span>
+                        <span>{formatCurrency((store.users.find(u => u.id === user.id)?.walletBalance || 0) - 1000, settings)}</span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    {(store.users.find(u => u.id === user.id)?.walletBalance || 0) >= 1000 ? (
+                        <button 
+                            onClick={confirmAssignmentWithPayment}
+                            disabled={isSaving}
+                            className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Confirm Payment'}
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={handleTopUp}
+                            disabled={isSaving}
+                            className="w-full py-4 bg-white dark:bg-zinc-900 text-black dark:text-white border border-zinc-950 dark:border-white font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add Funds (₦5,000)'}
+                        </button>
+                    )}
+                    <button 
+                        onClick={() => { setShowPaymentModal(false); setPendingTenant(null); }}
+                        className="w-full py-2 text-zinc-400 font-black uppercase tracking-[0.2em] text-[8px] hover:text-rose-500 transition-colors"
+                    >
+                        Abort
+                    </button>
+                </div>
+            </div>
         </div>
       )}
 

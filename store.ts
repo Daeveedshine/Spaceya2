@@ -171,6 +171,8 @@ import { sanitizeObject } from './lib/sanitize';
 
 // Save data to LocalStorage (Immediate) AND Firestore (Async)
 export const saveStore = async (state: AppState) => {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('sync-start'));
+  
   // 1. Local Persistence (Immediate)
   const sanitizedState = sanitizeObject(state);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
@@ -182,7 +184,7 @@ export const saveStore = async (state: AppState) => {
     const syncCollection = async <T extends { id: string }>(collectionName: string, items: T[]) => {
       if (!items || items.length === 0) return;
       
-      for (const item of items) {
+      const promises = items.map(async (item) => {
         try {
           // Safety: Ensure valid agentId is present for shared collections
           if (collectionName === 'tickets' && (!item['agentId'] || item['agentId'] === 'u1')) {
@@ -197,9 +199,9 @@ export const saveStore = async (state: AppState) => {
           }
 
           // Safety: Ensure critical fields exist for certain collections
-          if (collectionName === 'notifications' && !item['userId']) continue;
-          if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'] || item['agentId'] === 'u1')) continue;
-          if (collectionName === 'agreements' && (!item['agentId'] || !item['tenantId'])) continue;
+          if (collectionName === 'notifications' && !item['userId']) return;
+          if (collectionName === 'tickets' && (!item['agentId'] || !item['tenantId'] || item['agentId'] === 'u1')) return;
+          if (collectionName === 'agreements' && (!item['agentId'] || !item['tenantId'])) return;
 
           // Strip undefined values which cause Firebase SDK errors
           const cleanItem = JSON.parse(JSON.stringify(item));
@@ -207,7 +209,8 @@ export const saveStore = async (state: AppState) => {
         } catch (err: any) {
           try { handleFirestoreError(err, 'write', `/${collectionName}/${item.id}`, user); } catch(e) {}
         }
-      }
+      });
+      await Promise.all(promises);
     };
 
     // Filter items to only sync those that this user has permission to write (ownership based)
@@ -220,11 +223,13 @@ export const saveStore = async (state: AppState) => {
       syncCollection('applications', sanitizedState.applications.filter(a => a.userId === user.uid || a.agentId === user.uid)),
       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
       syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
-      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid || n.linkTo === 'maintenance' || n.title.includes('Legal Notice') || userRole === 'AGENT' || userRole === 'ADMIN')),
+      syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid)),
       syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
       syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
     ]);
   }
+  
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('sync-end'));
 };
 
 // Subscribe to Firestore updates (Real-time Sync)

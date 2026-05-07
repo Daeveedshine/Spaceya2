@@ -287,9 +287,12 @@ service cloud.firestore {
           && data.id is string
           && data.userId is string;
       }
-      allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
-      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isRole('AGENT'));
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
+        isRole('AGENT') || isAdmin()
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isRole('AGENT'));
       allow create: if isVerified() && isValidNotification(incoming()) && (
         incoming().userId == request.auth.uid || 
         isRole('AGENT') || 

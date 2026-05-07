@@ -35,7 +35,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
     );
   }, [store.properties, user.id]);
 
-  const handleUpdateStatus = (id: string, status: ApplicationStatus) => {
+  const handleUpdateStatus = async (id: string, status: ApplicationStatus) => {
     const updatedApps = store.applications.map(app => app.id === id ? { ...app, status } : app);
     const app = store.applications.find(a => a.id === id);
     if (!app) return;
@@ -50,6 +50,12 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
       isRead: false
     };
 
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      const { db } = await import('../firebaseConfig');
+      await setDoc(doc(db, 'notifications', notification.id), notification);
+    } catch (e) {}
+
     const newState = { ...store, applications: updatedApps, notifications: [notification, ...store.notifications] };
     saveStore(newState);
     setStore(newState);
@@ -61,7 +67,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
     if (!selectedApp) return;
     setIsRouting(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const today = new Date();
       const nextYear = new Date();
       nextYear.setFullYear(today.getFullYear() + 1);
@@ -115,6 +121,12 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
         isRead: false,
         linkTo: 'dashboard'
       };
+
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+      } catch (e) {}
 
       const updatedStore = { 
         ...store, 

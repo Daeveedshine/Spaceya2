@@ -255,7 +255,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     const score = 0;
     const recommendation = "";
 
-    setTimeout(() => {
+    setTimeout(async () => {
       // Map form data to standard fields where possible, put rest in customResponses
       const appRecord: TenantApplication = {
         id: `app${Date.now()}`,
@@ -292,19 +292,27 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         customResponses: formData
       };
 
+      const notification = {
+        id: `n_app_${Date.now()}`,
+        userId: appRecord.agentId,
+        title: 'New Tenancy Application',
+        message: `A new candidate has submitted a dossier via your custom form.`,
+        type: NotificationType.INFO,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        linkTo: 'screenings'
+      };
+
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+      } catch (e) {}
+
       const newState = {
         ...store,
         applications: [...store.applications, appRecord],
-        notifications: [{
-          id: `n_app_${Date.now()}`,
-          userId: appRecord.agentId,
-          title: 'New Tenancy Application',
-          message: `A new candidate has submitted a dossier via your custom form.`,
-          type: NotificationType.INFO,
-          timestamp: new Date().toISOString(),
-          isRead: false,
-          linkTo: 'screenings'
-        }, ...store.notifications]
+        notifications: [notification, ...store.notifications]
       };
 
       saveStore(newState);

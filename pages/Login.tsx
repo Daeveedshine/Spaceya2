@@ -12,6 +12,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { handleFirestoreError, extractErrorMessage } from '../lib/firebaseErrors';
 import { logger } from '../lib/logger';
+import { toast } from 'sonner';
 import { 
   Mail, UserCheck, 
   Lock, AlertCircle, Eye, EyeOff, Loader2 
@@ -45,25 +46,27 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      setError('Please enter your email address to reset password.');
+      toast.error('Please enter your email address to reset password.');
       return;
     }
     
     setIsLoading(true);
     setError('');
     setSuccessMessage('');
+    const toastId = toast.loading('Initiating reset protocol...');
     
     try {
       await sendPasswordResetEmail(auth, email);
+      toast.success('Password reset link sent to your inbox!', { id: toastId });
       setSuccessMessage('Password reset link sent to your inbox! Once you have updated your password, you can login with your new credentials.');
     } catch (err: any) {
       console.error('Password reset failed', err);
       if (err.code === 'auth/user-not-found') {
-        setError('This email identity was not found in our registry.');
+        toast.error('This email identity was not found in our registry.', { id: toastId });
       } else if (err.code === 'auth/invalid-email') {
-        setError('The provided email format is invalid.');
+        toast.error('The provided email format is invalid.', { id: toastId });
       } else {
-        setError('Failed to initiate reset protocol. Please try again.');
+        toast.error('Failed to initiate reset protocol. Please try again.', { id: toastId });
       }
     } finally {
       setIsLoading(false);
@@ -214,9 +217,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
       }
       
+      toast.success('Google Authentication successful', { id: toastId });
       onLogin(currentUserProfile);
     } catch (err: any) {
       setError(extractErrorMessage(err) || 'Google Authentication failed');
+      toast.error('Google Authentication failed', { id: toastId });
     } finally {
       setIsLoading(false);
     }

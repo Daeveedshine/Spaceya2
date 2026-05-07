@@ -69,19 +69,27 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
         aiAssessment: undefined
       };
 
+      const notification = {
+        id: `n_t_${Date.now()}`,
+        userId: freshTicket.agentId, 
+        title: 'Maintenance Request Logged',
+        message: `A new repair request has been filed for ${property?.name || freshTicket.propertyId}. Evidence attached.`,
+        type: NotificationType.INFO,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        linkTo: 'maintenance'
+      };
+
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+      } catch (e) {}
+
       const newState = { 
           ...store, 
           tickets: [freshTicket, ...store.tickets],
-          notifications: [{
-            id: `n_t_${Date.now()}`,
-            userId: freshTicket.agentId, 
-            title: 'Maintenance Request Logged',
-            message: `A new repair request has been filed for ${property?.name || freshTicket.propertyId}. Evidence attached.`,
-            type: NotificationType.INFO,
-            timestamp: new Date().toISOString(),
-            isRead: false,
-            linkTo: 'maintenance'
-          }, ...store.notifications]
+          notifications: [notification, ...store.notifications]
       };
       
       await saveStore(newState);
@@ -97,24 +105,32 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
     }
   };
 
-  const handleUpdateStatus = (ticketId: string, newStatus: TicketStatus) => {
+  const handleUpdateStatus = async (ticketId: string, newStatus: TicketStatus) => {
     const updatedTickets = store.tickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t);
     const ticket = store.tickets.find(t => t.id === ticketId);
     if (!ticket) return;
 
+    const notification = {
+        id: `n_ts_${Date.now()}`,
+        userId: ticket.tenantId,
+        title: 'Maintenance Status Updated',
+        message: `Your request #${ticket.id} is now ${newStatus.replace('_', ' ')}.`,
+        type: NotificationType.INFO,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        linkTo: 'maintenance'
+    };
+
+    try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebaseConfig');
+        await setDoc(doc(db, 'notifications', notification.id), notification);
+    } catch (e) {}
+
     const newState = { 
         ...store, 
         tickets: updatedTickets,
-        notifications: [{
-            id: `n_ts_${Date.now()}`,
-            userId: ticket.tenantId,
-            title: 'Maintenance Status Updated',
-            message: `Your request #${ticket.id} is now ${newStatus.replace('_', ' ')}.`,
-            type: NotificationType.INFO,
-            timestamp: new Date().toISOString(),
-            isRead: false,
-            linkTo: 'maintenance'
-        }, ...store.notifications]
+        notifications: [notification, ...store.notifications]
     };
     saveStore(newState);
     setStore(newState);
