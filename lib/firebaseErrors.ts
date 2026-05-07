@@ -22,6 +22,28 @@ export class SafeAPIError extends Error {
   }
 }
 
+export function extractErrorMessage(error: any): string {
+  if (!error) return 'An unexpected error occurred.';
+  if (typeof error === 'string') return error;
+  
+  let msg = error.message || 'An unexpected error occurred.';
+  
+  try {
+    const parsed = JSON.parse(msg);
+    if (parsed && typeof parsed.error === 'string') {
+      msg = parsed.error;
+    }
+  } catch (e) {
+    // message is not JSON, which is fine
+  }
+  
+  if (msg.includes('Missing or insufficient permissions.')) {
+     return 'You do not have permission to perform this action.';
+  }
+  
+  return msg;
+}
+
 export function handleFirestoreError(error: any, operationType: FirestoreErrorInfo['operationType'], path: string | null, authUser?: any) {
   const isPermissionDenied = error && error.code === 'permission-denied';
   

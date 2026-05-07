@@ -10,7 +10,7 @@ import {
   updateProfile 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { handleFirestoreError } from '../lib/firebaseErrors';
+import { handleFirestoreError, extractErrorMessage } from '../lib/firebaseErrors';
 import { logger } from '../lib/logger';
 import { 
   Mail, UserCheck, 
@@ -141,7 +141,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const projectId = (auth as any).app?.options?.projectId || 'unknown';
         setError(`Manual registration is not enabled in the Firebase console for project "${projectId}". Please enable Email/Password authentication in the Auth section of the console.`);
       } else {
-        setError(err.message || 'Authentication protocol failure.');
+        setError(extractErrorMessage(err) || 'Authentication protocol failure.');
       }
     } finally {
       setIsLoading(false);
@@ -216,7 +216,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       onLogin(currentUserProfile);
     } catch (err: any) {
-      setError(err.message || 'Google Authentication failed');
+      setError(extractErrorMessage(err) || 'Google Authentication failed');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,8 @@
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, runTransaction, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
+import { extractErrorMessage } from '../lib/firebaseErrors';
+
 const COMPANY_WALLET_ID = 'COMPANY_WALLET_0';
 
 export interface SimulationResult {
@@ -73,7 +75,7 @@ export const simulateFundWallet = async (userId: string, amount: number): Promis
   } catch (error: any) {
     return {
       status: 'failed',
-      message: error.message || 'Error funding wallet'
+      message: extractErrorMessage(error) || 'Error funding wallet'
     };
   }
 };
@@ -152,7 +154,7 @@ export const simulateTenantAssignment = async (agentId: string, tenantId: string
   } catch (error: any) {
     return {
       status: 'failed',
-      message: error.message || 'Error processing assignment'
+      message: extractErrorMessage(error) || 'Error processing assignment'
     };
   }
 };
@@ -200,7 +202,7 @@ export const simulateWithdrawal = async (agentId: string, amount: number): Promi
   } catch (error: any) {
     return {
       status: 'failed',
-      message: error.message || 'Error withdrawing funds'
+      message: extractErrorMessage(error) || 'Error withdrawing funds'
     };
   }
 };

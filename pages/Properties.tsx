@@ -13,6 +13,7 @@ import {
   Search, CheckCircle2, ClipboardCheck, Building, Camera, Image as ImageIcon, AlertTriangle, CreditCard,
   Upload, Send, FileWarning, AlertOctagon, AlertCircle, Trash2, ChevronLeft, ChevronRight, Filter
 } from 'lucide-react';
+import { extractErrorMessage } from '../lib/firebaseErrors';
 
 interface PropertiesProps {
   user: User;
@@ -289,7 +290,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       setSelectedProperty(updatedProperties.find(p => p.id === selectedProperty.id) || null);
       
     } catch (e: any) {
-      alert('Error during assignment: ' + e.message);
+      alert('Error during assignment: ' + extractErrorMessage(e));
     }
 
     setIsSaving(false);

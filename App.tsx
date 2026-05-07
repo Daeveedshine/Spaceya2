@@ -300,7 +300,7 @@ const App: React.FC = () => {
     { id: 'maintenance', label: 'Maintenance', icon: Wrench, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN], badge: badges.maintenance },
     { id: 'notifications', label: 'Notifications', icon: Bell, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN], badge: badges.notifications },
     { id: 'screenings', label: 'Screenings', icon: ClipboardCheck, roles: [UserRole.AGENT, UserRole.ADMIN], badge: badges.screenings },
-    { id: 'reports', label: 'Global Registry', icon: Table, roles: [UserRole.AGENT, UserRole.ADMIN] },
+    { id: 'reports', label: 'Report', icon: Table, roles: [UserRole.AGENT, UserRole.ADMIN] },
     { id: 'agreements', label: 'Agreements (Soon)', icon: FileText, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
     { id: 'payments', label: 'Rent & Payments', icon: CreditCard, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
     { id: 'settings', label: 'Settings', icon: SettingsIcon, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
