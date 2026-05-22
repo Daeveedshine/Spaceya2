@@ -319,8 +319,14 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
         unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('agentId', '==', user.uid))));
         unsubscribes.push(attachListener('agreements', 'agreements', query(collection(db, 'agreements'), where('agentId', '==', user.uid))));
       } else {
-        unsubscribes.push(attachListener('users', 'users', query(collection(db, 'users'), where('id', '==', user.uid))));
-        unsubscribes.push(attachListener('properties', 'properties', query(collection(db, 'properties'), where('status', 'in', ['LISTED', 'VACANT']))));
+        unsubscribes.push(attachListener('users', 'users', query(collection(db, 'users'), or(where('id', '==', user.uid), where('role', '==', 'AGENT')))));
+        unsubscribes.push(attachListener('properties', 'properties', query(
+           collection(db, 'properties'), 
+           or(
+             where('status', 'in', ['LISTED', 'VACANT']), 
+             where('tenantId', '==', user.uid)
+           )
+        )));
         unsubscribes.push(attachListener('applications', 'applications', query(collection(db, 'applications'), where('userId', '==', user.uid))));
         unsubscribes.push(attachListener('tickets', 'tickets', query(collection(db, 'tickets'), where('tenantId', '==', user.uid))));
       }
@@ -358,9 +364,9 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
       if (userRole === 'ADMIN') {
         unsubscribes.push(attachListener('transactions', 'transactions', collection(db, 'transactions')));
         unsubscribes.push(attachListener('wallets', 'wallets' as any, collection(db, 'wallets')));
-      } else if (userRole === 'AGENT') {
+      } else {
         unsubscribes.push(attachListener('transactions', 'transactions', query(collection(db, 'transactions'), where('user_id', '==', user.uid))));
-        unsubscribes.push(attachListener('wallets', 'wallets' as any, query(collection(db, 'wallets'), where('userId', '==', user.uid))));
+        unsubscribes.push(attachListener('wallets', 'wallets' as any, query(collection(db, 'wallets'), where('user_id', '==', user.uid))));
       }
 
     } else {
