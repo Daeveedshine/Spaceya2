@@ -6,7 +6,7 @@ import { compressImage } from '../lib/imageUtils';
 import { 
   User as UserIcon, Mail, Phone, Shield, Save, CheckCircle2, 
   AlertCircle, Copy, Check, Link as LinkIcon, FileText, 
-  Settings as SettingsIcon, PenTool, Plus, Trash2, GripVertical, X, Loader2,
+  PenTool, Plus, Trash2, GripVertical, X, Loader2,
   Camera, ArrowUp, ArrowDown
 } from 'lucide-react';
 

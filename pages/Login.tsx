@@ -318,7 +318,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onClick={signInWithGoogle} 
                     className="w-full py-5 sm:py-5 px-6 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full text-[9px] sm:text-[11px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-3 sm:gap-6 hover:opacity-80 transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
                   >
-                    <GoogleIcon /> {isLoading ? 'Verifying...' : 'Authorize via Google'}
+                    <GoogleIcon /> {isLoading ? 'Verifying...' : 'Login via Google'}
                   </button>
                 </div>
 

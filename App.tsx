@@ -61,19 +61,17 @@ import AdminDashboard from './pages/AdminDashboard';
 import Properties from './pages/Properties';
 import Maintenance from './pages/Maintenance';
 import Payments from './pages/Payments';
-import Agreements from './pages/Agreements';
 import Notifications from './pages/Notifications';
 import Reports from './pages/Reports';
 import Applications from './pages/Applications';
 import Screenings from './pages/Screenings';
 import AdminApplications from './pages/AdminApplications';
 import Profile from './pages/Profile';
-import Settings from './pages/Settings';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, Building2, Wrench, CreditCard, LogOut, Menu, X, Shield, 
   FileText, Bell, Table, Building, ClipboardCheck, UserPlus, 
-  User as UserIcon, ChevronLeft, ChevronRight, Settings as SettingsIcon, Cloud
+  User as UserIcon, ChevronLeft, ChevronRight, Cloud
 } from 'lucide-react';
 import { isConfigured, configurationError } from './firebaseConfig';
 import { requestNotificationPermission } from './lib/notifications';
@@ -241,16 +239,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [synced, setSynced] = useState(false);
 
-  // Sync Settings Function
-  const syncVisualSettings = () => {
-    const store = getStore();
-    const { appearance } = store.settings;
-    
-    document.documentElement.classList.toggle('disable-animations', !appearance.animations);
-    document.documentElement.classList.toggle('ui-compact', appearance.density === 'compact');
-    document.documentElement.classList.toggle('no-glass', !appearance.glassEffect);
-  };
-
   const refreshBadges = () => {
     const store = getStore();
     if (!store.currentUser) return;
@@ -289,8 +277,6 @@ const App: React.FC = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // Initial sync
-    syncVisualSettings();
     requestNotificationPermission();
 
     let unsubscribe: () => void = () => {};
@@ -339,7 +325,6 @@ const App: React.FC = () => {
     }
     
     refreshBadges();
-    syncVisualSettings(); // Refresh visual state on login
   };
 
   const handleLogout = async () => {
@@ -367,14 +352,12 @@ const App: React.FC = () => {
       case 'properties': content = <Properties user={user} />; break;
       case 'maintenance': content = <Maintenance user={user} onUpdate={refreshBadges} />; break;
       case 'payments': content = <Payments user={user} />; break;
-      case 'agreements': content = <Agreements user={user} />; break;
       case 'notifications': content = <Notifications user={user} onRefreshCount={refreshBadges} onNavigate={setView} />; break;
       case 'reports': content = <Reports user={user} />; break;
       case 'applications': content = <Applications user={user} onNavigate={setView} onUpdate={refreshBadges} />; break;
       case 'screenings': content = <Screenings user={user} onNavigate={setView} onUpdate={refreshBadges} />; break;
       case 'admin_applications': content = <AdminApplications user={user} onBack={() => setView('admin_dashboard')} />; break;
       case 'profile': content = <Profile user={user} onUserUpdate={setUser} />; break;
-      case 'settings': content = <Settings user={user} onSettingsUpdate={syncVisualSettings} />; break;
       default: content = <Dashboard user={user} onNavigate={setView} />; break;
     }
 
@@ -403,9 +386,7 @@ const App: React.FC = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN], badge: badges.notifications },
     { id: 'screenings', label: 'Screenings', icon: ClipboardCheck, roles: [UserRole.AGENT, UserRole.ADMIN], badge: badges.screenings },
     { id: 'reports', label: 'Report', icon: Table, roles: [UserRole.AGENT, UserRole.ADMIN] },
-    { id: 'agreements', label: 'Agreements (Soon)', icon: FileText, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
-    { id: 'payments', label: 'Rent & Payments', icon: CreditCard, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
+    { id: 'payments', label: 'Wallet', icon: CreditCard, roles: [UserRole.AGENT, UserRole.ADMIN] },
     { id: 'profile', label: 'My Profile', icon: UserIcon, roles: [UserRole.AGENT, UserRole.TENANT, UserRole.ADMIN] },
   ];
 
@@ -454,7 +435,7 @@ const App: React.FC = () => {
           )}
 
           {/* Mobile Header */}
-          <div className="md:hidden flex items-center justify-between glass-card p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
+          <div className="md:hidden flex items-center justify-between bg-white dark:bg-black p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
             <div className="flex items-center gap-2">
                <Logo size={24} className="text-black dark:text-white" />
                <h1 className="font-bold text-lg tracking-tighter">SPACEYA</h1>
@@ -472,7 +453,7 @@ const App: React.FC = () => {
           {/* Sidebar */}
           <aside className={`
             ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-            fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto glass-card text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
+            fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
             md:translate-x-0 md:static md:inset-auto print:hidden flex flex-col shrink-0
             border-none
             bg-zinc-50 dark:bg-black

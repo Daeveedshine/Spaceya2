@@ -214,8 +214,13 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     const toastId = toast.loading('Simulating fund transfer...');
     const { simulateFundWallet } = await import('../services/simulationEngine');
     const result = await simulateFundWallet(user.id, 5000);
-    if (result.status === 'success') {
+    if (result.status === 'success' && result.balance !== undefined) {
       toast.success('Wallet funded via simulation.', { id: toastId });
+      // Update store so UI refreshes without reload
+      const updatedUsers = store.users.map(u => u.id === user.id ? { ...u, walletBalance: result.balance } : u);
+      setStore({ ...store, users: updatedUsers });
+      // We don't call saveStore(store) here because simulateFundWallet handles it in Firestore directly.
+      // And the global sync handles localstorage.
     } else {
       toast.error('Error: ' + result.message, { id: toastId });
     }
@@ -259,10 +264,13 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         } as Property : p
       );
 
-      // 2. Update Tenant Array
+      // 2. Update Tenant Array and Agent Wallet Balance
       const updatedUsers = store.users.map(u => {
         if (u.id === pendingTenant.id) {
           return { ...u, assignedPropertyIds: [...(u.assignedPropertyIds || []), selectedProperty.id] };
+        }
+        if (u.id === user.id) {
+          return { ...u, walletBalance: assignResult.balance };
         }
         return u;
       });
@@ -299,8 +307,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
         await updateDoc(tenantDocRef, {
             assignedPropertyIds: [...(pendingTenant.assignedPropertyIds || []), selectedProperty.id]
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to create notification or update tenant', err);
+        toast.error('Assignment synchronization pending: ' + (err.message || 'Permissions issue'));
       }
 
       const updatedStore = { 

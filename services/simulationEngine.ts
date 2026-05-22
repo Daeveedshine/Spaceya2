@@ -35,6 +35,7 @@ export const simulateFundWallet = async (userId: string, amount: number): Promis
     const walletRef = doc(db, 'wallets', userId);
     
     const result = await runTransaction(db, async (transaction) => {
+      const userRef = doc(db, 'users', userId);
       const walletDoc = await transaction.get(walletRef);
       if (!walletDoc.exists()) {
         // Create wallet if it doesn't exist
@@ -44,11 +45,13 @@ export const simulateFundWallet = async (userId: string, amount: number): Promis
           status: 'active',
           created_at: Timestamp.now()
         });
+        transaction.update(userRef, { walletBalance: amount });
       } else {
         const currentBalance = walletDoc.data().balance || 0;
         transaction.update(walletRef, {
           balance: currentBalance + amount
         });
+        transaction.update(userRef, { walletBalance: currentBalance + amount });
       }
 
       const ref = generateReference('REF-TEST');
@@ -84,6 +87,7 @@ export const simulateTenantAssignment = async (agentId: string, tenantId: string
   try {
     const FEE = 1000;
     const agentWalletRef = doc(db, 'wallets', agentId);
+    const agentUserRef = doc(db, 'users', agentId);
     const companyWalletRef = doc(db, 'wallets', COMPANY_WALLET_ID);
 
     const result = await runTransaction(db, async (transaction) => {
@@ -117,6 +121,7 @@ export const simulateTenantAssignment = async (agentId: string, tenantId: string
       transaction.update(agentWalletRef, {
         balance: currentBalance - FEE
       });
+      transaction.update(agentUserRef, { walletBalance: currentBalance - FEE });
 
       const ref = generateReference('ASSIGN');
       
