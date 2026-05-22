@@ -290,11 +290,17 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
       };
 
       try {
-        const { doc, setDoc } = await import('firebase/firestore');
+        const { doc, setDoc, updateDoc } = await import('firebase/firestore');
         const { db } = await import('../firebaseConfig');
         await setDoc(doc(db, 'notifications', notification.id), notification);
+        
+        // Push the update for the tenant explicitly to ensure we avoid the profile/agent sync limitations
+        const tenantDocRef = doc(db, 'users', pendingTenant.id);
+        await updateDoc(tenantDocRef, {
+            assignedPropertyIds: [...(pendingTenant.assignedPropertyIds || []), selectedProperty.id]
+        });
       } catch (err) {
-        console.error('Failed to create notification', err);
+        console.error('Failed to create notification or update tenant', err);
       }
 
       const updatedStore = { 

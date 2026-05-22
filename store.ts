@@ -218,7 +218,6 @@ export const saveStore = async (state: AppState) => {
     const userRole = sanitizedState.users.find(u => u.id === user.uid)?.role || 'TENANT';
     
     await Promise.all([
-      syncCollection('users', sanitizedState.users.filter(u => u.id === user.uid)),
       syncCollection('properties', sanitizedState.properties.filter(p => p.agentId === user.uid)),
       syncCollection('applications', sanitizedState.applications.filter(a => a.userId === user.uid || a.agentId === user.uid)),
       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),

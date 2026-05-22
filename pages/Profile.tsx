@@ -128,23 +128,33 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
     }
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     
-    setTimeout(() => {
+    try {
       const store = getStore();
-      const updatedUser = { ...user, name, phone: userPhone, profilePictureUrl: profilePic || null };
+      const updatedUser = { ...user, name, phone: userPhone, profilePictureUrl: profilePic || undefined };
+      
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const { db } = await import('../firebaseConfig');
+      const updateData: any = { name, phone: userPhone };
+      if (profilePic) updateData.profilePictureUrl = profilePic;
+      
+      await updateDoc(doc(db, 'users', user.id), updateData);
       
       const updatedUsers = store.users.map(u => u.id === user.id ? updatedUser : u);
       const newState = { ...store, users: updatedUsers, currentUser: updatedUser };
       
       saveStore(newState);
       onUserUpdate(updatedUser);
-      setIsSaving(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);
-    }, 1000);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCopyId = () => {

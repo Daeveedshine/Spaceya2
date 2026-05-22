@@ -58,7 +58,7 @@ service cloud.firestore {
           && data.role is string && data.role in ['ADMIN', 'AGENT', 'TENANT']
           && (!('phone' in data) || (data.phone is string && data.phone.size() <= 30))
           && (!('walletBalance' in data) || (data.walletBalance is number))
-          && (!('profilePictureUrl' in data) || (data.profilePictureUrl is string && data.profilePictureUrl.size() <= 500))
+          && (!('profilePictureUrl' in data) || (data.profilePictureUrl is string && data.profilePictureUrl.size() <= 2048))
           && (!('assignedPropertyIds' in data) || (data.assignedPropertyIds is list && data.assignedPropertyIds.size() <= 100));
       }
 
@@ -85,9 +85,9 @@ service cloud.firestore {
                     && (
                       isAdmin() ||
                       // Action: User update profile
-                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl'])) ||
-                      // Action: Agent or internal system update balance/assignments
-                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds', 'walletBalance']))
+                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl', 'walletBalance', 'assignedPropertyIds'])) ||
+                      // Action: Agent or internal system update balance/assignments for TENANTS
+                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds', 'walletBalance']) && existing().role == 'TENANT')
                     );
     }
 

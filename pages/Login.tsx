@@ -183,6 +183,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     localStorage.setItem(RATELIMIT_KEY, JSON.stringify(attempts));
 
     setIsLoading(true);
+    const toastId = toast.loading('Authenticating via Google...');
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -200,13 +201,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       if (userSnap && userSnap.exists()) {
         currentUserProfile = userSnap.data() as User;
       } else {
+        const photoUrl = result.user.photoURL || '';
         currentUserProfile = {
           id: result.user.uid,
           name: result.user.displayName || 'New User',
           email: result.user.email || '',
           role: role,
           phone: result.user.phoneNumber || '',
-          profilePictureUrl: result.user.photoURL || '',
+          profilePictureUrl: photoUrl.length > 500 ? '' : photoUrl,
           walletBalance: role === UserRole.AGENT ? 5000 : 0,
           assignedPropertyIds: []
         };
