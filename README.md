@@ -1,20 +1,59 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# SPACEYA
 
-# Run and deploy your AI Studio app
+A comprehensive space and property lifecycle management application. SPACEYA provides an end-to-end digital workflow for real estate agents, property administrators, and tenants. It features role-based dashboards, wallet and payment management, maintenance ticketing, and screening processes in a sleek, modern UI.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/0db530e5-0b50-4dee-9a1e-de3af15bbb76
+- **Role-Based Access**: Dedicated workflows and dashboards for Admin, Agent, and Tenant users.
+- **Wallet & Payments**: Secure integrated wallet system for rent and fee settlements.
+- **Property Management**: Complete lifecycle tracking for properties from vacant listing to active tenancy.
+- **Screenings & Applications**: Manage prospective tenant applications and screening checks.
+- **Maintenance Ticketing**: Integrated ticket system for property maintenance requests.
+- **Reporting & Notifications**: Real-time notifications and detailed metric reporting for agents and admins.
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+- **Framework**: React 19 + Vite
+- **Styling**: Tailwind CSS v4, Lucide React (Icons)
+- **Animations**: Motion (Framer Motion)
+- **Database / Backend**: Firebase (Firestore)
+- **Charts**: Recharts
+- **Language**: TypeScript
 
+## Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Prerequisites
+
+Make sure you have Node.js installed.
+
+### Installation
+
+1. Install all required dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+### Configuration
+
+You need to connect this app to a Firebase project. Make sure you set up exactly:
+
+1. A Firebase project with Firestore and Authentication enabled.
+2. Configure the necessary Firebase environment variables (or rely on the `firebase-applet-config.json` generated in the AI Studio platform).
+3. Deploy the provided `firestore.rules` to secure your collections.
+
+### Project Structure
+
+- `pages/`: Contains the main application views (e.g., Dashboard, Properties, Maintenance, Login, Profile).
+- `store.ts`: Global application state manager (syncs securely with Firestore in real time).
+- `services/`: Specialized services, such as the `simulationEngine` used to mock payment processing logic.
+- `lib/`: Helper libraries such as notification push system or loggers.
+- `App.tsx`: Main router handling authorization rendering for different pages.
+
+## License
+
+This project is tailored for operations inside and outside the AI Studio environment.
