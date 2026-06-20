@@ -4,6 +4,7 @@ import { User, UserRole, Transaction } from '../types';
 import { getStore, saveStore, formatCurrency, useAppStore } from '../store';
 import { motion, AnimatePresence } from 'motion/react';
 import { CreditCard, Sparkles, ShieldCheck, Wallet, Receipt, TrendingUp, TrendingDown, Clock, ArrowUpRight, Plus, X, Loader2 } from 'lucide-react';
+import { usePaystackPayment } from 'react-paystack';
 
 interface PaymentsProps {
   user: User;
@@ -22,6 +23,16 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
     return store.users.find(u => u.id === user.id) || user;
   }, [store.users, user.id]);
 
+  const paystackConfig = {
+      reference: new Date().getTime().toString(),
+      email: currentUser.email || 'user@spaceya.com',
+      amount: (parseFloat(amount) || 0) * 100, 
+      publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_disabled',
+      currency: 'NGN'
+  };
+  
+  const initializePaystack = usePaystackPayment(paystackConfig);
+
   const walletBalance = useMemo(() => {
     if (!store.wallets) return 0;
     // Handle both snake_case and camelCase for robustness
@@ -35,23 +46,51 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [store.transactions, user.id]);
 
+  const onSuccessPaystack = async (reference: any) => {
+      const amountVal = parseFloat(amount);
+      const { simulateFundWallet } = await import('../services/simulationEngine');
+      const result = await simulateFundWallet(user.id, amountVal);
+      
+      if (result.status === 'success') {
+         setIsProcessing(false);
+         setShowDepositModal(false);
+         setAmount('5000');
+         alert(`Deposit successful via Paystack! Reference: ${reference.reference}`);
+      } else {
+         alert('Error updating DB: ' + result.message);
+         setIsProcessing(false);
+      }
+  };
+
+  const onClosePaystack = () => {
+      alert("Payment cancelled.");
+      setIsProcessing(false);
+  };
+
   const handleDeposit = async () => {
     const amountVal = parseFloat(amount);
     if (isNaN(amountVal) || amountVal <= 0) return;
 
     setIsProcessing(true);
     
-    // Attempt funding wallet via simulation engine
-    const { simulateFundWallet } = await import('../services/simulationEngine');
-    const result = await simulateFundWallet(user.id, amountVal);
-    
-    if (result.status === 'success') {
-       setIsProcessing(false);
-       setShowDepositModal(false);
-       setAmount('5000');
+    if (import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
+        initializePaystack(
+           onSuccessPaystack as any,
+           onClosePaystack as any
+        );
     } else {
-       alert('Error: ' + result.message);
-       setIsProcessing(false);
+        // Attempt funding wallet via simulation engine immediately if no public key
+        const { simulateFundWallet } = await import('../services/simulationEngine');
+        const result = await simulateFundWallet(user.id, amountVal);
+        
+        if (result.status === 'success') {
+           setIsProcessing(false);
+           setShowDepositModal(false);
+           setAmount('5000');
+        } else {
+           alert('Error: ' + result.message);
+           setIsProcessing(false);
+        }
     }
   };
 
