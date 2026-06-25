@@ -344,21 +344,24 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
       // Monitor notifications for new arrivals to trigger system notifications
       let lastNotificationCount = getStore().notifications.filter(n => n.userId === user.uid).length;
       const notificationsRef = query(collection(db, 'notifications'), where('userId', '==', user.uid));
-      onSnapshot(notificationsRef, (snap) => {
-          const currentNotifications = snap.docs.map(d => ({ ...d.data(), id: d.id } as Notification));
-          const unreadNew = currentNotifications.filter(n => !n.isRead);
-          
-          if (currentNotifications.length > lastNotificationCount) {
-             // Find the newest one
-             const newest = unreadNew.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-             if (newest) {
-                sendSystemNotification("SPACEYA: " + newest.title, {
-                  body: newest.message,
-                });
-             }
-          }
-          lastNotificationCount = currentNotifications.length;
-      });
+      unsubscribes.push(
+        onSnapshot(notificationsRef, (snap) => {
+            const currentNotifications = snap.docs.map(d => ({ ...d.data(), id: d.id } as Notification));
+            const unreadNew = currentNotifications.filter(n => !n.isRead);
+            
+            if (currentNotifications.length > lastNotificationCount) {
+               const newest = unreadNew.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+               if (newest) {
+                  sendSystemNotification("SPACEYA: " + newest.title, {
+                    body: newest.message,
+                  });
+               }
+            }
+            lastNotificationCount = currentNotifications.length;
+        }, (error: any) => {
+            console.error('Snapshot listener failed for collection [notifications]:', error.message);
+        })
+      );
 
       // TRANSACTIONS & WALLETS
       if (userRole === 'ADMIN') {
