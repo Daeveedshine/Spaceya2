@@ -88,7 +88,7 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Tenant Portfolio Sheet</h1>
+          <h1 className="text-2xl font-bold text-slate-800">LEASE TRACKING SHEET</h1>
           <p className="text-slate-500 text-sm">Consolidated view of all occupied properties and lease terms.</p>
         </div>
         <button 

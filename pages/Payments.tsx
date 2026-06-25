@@ -4,7 +4,7 @@ import { User, UserRole, Transaction } from '../types';
 import { getStore, saveStore, formatCurrency, useAppStore } from '../store';
 import { motion, AnimatePresence } from 'motion/react';
 import { CreditCard, Sparkles, ShieldCheck, Wallet, Receipt, TrendingUp, TrendingDown, Clock, ArrowUpRight, Plus, X, Loader2 } from 'lucide-react';
-import { usePaystackPayment } from 'react-paystack';
+import PaystackPop from '@paystack/inline-js';
 
 interface PaymentsProps {
   user: User;
@@ -22,16 +22,6 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
   const currentUser = useMemo(() => {
     return store.users.find(u => u.id === user.id) || user;
   }, [store.users, user.id]);
-
-  const paystackConfig = {
-      reference: new Date().getTime().toString(),
-      email: currentUser.email || 'user@spaceya.com',
-      amount: (parseFloat(amount) || 0) * 100, 
-      publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_disabled',
-      currency: 'NGN'
-  };
-  
-  const initializePaystack = usePaystackPayment(paystackConfig);
 
   const walletBalance = useMemo(() => {
     if (!store.wallets) return 0;
@@ -74,10 +64,16 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
     setIsProcessing(true);
     
     if (import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
-        initializePaystack(
-           onSuccessPaystack as any,
-           onClosePaystack as any
-        );
+        const paystack = new PaystackPop();
+        paystack.newTransaction({
+            key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+            email: currentUser.email || 'user@spaceya.com',
+            amount: amountVal * 100,
+            reference: new Date().getTime().toString(),
+            currency: 'NGN',
+            onSuccess: (transaction: any) => onSuccessPaystack(transaction),
+            onCancel: () => onClosePaystack()
+        });
     } else {
         // Attempt funding wallet via simulation engine immediately if no public key
         const { simulateFundWallet } = await import('../services/simulationEngine');

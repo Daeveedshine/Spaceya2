@@ -884,7 +884,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             </div>
             
             <div className="space-y-4 max-w-sm">
-              <h3 className="text-3xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">Registry Empty</h3>
+              <h3 className="text-3xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">NO ASSETS</h3>
               <p className="text-zinc-600 dark:text-zinc-400 font-medium text-sm leading-relaxed">
                 We couldn't find any assets matching your current filter criteria or registry sync. Try adjusting your filters or publish a new asset to get started.
               </p>

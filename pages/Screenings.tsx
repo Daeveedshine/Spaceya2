@@ -167,7 +167,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1 print:hidden">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Vetting Portal</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">Tenant Screening Portal</h1>
           <p className="text-zinc-500 text-sm font-medium">Verify tenant dossiers.</p>
         </div>
         <div className="relative w-full sm:w-auto">

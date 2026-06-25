@@ -119,7 +119,7 @@ const Reports: React.FC<ReportsProps> = ({ user }) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tighter">Tenant Portfolio Sheet</h1>
+          <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tighter">LEASE TRACKING SHEET</h1>
           <p className="text-zinc-600 dark:text-zinc-400 font-medium text-sm">Consolidated view of {user.role === UserRole.AGENT ? 'your' : 'all'} occupied properties and lease terms.</p>
         </div>
         <button 
