@@ -363,12 +363,10 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
         })
       );
 
-      // TRANSACTIONS & WALLETS
+      // TRANSACTIONS & WALLETS (Transactions are now paginated via usePaginatedCollection)
       if (userRole === 'ADMIN') {
-        unsubscribes.push(attachListener('transactions', 'transactions', collection(db, 'transactions')));
         unsubscribes.push(attachListener('wallets', 'wallets' as any, collection(db, 'wallets')));
       } else {
-        unsubscribes.push(attachListener('transactions', 'transactions', query(collection(db, 'transactions'), where('user_id', '==', user.uid))));
         unsubscribes.push(attachListener('wallets', 'wallets' as any, query(collection(db, 'wallets'), where('user_id', '==', user.uid))));
       }
 

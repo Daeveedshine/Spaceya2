@@ -55,18 +55,18 @@ const TopLoadingBar: React.FC = () => {
 import { User, UserRole, TicketStatus, ApplicationStatus } from './types';
 import { getStore, saveStore, initFirebaseSync } from './store';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import Properties from './pages/Properties';
-import Maintenance from './pages/Maintenance';
-import Payments from './pages/Payments';
-import Notifications from './pages/Notifications';
-import Reports from './pages/Reports';
-import Applications from './pages/Applications';
-import Screenings from './pages/Screenings';
-import AdminApplications from './pages/AdminApplications';
-import Profile from './pages/Profile';
+const Login = React.lazy(() => import('./pages/Login'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const Properties = React.lazy(() => import('./pages/Properties'));
+const Maintenance = React.lazy(() => import('./pages/Maintenance'));
+const Payments = React.lazy(() => import('./pages/Payments'));
+const Notifications = React.lazy(() => import('./pages/Notifications'));
+const Reports = React.lazy(() => import('./pages/Reports'));
+const Applications = React.lazy(() => import('./pages/Applications'));
+const Screenings = React.lazy(() => import('./pages/Screenings'));
+const AdminApplications = React.lazy(() => import('./pages/AdminApplications'));
+const Profile = React.lazy(() => import('./pages/Profile'));
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, Building2, Wrench, CreditCard, LogOut, Menu, X, Shield, 

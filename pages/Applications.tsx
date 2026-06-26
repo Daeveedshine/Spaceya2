@@ -12,8 +12,7 @@ import {
   UserPlus, Download, Trash2, Edit3, Image as ImageIcon, AlertCircle, ChevronDown, User as UserIcon, Printer, X, Maximize2, Check,
   Info, Settings, Plus, GripVertical, Save
 } from 'lucide-react';
-import * as htmlToImage from 'html-to-image';
-import { jsPDF } from 'jspdf';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="space-y-6 break-inside-avoid">
@@ -351,6 +350,9 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
     }
 
     try {
+        const htmlToImage = await import('html-to-image');
+        const { jsPDF } = await import('jspdf');
+
         const dataUrl = await htmlToImage.toPng(input, {
             quality: 1,
             pixelRatio: 2,
@@ -508,7 +510,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                               className="h-48 rounded-[2.5rem] bg-zinc-50 dark:bg-black border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer group hover:border-black dark:hover:border-white transition-all overflow-hidden"
                            >
                               {formData[field.key] ? (
-                                 <img src={formData[field.key]} className="w-full h-full object-cover" alt="Uploaded" />
+                                 <OptimizedImage src={formData[field.key]} className="w-full h-full object-cover" alt="Uploaded" />
                               ) : (
                                  <div className="text-center group-hover:scale-110 transition-transform">
                                     <Camera size={32} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
@@ -581,7 +583,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
             <div className="flex items-center gap-6 flex-1">
                 <div className="w-20 h-20 bg-offwhite dark:bg-black rounded-3xl flex items-center justify-center overflow-hidden border border-zinc-50 dark:border-zinc-800 shadow-xl">
                   {app.passportPhotoUrl ? (
-                     <img src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
+                     <OptimizedImage src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                   ) : (
                      <span className="font-black text-black dark:text-white text-xl">{app.firstName.charAt(0)}</span>
                   )}
@@ -675,7 +677,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                 <div className="flex flex-col md:flex-row gap-8 items-center border-b border-zinc-100 dark:border-zinc-800 pb-10">
                    <div className="w-24 h-24 bg-zinc-50 dark:bg-black rounded-3xl overflow-hidden border-2 border-zinc-100 dark:border-zinc-800 shadow-xl">
                       {viewingApp.passportPhotoUrl ? (
-                        <img src={viewingApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
+                        <OptimizedImage src={viewingApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-700 text-3xl font-black">
                           {viewingApp.firstName.charAt(0)}

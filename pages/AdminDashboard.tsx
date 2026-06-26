@@ -1,13 +1,14 @@
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, Suspense } from 'react';
 import { User, UserRole } from '../types';
 import { getStore, useAppStore, formatCurrency } from '../store';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
-import { Building, Users, AlertCircle, DollarSign, UserCheck, Activity, ArrowRight, ClipboardCheck } from 'lucide-react';
+import { Building, Users, AlertCircle, DollarSign, UserCheck, Activity, ArrowRight, ClipboardCheck, ChevronDown, Loader2 } from 'lucide-react';
 import { initializeCompanyWallet } from '../services/simulationEngine';
+import { LazyScrollWrapper } from '../components/LazyScrollWrapper';
+import { usePaginatedCollection } from '../lib/usePaginatedCollection';
+import { orderBy, where } from 'firebase/firestore';
+
+const PropertyStatusPieChart = React.lazy(() => import('../components/PropertyStatusPieChart'));
 
 interface AdminDashboardProps {
   user: User;
@@ -18,6 +19,12 @@ const COLORS = ['#000000', '#52525b', '#71717a', '#a1a1aa'];
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => {
   const [store] = useAppStore();
+
+  const transactionsQuery = useMemo(() => [
+    orderBy('created_at', 'desc')
+  ], []);
+
+  const { data: paginatedTransactions, loading, loadingMore, hasMore, loadMore } = usePaginatedCollection<any>('transactions', transactionsQuery, 15);
 
   useEffect(() => {
     initializeCompanyWallet().catch(console.error);
@@ -76,26 +83,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => 
         <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-6">Property Status Distribution</h3>
           <div className="h-48 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={propertyStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {propertyStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{backgroundColor: '#000', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '10px'}}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <LazyScrollWrapper fallback={<div className="w-full h-full flex items-center justify-center text-zinc-500 animate-pulse text-[10px] font-black uppercase tracking-widest">Loading Analytics...</div>}>
+              <PropertyStatusPieChart data={propertyStatusData} />
+            </LazyScrollWrapper>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4 border-t border-zinc-100 dark:border-zinc-800 pt-4">
             {propertyStatusData.map((entry, index) => (
@@ -116,7 +106,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => 
             <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Real-time Ledger</span>
           </div>
           <div className="overflow-x-auto flex-1 h-[300px] overflow-y-auto custom-scrollbar">
-            {store.transactions && store.transactions.length > 0 ? (
+            {loading && paginatedTransactions.length === 0 ? (
+                <div className="flex justify-center py-10">
+                    <Loader2 className="animate-spin text-zinc-400" />
+                </div>
+            ) : paginatedTransactions.length > 0 ? (
+              <>
               <table className="w-full text-left">
                 <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
                   <tr className="text-[9px] uppercase font-black text-zinc-500 dark:text-zinc-400 tracking-wider">
@@ -127,7 +122,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-[10px]">
-                  {store.transactions.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50).map(tx => {
+                  {paginatedTransactions.map(tx => {
                     const txUser = store.users.find(u => u.id === tx.user_id);
                     const userName = txUser ? txUser.name : (tx.user_id === 0 || tx.user_id === '0' ? 'Reserve' : 'External');
                     return (
@@ -147,6 +142,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => 
                   })}
                 </tbody>
               </table>
+              {hasMore && (
+                  <button 
+                      onClick={loadMore} 
+                      disabled={loadingMore}
+                      className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-black dark:hover:text-white transition-colors border-t border-zinc-100 dark:border-zinc-800"
+                  >
+                      {loadingMore ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
+                      {loadingMore ? 'Loading...' : 'Load More'}
+                  </button>
+              )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-40">
                 <DollarSign size={40} className="mb-4 text-zinc-300 dark:text-zinc-700" />

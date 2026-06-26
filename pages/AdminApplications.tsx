@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { User, TenantApplication, ApplicationStatus } from '../types';
 import { getStore } from '../store';
+import { OptimizedImage } from '../components/OptimizedImage';
 import { 
   ArrowLeft, Search, Download, FileText, User as UserIcon, Building, 
   TrendingUp, Smartphone, Calendar, MapPin, 
@@ -86,7 +87,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                       <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-600 dark:text-zinc-400 font-black shadow-lg">
                            {app.passportPhotoUrl ? (
-                             <img src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
+                             <OptimizedImage src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                            ) : (
                              app.firstName.charAt(0)
                            )}
@@ -152,7 +153,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                  <div className="flex items-center gap-10">
                     <div className="w-32 h-32 bg-white dark:bg-zinc-900 rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-2xl print:border-4 border border-zinc-200 dark:border-zinc-800">
                       {selectedApp.passportPhotoUrl ? (
-                        <img src={selectedApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
+                        <OptimizedImage src={selectedApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                       ) : (
                         <div className="text-zinc-300 dark:text-zinc-700 text-5xl font-black">{selectedApp.firstName.charAt(0)}</div>
                       )}
@@ -211,7 +212,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                         <div className="bg-zinc-50 dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 flex flex-col shadow-sm">
                            <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-6">Identity Scan Evidence</p>
                            {selectedApp.verificationUrl ? (
-                             <img src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-72 object-contain shadow-2xl grayscale hover:grayscale-0 transition-all duration-700" alt="ID Document" />
+                             <OptimizedImage src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-72 object-contain shadow-2xl grayscale hover:grayscale-0 transition-all duration-700" alt="ID Document" />
                            ) : (
                              <div className="py-24 text-center text-zinc-400 dark:text-zinc-600 italic text-xs">No scan available.</div>
                            )}

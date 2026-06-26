@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole, FormTemplate, FormSection, FormField, FieldType } from '../types';
 import { getStore, saveStore, UserSettings } from '../store';
 import { compressImage } from '../lib/imageUtils';
+import { OptimizedImage } from '../components/OptimizedImage';
 import { 
   User as UserIcon, Mail, Phone, Shield, Save, CheckCircle2, 
   AlertCircle, Copy, Check, Link as LinkIcon, FileText, 
@@ -333,7 +334,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
               >
                 <div className="w-28 h-28 bg-white rounded-[2rem] overflow-hidden flex items-center justify-center text-zinc-400 border border-zinc-200 text-3xl font-black shadow-lg mb-6 relative">
                   {profilePic ? (
-                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                    <OptimizedImage src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name.charAt(0)
                   )}

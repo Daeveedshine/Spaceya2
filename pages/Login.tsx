@@ -57,17 +57,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success('Password reset link sent to your inbox!', { id: toastId });
-      setSuccessMessage('Password reset link sent to your inbox! Once you have updated your password, you can login with your new credentials.');
+      toast.success("If that email is registered, you'll receive a reset link", { id: toastId });
+      setSuccessMessage("If that email is registered, you'll receive a reset link");
     } catch (err: any) {
       console.error('Password reset failed', err);
-      if (err.code === 'auth/user-not-found') {
-        toast.error('This email identity was not found in our registry.', { id: toastId });
-      } else if (err.code === 'auth/invalid-email') {
-        toast.error('The provided email format is invalid.', { id: toastId });
-      } else {
-        toast.error('Failed to initiate reset protocol. Please try again.', { id: toastId });
-      }
+      // Prevent user enumeration by showing same success message
+      toast.success("If that email is registered, you'll receive a reset link", { id: toastId });
+      setSuccessMessage("If that email is registered, you'll receive a reset link");
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +86,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     setIsLoading(true);
     try {
+      // Server-side validation
+      const endpoint = isRegistering ? '/api/auth/signup' : '/api/auth/login';
+      const payload = isRegistering ? { name, email, password } : { email, password };
+      
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        setError('Incorrect email or password');
+        setIsLoading(false);
+        return;
+      }
+
       let userCredential;
       if (isRegistering) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -132,19 +145,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       onLogin(currentUserProfile);
     } catch (err: any) {
       console.error('Manual Authentication failed', err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('This identity is already registered. Try logging in instead.');
-      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-        setError('Invalid security credentials provided. Please check your email and password.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Account temporarily locked due to too many failed attempts. Please try again later or reset your password.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Security key sequence is too weak.');
-      } else if (err.code === 'auth/operation-not-allowed') {
+      if (err.code === 'auth/operation-not-allowed') {
         const projectId = (auth as any).app?.options?.projectId || 'unknown';
         setError(`Manual registration is not enabled in the Firebase console for project "${projectId}". Please enable Email/Password authentication in the Auth section of the console.`);
       } else {
-        setError(extractErrorMessage(err) || 'Authentication protocol failure.');
+        setError('Incorrect email or password');
       }
     } finally {
       setIsLoading(false);

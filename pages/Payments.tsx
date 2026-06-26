@@ -3,8 +3,10 @@ import React, { useMemo, useState } from 'react';
 import { User, UserRole, Transaction } from '../types';
 import { getStore, saveStore, formatCurrency, useAppStore } from '../store';
 import { motion, AnimatePresence } from 'motion/react';
-import { CreditCard, Sparkles, ShieldCheck, Wallet, Receipt, TrendingUp, TrendingDown, Clock, ArrowUpRight, Plus, X, Loader2 } from 'lucide-react';
+import { CreditCard, Sparkles, ShieldCheck, Wallet, Receipt, TrendingUp, TrendingDown, Clock, ArrowUpRight, Plus, X, Loader2, ChevronDown } from 'lucide-react';
 import PaystackPop from '@paystack/inline-js';
+import { usePaginatedCollection } from '../lib/usePaginatedCollection';
+import { where, orderBy } from 'firebase/firestore';
 
 interface PaymentsProps {
   user: User;
@@ -25,16 +27,16 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
 
   const walletBalance = useMemo(() => {
     if (!store.wallets) return 0;
-    // Handle both snake_case and camelCase for robustness
     const wallet = store.wallets.find(w => (w.user_id === user.id || w.userId === user.id));
     return wallet?.balance || 0;
   }, [store.wallets, user.id]);
 
-  const transactions = useMemo(() => {
-    return store.transactions
-      .filter(t => (t.user_id === user.id || t.userId === user.id))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [store.transactions, user.id]);
+  const transactionsQuery = useMemo(() => [
+    where('user_id', '==', user.id),
+    orderBy('created_at', 'desc')
+  ], [user.id]);
+
+  const { data: transactions, loading, loadingMore, hasMore, loadMore, refetch } = usePaginatedCollection<Transaction>('transactions', transactionsQuery, 10);
 
   const onSuccessPaystack = async (reference: any) => {
       const amountVal = parseFloat(amount);
@@ -46,6 +48,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
          setShowDepositModal(false);
          setAmount('5000');
          alert(`Deposit successful via Paystack! Reference: ${reference.reference}`);
+         refetch();
       } else {
          alert('Error updating DB: ' + result.message);
          setIsProcessing(false);
@@ -83,6 +86,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
            setIsProcessing(false);
            setShowDepositModal(false);
            setAmount('5000');
+           refetch();
         } else {
            alert('Error: ' + result.message);
            setIsProcessing(false);
@@ -106,6 +110,7 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
        setShowWithdrawalModal(false);
        setAmount('5000');
        alert('Withdrawal successful. Reference: ' + result.reference);
+       refetch();
     } else {
        alert('Error: ' + result.message);
        setIsProcessing(false);
@@ -332,29 +337,47 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
                 </div>
 
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                    {transactions.length > 0 ? transactions.map(t => {
-                        const isDebit = t.type === 'deduction' || t.type === 'withdrawal';
-                        return (
-                        <div key={t.id} className="p-4 sm:p-6 bg-zinc-50/50 dark:bg-black/40 rounded-3xl border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between gap-3 group hover:bg-zinc-100 dark:hover:bg-black transition-all">
-                            <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDebit ? 'bg-white dark:bg-zinc-800 text-black dark:text-white border border-black' : 'bg-black text-white border border-black dark:border-white'}`}>
-                                    {isDebit ? <TrendingDown size={18} /> : <TrendingUp size={18} />}
-                                </div>
-                                <div className="min-w-0 text-left">
-                                    <p className="font-black text-black dark:text-white tracking-tight break-words text-sm sm:text-base leading-tight">{t.description}</p>
-                                    <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest mt-1">
-                                        <Clock size={10} className="shrink-0" /> <span className="truncate">{new Date(t.created_at).toLocaleDateString()}</span>
+                    {loading && transactions.length === 0 ? (
+                        <div className="flex justify-center py-10">
+                            <Loader2 className="animate-spin text-zinc-400" />
+                        </div>
+                    ) : transactions.length > 0 ? (
+                        <>
+                            {transactions.map(t => {
+                                const isDebit = t.type === 'deduction' || t.type === 'withdrawal';
+                                return (
+                                <div key={t.id} className="p-4 sm:p-6 bg-zinc-50/50 dark:bg-black/40 rounded-3xl border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between gap-3 group hover:bg-zinc-100 dark:hover:bg-black transition-all">
+                                    <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDebit ? 'bg-white dark:bg-zinc-800 text-black dark:text-white border border-black' : 'bg-black text-white border border-black dark:border-white'}`}>
+                                            {isDebit ? <TrendingDown size={18} /> : <TrendingUp size={18} />}
+                                        </div>
+                                        <div className="min-w-0 text-left">
+                                            <p className="font-black text-black dark:text-white tracking-tight break-words text-sm sm:text-base leading-tight">{t.description}</p>
+                                            <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest mt-1">
+                                                <Clock size={10} className="shrink-0" /> <span className="truncate">{new Date(t.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className={`text-sm sm:text-lg font-black tracking-tighter ${isDebit ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'} break-all`}>
+                                            {isDebit ? '-' : '+'}{formatCurrency(t.amount, settings)}
+                                        </p>
+                                        <span className="text-[8px] sm:text-[9px] font-black uppercase text-zinc-500 tracking-widest">{t.status}</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="text-right shrink-0">
-                                <p className={`text-sm sm:text-lg font-black tracking-tighter ${isDebit ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'} break-all`}>
-                                    {isDebit ? '-' : '+'}{formatCurrency(t.amount, settings)}
-                                </p>
-                                <span className="text-[8px] sm:text-[9px] font-black uppercase text-zinc-500 tracking-widest">{t.status}</span>
-                            </div>
-                        </div>
-                    )}) : (
+                            )})}
+                            {hasMore && (
+                                <button 
+                                    onClick={loadMore} 
+                                    disabled={loadingMore}
+                                    className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
+                                >
+                                    {loadingMore ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
+                                    {loadingMore ? 'Loading...' : 'Load More'}
+                                </button>
+                            )}
+                        </>
+                    ) : (
                         <div className="flex flex-col items-center justify-center py-20 opacity-30">
                             <Receipt size={64} className="mb-4 text-zinc-300 dark:text-zinc-700" />
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black dark:text-white">No Transactions Found</p>

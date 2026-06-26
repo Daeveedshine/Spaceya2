@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { extractErrorMessage } from '../lib/firebaseErrors';
 import { toast } from 'sonner';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 interface PropertiesProps {
   user: User;
@@ -813,7 +814,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
               className="group bg-zinc-50/50 dark:bg-white/5 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-500 cursor-pointer flex flex-col gap-3"
             >
               <div className="w-full h-44 bg-zinc-50 dark:bg-zinc-900 relative overflow-hidden shrink-0 rounded-md">
-                <img 
+                <OptimizedImage 
                   src={thumbnail} 
                   alt={property.name} 
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
@@ -917,7 +918,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     className="w-full h-full relative cursor-pointer"
                     onClick={() => setExpandedImage(displayImages[currentImageIndex])}
                 >
-                    <img 
+                    <OptimizedImage 
                         src={displayImages[currentImageIndex]} 
                         className="w-full h-full object-cover" 
                         alt="Property Preview" 
@@ -1051,7 +1052,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                              className="h-48 rounded-lg bg-zinc-50 dark:bg-white/5 border-2 border-dashed border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-black dark:hover:border-white transition-all"
                           >
                              {maintenanceImage ? (
-                                <img src={maintenanceImage} className="w-full h-full object-cover" alt="Preview" />
+                                <OptimizedImage src={maintenanceImage} className="w-full h-full object-cover" alt="Preview" />
                              ) : (
                                 <div className="text-center group-hover:scale-110 transition-transform">
                                    <Camera size={32} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
@@ -1180,7 +1181,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     </div>
                                     {ticket.imageUrl && (
                                         <div className="h-40 w-full rounded-md overflow-hidden cursor-pointer bg-black/20" onClick={() => setExpandedImage(ticket.imageUrl || null)}>
-                                            <img src={ticket.imageUrl} className="w-full h-full object-cover hover:scale-105 transition-transform" alt="Evidence" />
+                                            <OptimizedImage src={ticket.imageUrl} className="w-full h-full object-cover hover:scale-105 transition-transform" alt="Evidence" />
                                         </div>
                                     )}
                                 </div>
@@ -1362,7 +1363,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                                             onClick={() => setCurrentImageIndex(idx)}
                                                             className={`w-24 h-24 rounded-2xl overflow-hidden relative shrink-0 cursor-pointer border-4 transition-all snap-start ${idx === currentImageIndex ? 'border-blue-600 scale-105 shadow-xl shadow-blue-600/20' : 'border-transparent opacity-40 hover:opacity-100 hover:scale-105'}`}
                                                         >
-                                                            <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                                                            <OptimizedImage src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                                                             {idx === currentImageIndex && (
                                                                 <div className="absolute inset-0 bg-blue-600/10 flex items-center justify-center">
                                                                     <div className="w-2 h-2 bg-white rounded-full animate-ping" />
@@ -1601,7 +1602,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
            <button className="absolute top-10 right-10 p-5 glass-card rounded-full text-white" onClick={() => setExpandedImage(null)}>
               <X size={32} />
            </button>
-           <img src={expandedImage} className="max-w-full max-h-full object-contain rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.4)]" alt="Full Preview" />
+           <OptimizedImage src={expandedImage} className="max-w-full max-h-full object-contain rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.4)]" alt="Full Preview" />
         </div>
       )}
     </div>

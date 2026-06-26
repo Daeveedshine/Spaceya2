@@ -1,9 +1,12 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { User, UserRole, PropertyStatus, TicketStatus, NotificationType, ApplicationStatus } from '../types';
 import { getStore, formatCurrency, formatDate, useAppStore } from '../store';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building, Users, AlertTriangle, TrendingUp, Clock, FileText, Wrench, Bell, UserPlus } from 'lucide-react';
+import { OptimizedImage } from '../components/OptimizedImage';
+import { LazyScrollWrapper } from '../components/LazyScrollWrapper';
+
+const PaymentBarChart = React.lazy(() => import('../components/PaymentBarChart'));
 
 interface DashboardProps {
   user: User;
@@ -114,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
       <header className="flex flex-col items-center text-center gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-12">
         {user.profilePictureUrl && (
           <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2.5rem] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 cursor-pointer border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl mb-2">
-             <img src={user.profilePictureUrl} alt="Profile" className="w-full h-full object-cover" />
+             <OptimizedImage src={user.profilePictureUrl} alt="Profile" className="w-full h-full object-cover" />
           </div>
         )}
         <div>
@@ -148,18 +151,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                 <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-full">Currency: {settings.localization.currency}</div>
               </div>
               <div className="h-64 sm:h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={paymentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#444', fontSize: 9, fontWeight: '900'}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#444', fontSize: 9, fontWeight: '900'}} />
-                    <Tooltip 
-                      cursor={{fill: 'rgba(255,255,255,0.03)'}}
-                      contentStyle={{backgroundColor: '#000', border: '1px solid #333', borderRadius: '12px', padding: '12px'}}
-                    />
-                    <Bar dataKey="amount" fill="#FFF" radius={[2, 2, 0, 0]} barSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <LazyScrollWrapper fallback={<div className="w-full h-full flex items-center justify-center text-zinc-500 animate-pulse text-[10px] font-black uppercase tracking-widest">Loading Analytics...</div>}>
+                  <PaymentBarChart data={paymentData} />
+                </LazyScrollWrapper>
               </div>
             </>
           ) : (

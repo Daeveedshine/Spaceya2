@@ -4,6 +4,7 @@ import { User, UserRole, MaintenanceTicket, TicketStatus, TicketPriority, Notifi
 import { getStore, saveStore, useAppStore } from '../store';
 import { Plus, CheckCircle2, Clock, AlertCircle, Wrench, X, ChevronDown, Camera, Image as ImageIcon, Sparkles, Loader2, Maximize2, Building } from 'lucide-react';
 import { compressImage } from '../lib/imageUtils';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 interface MaintenanceProps {
   user: User;
@@ -202,7 +203,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                   className="h-full min-h-[350px] rounded-[3rem] bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 >
                   {newImage ? (
-                    <img src={newImage} className="w-full h-full object-cover" alt="Evidence" />
+                    <OptimizedImage src={newImage} className="w-full h-full object-cover" alt="Evidence" />
                   ) : (
                     <div className="text-center group-hover:scale-110 transition-transform">
                       <Camera size={64} className="text-zinc-300 dark:text-zinc-700 mx-auto mb-6" />
@@ -237,7 +238,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                   className="w-full lg:w-64 h-64 bg-zinc-50 dark:bg-zinc-950 overflow-hidden shrink-0 relative cursor-pointer group/img"
                   onClick={() => setExpandedImage(ticket.imageUrl || null)}
                 >
-                   <img src={ticket.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-110 grayscale group-hover/img:grayscale-0" alt="Ticket Evidence" />
+                   <OptimizedImage src={ticket.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-110 grayscale group-hover/img:grayscale-0" alt="Ticket Evidence" />
                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                       <Maximize2 className="text-white" size={32} />
                    </div>
@@ -310,7 +311,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
            <button className="absolute top-10 right-10 p-5 glass-card rounded-full text-white" onClick={() => setExpandedImage(null)}>
               <X size={32} />
            </button>
-           <img src={expandedImage} className="max-w-full max-h-full object-contain rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]" alt="Full Evidence" />
+           <OptimizedImage src={expandedImage} className="max-w-full max-h-full object-contain rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]" alt="Full Evidence" />
         </div>
       )}
     </div>

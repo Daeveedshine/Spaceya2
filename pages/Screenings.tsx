@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, UserRole, TenantApplication, ApplicationStatus, NotificationType, PropertyStatus, Agreement } from '../types';
 import { getStore, saveStore, useAppStore } from '../store';
+import { OptimizedImage } from '../components/OptimizedImage';
 import { 
   ClipboardCheck, CheckCircle, XCircle, 
   Search, ChevronRight, ShieldCheck, Mail, Phone, Calendar, Download,
@@ -187,7 +188,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
             >
               <div className="w-16 h-16 bg-zinc-800 rounded-2xl overflow-hidden flex items-center justify-center font-black shrink-0 border border-zinc-700 shadow-xl">
                 {app.passportPhotoUrl ? (
-                  <img src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
+                  <OptimizedImage src={app.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                 ) : (
                   <UserIcon size={24} className="text-zinc-600" />
                 )}
@@ -250,7 +251,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                       className="w-24 h-24 bg-white rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl print:border-zinc-200 print:shadow-none cursor-pointer group relative"
                     >
                       {selectedApp.passportPhotoUrl ? (
-                        <img src={selectedApp.passportPhotoUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Profile" />
+                        <OptimizedImage src={selectedApp.passportPhotoUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Profile" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-zinc-300 text-3xl font-black">
                           {selectedApp.firstName.charAt(0)}
@@ -382,7 +383,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                           >
                              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4">Official Document Capture</p>
                              {selectedApp.verificationUrl ? (
-                               <img src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-64 object-contain shadow-xl print:shadow-none print:border print:border-zinc-200 transition-transform group-hover:scale-[1.02]" alt="ID Document" />
+                               <OptimizedImage src={selectedApp.verificationUrl} className="w-full h-auto rounded-2xl max-h-64 object-contain shadow-xl print:shadow-none print:border print:border-zinc-200 transition-transform group-hover:scale-[1.02]" alt="ID Document" />
                              ) : (
                                <div className="py-24 text-center text-zinc-300 italic text-xs">No scan data attached.</div>
                              )}
@@ -470,7 +471,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
               <X size={32} />
            </button>
            <div className="relative w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
-              <img 
+              <OptimizedImage 
                 src={expandedImage} 
                 className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.2)]" 
                 alt="Expanded View"
