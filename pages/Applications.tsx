@@ -159,6 +159,32 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         }
       }
 
+      // 1.5 Try suiteId Match
+      if (!agent) {
+        const q = query(
+          collection(db, 'users'), 
+          where('suiteId', '==', cleanId.toUpperCase()), 
+          where('role', '==', UserRole.AGENT)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const doc = snap.docs[0];
+          agent = { ...doc.data(), id: doc.id } as User;
+        }
+      }
+
+      // 1.6 Try first 8 characters match
+      if (!agent && cleanId.length === 8) {
+         const q = query(
+             collection(db, 'users'),
+             where('role', '==', UserRole.AGENT)
+         );
+         const snap = await getDocs(q);
+         const docs = snap.docs.map(d => ({ ...d.data(), id: d.id } as User));
+         const matched = docs.find(d => d.id.toUpperCase().startsWith(cleanId.toUpperCase()));
+         if (matched) agent = matched;
+      }
+
       // 2. Try Email Match (If ID looks like an email)
       if (!agent && cleanId.includes('@')) {
         const q = query(

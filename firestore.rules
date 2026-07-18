@@ -59,7 +59,8 @@ service cloud.firestore {
           && (!('phone' in data) || (data.phone is string && data.phone.size() <= 30))
           && (!('walletBalance' in data) || (data.walletBalance is number))
           && (!('profilePictureUrl' in data) || (data.profilePictureUrl is string && data.profilePictureUrl.size() <= 2048))
-          && (!('assignedPropertyIds' in data) || (data.assignedPropertyIds is list && data.assignedPropertyIds.size() <= 100));
+          && (!('assignedPropertyIds' in data) || (data.assignedPropertyIds is list && data.assignedPropertyIds.size() <= 100))
+          && (!('suiteId' in data) || (data.suiteId is string && data.suiteId.size() <= 128));
       }
 
       allow create: if (isSignedIn() || isVerified()) 
@@ -98,7 +99,9 @@ service cloud.firestore {
           && data.agentId is string && data.agentId.size() <= 128
           && data.category is string && data.category.size() <= 100
           && data.type is string && data.type.size() <= 100
-          && (!('images' in data) || (data.images is list && data.images.size() <= 20));
+          && (!('images' in data) || (data.images is list && data.images.size() <= 20))
+          && (!('rentPaid' in data) || (data.rentPaid is number && data.rentPaid >= 0))
+          && (!('rentReminderPeriod' in data) || (data.rentReminderPeriod is string && data.rentReminderPeriod in ['1_MONTH', '2_WEEKS']));
       }
 
       allow read: if isSignedIn();
@@ -114,7 +117,7 @@ service cloud.firestore {
                     && isValidProperty(incoming())
                     && (
                       isAdmin() ||
-                      (existing().agentId == request.auth.uid && incoming().agentId == existing().agentId && incoming().id == existing().id && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'location', 'rent', 'status', 'description', 'category', 'type', 'images', 'tenantId', 'rentStartDate', 'rentExpiryDate']))
+                      (existing().agentId == request.auth.uid && incoming().agentId == existing().agentId && incoming().id == existing().id && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'location', 'rent', 'status', 'description', 'category', 'type', 'images', 'tenantId', 'rentStartDate', 'rentExpiryDate', 'rentPaid', 'rentReminderPeriod']))
                     );
 
       allow delete: if isSignedIn() && (existing().agentId == request.auth.uid || isAdmin());

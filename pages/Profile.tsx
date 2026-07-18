@@ -357,9 +357,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
                  <div>
                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Unique Suite ID</p>
                     <div className="bg-black p-3 rounded-xl border border-zinc-800 flex items-center justify-between group">
-                      <span className="text-sm font-mono font-bold text-zinc-100">{user.id}</span>
+                      <span className="text-sm font-mono font-bold text-zinc-100">{user.suiteId || user.id.substring(0, 8).toUpperCase()}</span>
                       <button 
-                          onClick={handleCopyId}
+                          onClick={() => {
+                              navigator.clipboard.writeText(user.suiteId || user.id.substring(0, 8).toUpperCase());
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                          }}
                           className="p-2 text-zinc-600 hover:text-white transition-colors rounded-lg active:scale-95"
                           title="Copy ID"
                       >

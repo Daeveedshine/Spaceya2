@@ -44,7 +44,7 @@ async function startServer() {
       res.status(200).json({ success: true });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Server validation failed during login:", error.errors.map(e => e.path.join('.')));
+        console.error("Server validation failed during login:", (error as any).errors.map((e: any) => e.path.join('.')));
       } else {
         console.error("Server validation failed during login due to an unknown error.");
       }
@@ -67,7 +67,7 @@ async function startServer() {
       res.status(200).json({ success: true });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Server validation failed during signup:", error.errors.map(e => e.path.join('.')));
+        console.error("Server validation failed during signup:", (error as any).errors.map((e: any) => e.path.join('.')));
       } else {
         console.error("Server validation failed during signup due to an unknown error.");
       }

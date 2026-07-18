@@ -56,6 +56,7 @@ export enum ApplicationStatus {
 
 export interface User {
   id: string;
+  suiteId?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -109,6 +110,8 @@ export interface Property {
   type: PropertyType;
   rentStartDate?: string;
   rentExpiryDate?: string;
+  rentReminderPeriod?: '1_MONTH' | '2_WEEKS';
+  rentPaid?: number;
   images?: string[];
 }
 

@@ -127,6 +127,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       } else {
         currentUserProfile = {
           id: user.uid,
+          suiteId: Math.random().toString(36).substring(2, 8).toUpperCase(),
           name: name || user.displayName || 'New User',
           email: user.email || '',
           role: role,
@@ -209,6 +210,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const photoUrl = result.user.photoURL || '';
         currentUserProfile = {
           id: result.user.uid,
+          suiteId: Math.random().toString(36).substring(2, 8).toUpperCase(),
           name: result.user.displayName || 'New User',
           email: result.user.email || '',
           role: role,

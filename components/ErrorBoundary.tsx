@@ -44,12 +44,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 We encountered an unexpected error while rendering this page.
               </p>
             </div>
-            
-            <div className="p-4 bg-zinc-100 dark:bg-black rounded-2xl text-left overflow-hidden">
-               <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 break-words line-clamp-3">
-                 {this.state.error?.message || 'Unknown error'}
-               </p>
-            </div>
 
             <div className="flex flex-col gap-3 pt-2">
               <button 

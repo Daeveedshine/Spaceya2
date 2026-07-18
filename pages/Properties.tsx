@@ -119,7 +119,10 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     const expiringProps = store.properties.filter(p => {
         if (p.status !== PropertyStatus.OCCUPIED || !p.rentExpiryDate) return false;
         const days = getDaysRemaining(p.rentExpiryDate);
-        return days !== null && days <= 30 && days > 0;
+        if (days === null || days <= 0) return false;
+
+        const reminderDays = p.rentReminderPeriod === '2_WEEKS' ? 14 : 30; // Default to 1 month (30 days)
+        return days <= reminderDays;
     });
 
     const newNotifications: Notification[] = [];
@@ -1236,6 +1239,9 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     <InputWrapper label="Annual Rent (Base NGN)">
                                         <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rent} onChange={e => setEditFormData({...editFormData, rent: parseInt(e.target.value) || 0})} />
                                     </InputWrapper>
+                                    <InputWrapper label="Amount Paid (NGN)">
+                                        <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rentPaid || 0} onChange={e => setEditFormData({...editFormData, rentPaid: parseInt(e.target.value) || 0})} />
+                                    </InputWrapper>
                                     <InputWrapper label="Status">
                                         <select className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" value={editFormData.status} onChange={e => setEditFormData({...editFormData, status: e.target.value as PropertyStatus})}>
                                             <option value={PropertyStatus.DRAFT}>DRAFT</option>
@@ -1247,6 +1253,17 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                     </InputWrapper>
                                     <InputWrapper label="Lifecycle Start">
                                         <input type="date" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rentStartDate || ''} onChange={handleStartDateChange} />
+                                    </InputWrapper>
+
+                                    <InputWrapper label="Rent Reminder">
+                                        <select 
+                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" 
+                                          value={editFormData.rentReminderPeriod || '1_MONTH'} 
+                                          onChange={e => setEditFormData({...editFormData, rentReminderPeriod: e.target.value as '1_MONTH' | '2_WEEKS'})}
+                                        >
+                                            <option value="1_MONTH">1 Month Before</option>
+                                            <option value="2_WEEKS">2 Weeks Before</option>
+                                        </select>
                                     </InputWrapper>
                                     
                                     <InputWrapper label="Property Category">
@@ -1380,8 +1397,15 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                 <>
                                     <DetailCard icon={MapPin} label="Location" value={selectedProperty.location} />
                                     <DetailCard icon={DollarSign} label="Annual Yield" value={formatCurrency(selectedProperty.rent, settings)} />
+                                    {selectedProperty.rentPaid !== undefined && (
+                                        <>
+                                            <DetailCard icon={DollarSign} label="Amount Paid" value={formatCurrency(selectedProperty.rentPaid, settings)} />
+                                            <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - selectedProperty.rentPaid, settings)} />
+                                        </>
+                                    )}
                                     <DetailCard icon={Layout} label="Type" value={selectedProperty.type} />
                                     <DetailCard icon={Building} label="Category" value={selectedProperty.category} />
+                                    <DetailCard icon={Clock} label="Rent Reminder" value={selectedProperty.rentReminderPeriod === '2_WEEKS' ? '2 Weeks Before' : '1 Month Before'} />
                                     {selectedProperty.rentStartDate && <DetailCard icon={CalendarDays} label="Start" value={formatDate(selectedProperty.rentStartDate, settings)} />}
                                     {selectedProperty.rentExpiryDate && (
                                         <div className={`p-6 bg-zinc-50/50 dark:bg-white/5 rounded-lg border group hover:border-black dark:hover:border-white transition-colors shadow-sm ${
