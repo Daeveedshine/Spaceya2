@@ -205,6 +205,12 @@ export const saveStore = async (state: AppState) => {
 
           // Strip undefined values which cause Firebase SDK errors
           const cleanItem = JSON.parse(JSON.stringify(item));
+          
+          if (collectionName === 'properties') {
+             delete cleanItem.rentPaid;
+             delete cleanItem.rentReminderPeriod;
+          }
+
           await setDoc(doc(db, collectionName, cleanItem.id), cleanItem, { merge: true });
         } catch (err: any) {
           try { handleFirestoreError(err, 'write', `/${collectionName}/${item.id}`, user); } catch(e) {}
@@ -293,6 +299,19 @@ export const initFirebaseSync = (onUpdate: (newState: AppState) => void) => {
             stateMergers[localKey] = data; // replace specific tracker list
             
             const currentLocal = getStore();
+            
+            // Preserve local rentPaid and rentReminderPeriod
+            if (localKey === 'properties') {
+              stateMergers[localKey] = stateMergers[localKey].map((remoteItem: any) => {
+                const localItem = currentLocal.properties.find(p => p.id === remoteItem.id);
+                if (localItem) {
+                  if (localItem.rentPaid !== undefined) remoteItem.rentPaid = localItem.rentPaid;
+                  if (localItem.rentReminderPeriod) remoteItem.rentReminderPeriod = localItem.rentReminderPeriod;
+                }
+                return remoteItem;
+              });
+            }
+
             const mergedState = { ...currentLocal, [localKey]: stateMergers[localKey] };
             mergedState.currentUser = mergedState.users.find(u => u.id === user.uid) || currentLocal.currentUser;
             
