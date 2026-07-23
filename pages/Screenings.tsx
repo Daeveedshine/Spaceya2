@@ -169,7 +169,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1 print:hidden">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight">Tenant Screening Portal</h1>
-          <p className="text-zinc-500 text-sm font-medium">Verify tenant dossiers.</p>
+          <p className="text-zinc-500 text-sm font-medium">Verify tenant dossiers. ({filteredApps.length} loaded)</p>
         </div>
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
