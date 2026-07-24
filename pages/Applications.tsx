@@ -379,16 +379,40 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         const htmlToImage = await import('html-to-image');
         const { jsPDF } = await import('jspdf');
 
+        const scrollHeight = input.scrollHeight;
+        const scrollWidth = input.scrollWidth;
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        const bgColor = isDarkMode ? '#09090b' : '#ffffff';
+
+        // Temporarily modify the DOM to ensure full height is rendered by html-to-image
+        const originalHeight = input.style.height;
+        const originalMaxHeight = input.style.maxHeight;
+        const originalOverflow = input.style.overflow;
+        
+        input.style.height = 'max-content';
+        input.style.maxHeight = 'none';
+        input.style.overflow = 'visible';
+
         const dataUrl = await htmlToImage.toPng(input, {
             quality: 1,
             pixelRatio: 2,
-            backgroundColor: '#ffffff',
+            backgroundColor: bgColor,
             fontEmbedCSS: '',
+            width: scrollWidth,
+            height: scrollHeight,
             style: {
                 transform: 'none',
+                overflow: 'visible',
+                maxHeight: 'none',
+                height: `${scrollHeight}px`,
             }
         });
         
+        // Revert DOM changes
+        input.style.height = originalHeight;
+        input.style.maxHeight = originalMaxHeight;
+        input.style.overflow = originalOverflow;
+
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -398,6 +422,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         const imgProps = pdf.getImageProperties(dataUrl);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
         let heightLeft = pdfHeight;
         let position = 0;
         const pageHeight = pdf.internal.pageSize.getHeight();
@@ -405,7 +430,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
         heightLeft -= pageHeight;
 
-        while (heightLeft >= 0) {
+        while (heightLeft > 0) {
             position = heightLeft - pdfHeight;
             pdf.addPage();
             pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
@@ -415,7 +440,6 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         pdf.save(`SPACEYA_Application_${app.id}.pdf`);
     } catch (err) {
         console.error("PDF Generation failed", err);
-        // Fallback to print if it still fails
         window.print();
     } finally {
         setIsDownloading(false);

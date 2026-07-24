@@ -1396,11 +1396,11 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                             ) : (
                                 <>
                                     <DetailCard icon={MapPin} label="Location" value={selectedProperty.location} />
-                                    <DetailCard icon={DollarSign} label="Annual Yield" value={formatCurrency(selectedProperty.rent, settings)} />
+                                    <DetailCard icon={DollarSign} label="Annual Yield" value={formatCurrency(selectedProperty.rent, settings)} valueClassName="text-emerald-600 dark:text-emerald-400" />
                                     {selectedProperty.rentPaid !== undefined && (
                                         <>
-                                            <DetailCard icon={DollarSign} label="Amount Paid" value={formatCurrency(selectedProperty.rentPaid, settings)} />
-                                            <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - selectedProperty.rentPaid, settings)} />
+                                            <DetailCard icon={DollarSign} label="Amount Paid" value={formatCurrency(selectedProperty.rentPaid, settings)} valueClassName="text-blue-600 dark:text-blue-400" />
+                                            <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - selectedProperty.rentPaid, settings)} valueClassName="text-rose-600 dark:text-rose-400" />
                                         </>
                                     )}
                                     <DetailCard icon={Layout} label="Type" value={selectedProperty.type} />
@@ -1645,13 +1645,13 @@ const InputWrapper = ({ label, children }: { label: string, children?: React.Rea
     </div>
 );
 
-const DetailCard = ({ icon: Icon, label, value }: any) => (
+const DetailCard = ({ icon: Icon, label, value, valueClassName }: any) => (
   <div className="p-6 bg-zinc-50/50 dark:bg-white/5 rounded-lg border border-zinc-100 dark:border-zinc-800 group hover:border-black dark:hover:border-white transition-colors shadow-sm">
     <div className="flex items-center justify-between mb-3">
         <p className="text-[8px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
-        <Icon className="w-3.5 h-3.5 text-black dark:text-white" />
+        <Icon className={`w-3.5 h-3.5 ${valueClassName || "text-black dark:text-white"}`} />
     </div>
-    <p className="text-lg font-black text-zinc-900 dark:text-white tracking-tight truncate leading-tight uppercase">{value}</p>
+    <p className={`text-lg font-black tracking-tight truncate leading-tight uppercase ${valueClassName || "text-zinc-900 dark:text-white"}`}>{value}</p>
   </div>
 );
 

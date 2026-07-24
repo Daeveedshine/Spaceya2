@@ -22,6 +22,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (error.message.includes('dynamically imported module') || error.message.includes('Failed to fetch')) {
+       // Automatically reload the page once on chunk load errors
+       if (!sessionStorage.getItem('chunk_load_error_reload')) {
+          sessionStorage.setItem('chunk_load_error_reload', 'true');
+          window.location.reload();
+          return;
+       }
+    }
     logger.error('Uncaught component error:', { error, errorInfo });
   }
 

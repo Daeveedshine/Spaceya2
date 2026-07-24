@@ -179,7 +179,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left List - Hidden on print */}
-        <div className="lg:col-span-1 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar print:hidden">
+        <div className="lg:col-span-1 space-y-4 max-h-[600px] lg:max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar print:hidden">
           {filteredApps.map(app => (
             <button 
                 key={app.id} 
