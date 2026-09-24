@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { User, TenantApplication, ApplicationStatus } from '../types';
 import { getStore } from '../store';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { toast } from 'sonner';
 import { 
   ArrowLeft, Search, Download, FileText, User as UserIcon, Building, 
   TrendingUp, Smartphone, Calendar, MapPin, 
   ShieldCheck, Briefcase, Phone, Users, Info, CreditCard,
   FileSearch, AlertCircle, PenTool, CheckCircle, Hash,
-  Home, ClipboardCheck
+  Home, ClipboardCheck, List
 } from 'lucide-react';
 
 interface AdminApplicationsProps {
@@ -27,7 +28,10 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
   );
 
   const handleExportPDF = () => {
-    window.print();
+    toast.info('Preparing print-friendly dossier... Select "Save as PDF" to download.', { duration: 3500 });
+    setTimeout(() => {
+      window.print();
+    }, 200);
   };
 
   const getStatusStyle = (status: ApplicationStatus) => {
@@ -143,9 +147,10 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                  </button>
                  <button 
                    onClick={handleExportPDF}
-                   className="bg-black dark:bg-white text-white dark:text-black px-10 py-5 rounded-[1.5rem] font-black flex items-center shadow-2xl hover:opacity-80 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
+                   className="bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-black flex items-center shadow-2xl hover:opacity-80 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
+                   title="Download clean print-friendly PDF"
                  >
-                   <Download size={20} className="mr-2" /> Download Dossier
+                   <Download size={18} className="mr-2" /> Download PDF
                  </button>
                </div>
 
@@ -230,10 +235,25 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
                      </div>
                   </div>
                </section>
+
+               {/* 04: Additional Information */}
+               {selectedApp.customResponses && Object.keys(selectedApp.customResponses).length > 0 && (
+                 <section className="space-y-10 break-inside-avoid">
+                    <h3 className="text-xs font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.4em] border-b-2 border-zinc-100 dark:border-zinc-900 pb-4 print:text-black print:border-black">04: Additional Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+                       {Object.entries(selectedApp.customResponses).map(([key, value]) => {
+                          if (key === 'agentIdCode' || key === 'signature' || value === undefined || value === null || typeof value === 'object') return null;
+                          if (['firstName', 'surname', 'middleName', 'dob', 'maritalStatus', 'gender', 'currentHomeAddress', 'occupation', 'familySize', 'phoneNumber', 'reasonForRelocating', 'currentLandlordName', 'currentLandlordPhone', 'verificationType', 'verificationIdNumber', 'verificationUrl', 'passportPhotoUrl'].includes(key)) return null;
+                          
+                          return <DataPoint key={key} label={key.replace(/([A-Z])/g, ' $1').trim()} value={String(value)} />;
+                       })}
+                    </div>
+                 </section>
+               )}
              </div>
              
              {/* Footer */}
-             <div className="p-10 bg-zinc-50 text-center text-slate-300 print:block">
+             <div className="p-10 bg-zinc-50 dark:bg-black text-center text-zinc-400 dark:text-zinc-600 print:block print:bg-white print:border-t print:border-zinc-200">
                 <p className="text-[9px] font-black uppercase tracking-[0.5em]">This dossier is a private legal record of the Property Management Suite</p>
              </div>
           </div>
@@ -242,13 +262,64 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
       <style>{`
         @media print {
-          html, body, #root, main, .flex, .flex-1, .max-w-6xl, .h-screen, .overflow-auto { height: auto !important; overflow: visible !important; position: static !important; background: white !important; color: black !important; }
+          @page {
+            size: A4 portrait;
+            margin: 12mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box !important;
+          }
+          html, body {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           .print\\:hidden { display: none !important; }
-          main { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+          #root, main, .app-container, .max-w-7xl, .min-h-full {
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 0 !important;
+            background: white !important;
+            color: black !important;
+            display: block !important;
+          }
+          .fixed {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+          .max-w-5xl {
+            max-width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
           .bg-zinc-900, .bg-zinc-950, .bg-black { background-color: white !important; color: black !important; }
           .text-white { color: black !important; }
-          @page { margin: 1.5cm; size: A4; }
-          section { page-break-inside: avoid; }
+          section, .break-inside-avoid {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px !important;
+          }
+          img {
+            max-width: 100% !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
         }
       `}</style>
     </div>
@@ -256,9 +327,11 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 };
 
 const DataPoint = ({ label, value }: { label: string, value: any }) => (
-  <div className="space-y-1">
-    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.3em] leading-none mb-2 truncate">{label}</p>
-    <p className="text-lg font-bold text-black dark:text-white leading-tight break-words">{value || 'N/A'}</p>
+  <div className="space-y-1 break-inside-avoid">
+    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.3em] leading-none mb-2 truncate print:text-zinc-600">{label}</p>
+    <p className="text-base sm:text-lg font-bold text-black dark:text-white print:text-black leading-tight break-words print:text-sm">
+      {value !== undefined && value !== null && String(value).trim() !== '' ? String(value) : 'N/A'}
+    </p>
   </div>
 );
 

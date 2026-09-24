@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { logger } from './lib/logger';
 
@@ -46,11 +46,9 @@ if (configurationError) {
 } else {
   try {
     app = initializeApp(activeConfig);
-    // Using force long polling for restricted environments
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-      useFetchStreams: false,
-    } as any, activeConfig.firestoreDatabaseId);
+    db = activeConfig.firestoreDatabaseId 
+      ? getFirestore(app, activeConfig.firestoreDatabaseId)
+      : getFirestore(app);
     auth = getAuth(app);
     isConfigured = true;
   } catch (error: any) {
@@ -61,24 +59,19 @@ if (configurationError) {
 
 export { db, auth, isConfigured, configurationError };
 
-// Validate Connection to Firestore on boot with a more helpful message
+// Validate Connection to Firestore on boot
 async function verifyBackendConnection() {
   if (!isConfigured || !db) return;
   try {
-    // Try to reach the backend, but don't fail the whole app if it's just slow
     const connectionRef = doc(db, 'test', 'connection');
     await getDocFromServer(connectionRef);
   } catch (error: any) {
-    // Suppress connectivity errors as many environments are slow or start offline
-    if (error?.message?.includes('offline') || error?.message?.includes('deadline-exceeded')) {
-      logger.warn("Firestore is taking longer than expected to connect. The app will sync when online.");
-    } else {
-      logger.error("Firebase Backend Error:", error?.message);
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      logger.warn("Please check your Firebase configuration or network connection.");
     }
   }
 }
 
-// Run connection check in the background if configured
 if (isConfigured) {
   verifyBackendConnection();
 }

@@ -13,6 +13,7 @@ import {
   Info, Settings, Plus, GripVertical, Save
 } from 'lucide-react';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { toast } from 'sonner';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="space-y-6 break-inside-avoid">
@@ -22,9 +23,11 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const PrintRow: React.FC<{ label: string; value: any }> = ({ label, value }) => (
-  <div className="mb-4">
+  <div className="mb-4 break-inside-avoid">
     <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 truncate">{label}</p>
-    <p className="text-sm font-bold text-zinc-900 dark:text-white leading-tight break-words">{value || 'N/A'}</p>
+    <p className="text-sm font-bold text-zinc-900 dark:text-white leading-tight break-words">
+      {value !== undefined && value !== null && String(value).trim() !== '' ? String(value) : 'N/A'}
+    </p>
   </div>
 );
 
@@ -357,14 +360,18 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
   }, [store.applications, user.id]);
 
   const handleDownloadPDF = async (app: TenantApplication) => {
-    // If not currently viewing, view it first to render the DOM
     if (!viewingApp || viewingApp.id !== app.id) {
-        setViewingApp(app);
-        // Wait for render
-        setTimeout(() => generatePDF(app), 500);
-        return;
+      setViewingApp(app);
+      toast.info('Preparing print-friendly dossier... Select "Save as PDF" to download.', { duration: 3500 });
+      setTimeout(() => {
+        window.print();
+      }, 350);
+      return;
     }
-    generatePDF(app);
+    toast.info('Preparing print-friendly dossier... Select "Save as PDF" to download.', { duration: 3500 });
+    setTimeout(() => {
+      window.print();
+    }, 200);
   };
 
   const generatePDF = async (app: TenantApplication) => {
@@ -692,9 +699,9 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         </div>
       )}      {/* VIEW MODAL (On Screen & Download Source) */}
       {viewingApp && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-950 w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800 relative">
-             <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-black text-black dark:text-white">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 print:p-0 print:static print:bg-white print:block">
+          <div className="bg-white dark:bg-zinc-950 w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800 relative print:border-none print:shadow-none print:max-h-none print:rounded-none">
+             <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-black text-black dark:text-white print:hidden">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-2xl flex items-center justify-center text-black dark:text-white border border-zinc-200 dark:border-zinc-800 shadow-sm">
                        <FileText size={24} />
@@ -708,9 +715,10 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                    <button 
                      onClick={() => handleDownloadPDF(viewingApp)} 
                      disabled={isDownloading}
-                     className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-all disabled:opacity-50"
+                     className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-all disabled:opacity-50 active:scale-95 shadow-lg"
+                     title="Download print-friendly PDF"
                    >
-                      {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} 
+                      <Download size={15} /> 
                       Download PDF
                    </button>
                    <button 
@@ -721,68 +729,97 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                    </button>
                 </div>
              </div>
+
+             {/* Print Header - Only visible on print */}
+             <div className="hidden print:flex items-center justify-between pb-6 mb-6 border-b-2 border-black bg-white text-black p-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-black text-white p-3 rounded-xl font-black text-xl flex items-center justify-center">
+                    <Building size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight text-black">SPACEYA REAL ESTATE</h1>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600">Official Tenancy Application Dossier</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-0.5">Dossier ID</p>
+                  <p className="font-mono text-sm font-bold text-black">{viewingApp.id}</p>
+                  <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Printed: {new Date().toLocaleDateString()}</p>
+                </div>
+             </div>
              
              {/* Printable/Viewable Content Area */}
-             <div id="printable-content" className="p-10 overflow-y-auto custom-scrollbar space-y-12 bg-white dark:bg-zinc-950 text-black dark:text-white">
-                <div className="flex flex-col md:flex-row gap-8 items-center border-b border-zinc-100 dark:border-zinc-800 pb-10">
-                   <div className="w-24 h-24 bg-zinc-50 dark:bg-black rounded-3xl overflow-hidden border-2 border-zinc-100 dark:border-zinc-800 shadow-xl">
+             <div id="printable-content" className="p-8 sm:p-10 overflow-y-auto custom-scrollbar space-y-10 sm:space-y-12 bg-white dark:bg-zinc-950 text-black dark:text-white print:overflow-visible print:p-6 print:bg-white print:text-black">
+                <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-center border-b border-zinc-100 dark:border-zinc-800 pb-8 print:border-zinc-300">
+                   <div className="w-24 h-24 bg-zinc-50 dark:bg-black rounded-3xl overflow-hidden border-2 border-zinc-100 dark:border-zinc-800 shadow-xl shrink-0 print:border-zinc-300 print:shadow-none">
                       {viewingApp.passportPhotoUrl ? (
                         <OptimizedImage src={viewingApp.passportPhotoUrl} className="w-full h-full object-cover" alt="Profile" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-700 text-3xl font-black">
+                        <div className="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-700 text-3xl font-black print:text-zinc-600">
                           {viewingApp.firstName.charAt(0)}
                         </div>
                       )}
                    </div>
-                   <div className="text-center md:text-left">
-                      <h2 className="text-2xl sm:text-3xl font-black text-black dark:text-white tracking-tighter leading-none">{viewingApp.firstName} {viewingApp.surname}</h2>
-                      <div className="flex items-center justify-center md:justify-start gap-4 mt-3">
-                        <span className="px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-zinc-200 dark:border-zinc-700">{viewingApp.status}</span>
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-500 font-black uppercase tracking-[0.2em]">Filed: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>
+                   <div className="text-center md:text-left flex-1 min-w-0">
+                      <h2 className="text-2xl sm:text-3xl font-black text-black dark:text-white print:text-black tracking-tighter leading-none break-words">{viewingApp.firstName} {viewingApp.surname}</h2>
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-3">
+                        <span className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border border-zinc-200 dark:border-zinc-700 print:border-zinc-400 print:bg-white print:text-black">{viewingApp.status}</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 print:text-zinc-600 font-black uppercase tracking-[0.2em]">Filed: {new Date(viewingApp.submissionDate).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-3">
-                         Submitted to: <span className="text-blue-600 dark:text-blue-400">{store.users.find(u => u.id === viewingApp.agentId)?.name || 'Unknown Agent'}</span>
-                      </p>
+                      <div className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 print:text-zinc-700 flex flex-wrap gap-x-6 gap-y-1 justify-center md:justify-start">
+                        <span><strong>Phone:</strong> {viewingApp.phoneNumber || 'N/A'}</span>
+                        <span><strong>Target Property:</strong> {store.properties.find(p => p.id === viewingApp.propertyId)?.name || 'Pending Allocation'}</span>
+                        <span><strong>Managing Agent:</strong> {store.users.find(u => u.id === viewingApp.agentId)?.name || 'Unknown Agent'}</span>
+                      </div>
                    </div>
                 </div>
 
                 <Section title="01: Registry Information">
-                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                       <PrintRow label="Surname" value={viewingApp.surname} />
                       <PrintRow label="First Name" value={viewingApp.firstName} />
-                      <PrintRow label="Other Name" value={viewingApp.middleName} />
+                      <PrintRow label="Other Names" value={viewingApp.middleName} />
                       <PrintRow label="Date of Birth" value={viewingApp.dob} />
-                      <PrintRow label="Gender" value={viewingApp.gender} />
+                      <PrintRow label="Biological Gender" value={viewingApp.gender} />
                       <PrintRow label="Marital Status" value={viewingApp.maritalStatus} />
                       <PrintRow label="Occupation" value={viewingApp.occupation} />
-                      <PrintRow label="Phone" value={viewingApp.phoneNumber} />
-                      <PrintRow label="Family Size" value={viewingApp.familySize} />
+                      <PrintRow label="Phone Number" value={viewingApp.phoneNumber} />
+                      <PrintRow label="Family / Household Size" value={viewingApp.familySize} />
                    </div>
                 </Section>
 
                 <Section title="02: Residential Analysis">
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <PrintRow label="Current Address" value={viewingApp.currentHomeAddress} />
-                      <PrintRow label="Relocation Reason" value={viewingApp.reasonForRelocating} />
-                      <PrintRow label="Landlord" value={viewingApp.currentLandlordName} />
-                      <PrintRow label="Landlord Phone" value={viewingApp.currentLandlordPhone} />
+                      <PrintRow label="Current Residential Address" value={viewingApp.currentHomeAddress} />
+                      <PrintRow label="Primary Reason for Relocation" value={viewingApp.reasonForRelocating} />
+                      <PrintRow label="Current Landlord Name" value={viewingApp.currentLandlordName} />
+                      <PrintRow label="Landlord Phone Number" value={viewingApp.currentLandlordPhone} />
                    </div>
                 </Section>
 
                 <Section title="03: Verification Dossier">
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <PrintRow label="ID Type" value={viewingApp.verificationType} />
-                      <PrintRow label="ID Number" value={viewingApp.verificationIdNumber} />
+                      <PrintRow label="ID Document Type" value={viewingApp.verificationType} />
+                      <PrintRow label="ID Document Number" value={viewingApp.verificationIdNumber} />
                    </div>
-                   {/* URL and Image removed from Tenant View per request */}
+                   {viewingApp.verificationUrl && (
+                     <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 print:border-zinc-300 break-inside-avoid">
+                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3">Official ID Document Scan</p>
+                        <OptimizedImage 
+                          src={viewingApp.verificationUrl} 
+                          className="max-h-48 rounded-xl border border-zinc-200 dark:border-zinc-800 print:border-zinc-300 object-contain shadow-sm" 
+                          alt="ID Document" 
+                        />
+                     </div>
+                   )}
                 </Section>
 
                 {/* Dynamic Sections */}
-                {Object.keys(viewingApp.customResponses || {}).length > 0 && (
+                {viewingApp.customResponses && Object.keys(viewingApp.customResponses).length > 0 && (
                   <Section title="04: Additional Information">
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {Object.entries(viewingApp.customResponses || {}).map(([key, value]) => {
-                           if (key === 'agentIdCode' || key === 'signature' || typeof value !== 'string') return null;
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {Object.entries(viewingApp.customResponses).map(([key, value]) => {
+                           if (key === 'agentIdCode' || key === 'signature' || value === undefined || value === null || typeof value === 'object') return null;
                            if (['firstName', 'surname', 'middleName', 'dob', 'maritalStatus', 'gender', 'currentHomeAddress', 'occupation', 'familySize', 'phoneNumber', 'reasonForRelocating', 'currentLandlordName', 'currentLandlordPhone', 'verificationType', 'verificationIdNumber', 'verificationUrl', 'passportPhotoUrl'].includes(key)) return null;
                            
                            return <PrintRow key={key} label={key.replace(/([A-Z])/g, ' $1').trim()} value={String(value)} />;
@@ -791,15 +828,93 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                   </Section>
                 )}
 
-                <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4">Dossier Authentication</p>
-                    <p className="text-4xl font-serif italic text-zinc-900 dark:text-white mb-2">{viewingApp.signature}</p>
-                    <p className="text-[8px] font-bold text-zinc-300 uppercase tracking-widest">Digital Signature Verified • {viewingApp.applicationDate}</p>
+                <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 print:border-zinc-300 text-center break-inside-avoid">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3">Digital Legal Authorization</p>
+                    <p className="text-4xl sm:text-5xl font-serif italic text-zinc-900 dark:text-white print:text-black mb-2">{viewingApp.signature || `${viewingApp.firstName} ${viewingApp.surname}`}</p>
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Digital Signature Verified • Application Date: {viewingApp.applicationDate}</p>
+                </div>
+
+                <div className="hidden print:block pt-8 border-t border-zinc-200 text-center text-[8px] font-black text-zinc-400 uppercase tracking-[0.4em]">
+                  Official Submission Record • SPACEYA Property Management Suite
                 </div>
              </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 12mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box !important;
+          }
+          html, body {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          aside, nav, header, footer, .print\\:hidden, button, .custom-scrollbar {
+            display: none !important;
+          }
+          #root, main, .app-container, .max-w-7xl, .min-h-full {
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 0 !important;
+            background: white !important;
+            color: black !important;
+            display: block !important;
+          }
+          .fixed {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+          .max-w-4xl, .max-h-\\[90vh\\] {
+            max-width: 100% !important;
+            max-height: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          #printable-content {
+            overflow: visible !important;
+            max-height: none !important;
+            padding: 0 !important;
+            background: white !important;
+            color: black !important;
+          }
+          #printable-content .grid {
+            display: grid !important;
+          }
+          .break-inside-avoid, section {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px !important;
+          }
+          img {
+            max-width: 100% !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

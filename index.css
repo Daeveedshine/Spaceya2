@@ -28,3 +28,10 @@
     @apply border-black dark:border-white;
   }
 }
+
+@media print {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

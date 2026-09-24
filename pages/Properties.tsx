@@ -862,8 +862,16 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                       <p className="text-[8px] font-black text-black dark:text-zinc-200 uppercase tracking-wide truncate">{formatDate(property.rentExpiryDate || '---', settings)}</p>
                     </div>
                     <div>
-                      <p className="text-[5px] font-bold text-zinc-500 dark:text-zinc-600 uppercase mb-0 tracking-wider">Rent</p>
-                      <p className="text-[8px] font-black text-black dark:text-zinc-100 uppercase tracking-wide truncate">{formatCurrency(property.rent, settings)}</p>
+                      <p className="text-[5px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-0 tracking-wider">Annual Yield</p>
+                      <p className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wide truncate">{formatCurrency(property.rent, settings)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[5px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-0 tracking-wider">Amount Paid</p>
+                      <p className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wide truncate">{formatCurrency(property.rentPaid ?? (property.status === PropertyStatus.OCCUPIED ? property.rent : 0), settings)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[5px] font-bold text-rose-600 dark:text-rose-400 uppercase mb-0 tracking-wider">Rent Balance</p>
+                      <p className="text-[8px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wide truncate">{formatCurrency(property.rent - (property.rentPaid ?? (property.status === PropertyStatus.OCCUPIED ? property.rent : 0)), settings)}</p>
                     </div>
                   </div>
                 </div>
@@ -1397,12 +1405,8 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                                 <>
                                     <DetailCard icon={MapPin} label="Location" value={selectedProperty.location} />
                                     <DetailCard icon={DollarSign} label="Annual Yield" value={formatCurrency(selectedProperty.rent, settings)} valueClassName="text-emerald-600 dark:text-emerald-400" />
-                                    {selectedProperty.rentPaid !== undefined && (
-                                        <>
-                                            <DetailCard icon={DollarSign} label="Amount Paid" value={formatCurrency(selectedProperty.rentPaid, settings)} valueClassName="text-blue-600 dark:text-blue-400" />
-                                            <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - selectedProperty.rentPaid, settings)} valueClassName="text-rose-600 dark:text-rose-400" />
-                                        </>
-                                    )}
+                                    <DetailCard icon={DollarSign} label="Amount Paid" value={formatCurrency(selectedProperty.rentPaid ?? (selectedProperty.status === PropertyStatus.OCCUPIED ? selectedProperty.rent : 0), settings)} valueClassName="text-blue-600 dark:text-blue-400" />
+                                    <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - (selectedProperty.rentPaid ?? (selectedProperty.status === PropertyStatus.OCCUPIED ? selectedProperty.rent : 0)), settings)} valueClassName="text-rose-600 dark:text-rose-400" />
                                     <DetailCard icon={Layout} label="Type" value={selectedProperty.type} />
                                     <DetailCard icon={Building} label="Category" value={selectedProperty.category} />
                                     <DetailCard icon={Clock} label="Rent Reminder" value={selectedProperty.rentReminderPeriod === '2_WEEKS' ? '2 Weeks Before' : '1 Month Before'} />
