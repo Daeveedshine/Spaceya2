@@ -97,7 +97,7 @@ const Notifications: React.FC<NotificationsProps> = ({ user, onRefreshCount, onN
         <input 
           type="text" 
           placeholder="Search notifications..."
-          className="w-full pl-14 pr-6 py-6 bg-white dark:bg-black border-2 border-zinc-100 dark:border-zinc-800 rounded-[2rem] focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 outline-none transition-all shadow-sm font-bold placeholder:text-zinc-300"
+          className="w-full pl-14 pr-6 py-6 bg-white dark:bg-black border-2 border-zinc-200 dark:border-zinc-800 rounded-[2rem] focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 outline-none transition-all shadow-sm font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

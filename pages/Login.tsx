@@ -15,7 +15,8 @@ import { logger } from '../lib/logger';
 import { toast } from 'sonner';
 import { 
   Mail, UserCheck, 
-  Lock, AlertCircle, Eye, EyeOff, Loader2 
+  Lock, AlertCircle, Eye, EyeOff, Loader2,
+  Sun, Moon
 } from 'lucide-react';
 import { Logo } from '../App';
 
@@ -43,6 +44,28 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) return savedTheme === 'dark';
+      return document.documentElement.classList.contains('dark');
+    }
+    return true;
+  });
+
+  const toggleTheme = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -237,21 +260,33 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-black relative overflow-hidden font-sans">
-      {/* Background Grid - Matching user provided photo */}
+    <div className="h-[100dvh] w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white relative overflow-hidden font-sans transition-colors duration-300">
+      {/* Background Grid */}
       <div 
         className="fixed inset-0 z-0 opacity-40 pointer-events-none" 
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)
+            linear-gradient(to right, currentColor 1px, transparent 1px),
+            linear-gradient(to bottom, currentColor 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px'
         }}
       />
       
-      {/* Vignette effect for depth */}
-      <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+      {/* Subtle Vignette for Depth */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.05)_100%)] dark:bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
+
+      {/* Top Bar with Theme Toggle */}
+      <div className="absolute top-6 right-6 z-20">
+        <button 
+          onClick={toggleTheme}
+          aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-zinc-900 dark:text-white active:scale-95 transition-all shadow-md hover:border-black dark:hover:border-white"
+        >
+          {isDark ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-indigo-500" />}
+        </button>
+      </div>
 
       {/* Scrollable Content Layer */}
       <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden scroll-smooth flex flex-col">
@@ -259,12 +294,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="max-w-4xl w-full space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <div className="text-center space-y-4">
               <div className="flex justify-center mb-8">
-                <Logo size={80} className="text-white" />
+                <Logo size={80} className="text-black dark:text-white" />
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-[-0.05em] uppercase break-words">
+              <h2 className="text-3xl sm:text-5xl font-black text-black dark:text-white tracking-[-0.05em] uppercase break-words">
                 SPACEYA
               </h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-400">
+              <p className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-600 dark:text-zinc-400">
                 Your Space, Handled.
               </p>
             </div>
@@ -272,39 +307,39 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {error && (
               <div 
                 id="manual-auth-error"
-                className="max-w-md mx-auto bg-zinc-950 dark:bg-white text-white dark:text-black p-5 rounded-2xl text-[10px] font-bold uppercase tracking-wider leading-relaxed flex items-start gap-4 animate-in shake"
+                className="max-w-md mx-auto bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 p-5 rounded-2xl text-[10px] font-bold uppercase tracking-wider leading-relaxed flex items-start gap-4 animate-in shake shadow-lg"
               >
-                <AlertCircle size={20} className="shrink-0 mt-0.5" /> 
+                <AlertCircle size={20} className="shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" /> 
                 <span className="flex-1">{error}</span>
               </div>
             )}
 
             {successMessage && (
               <div 
-                className="max-w-md mx-auto bg-green-500 text-white p-5 rounded-2xl text-[10px] font-bold uppercase tracking-wider leading-relaxed flex items-start gap-4 animate-in fade-in zoom-in"
+                className="max-w-md mx-auto bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 p-5 rounded-2xl text-[10px] font-bold uppercase tracking-wider leading-relaxed flex items-start gap-4 animate-in fade-in zoom-in shadow-lg"
               >
-                <UserCheck size={20} className="shrink-0 mt-0.5" /> 
+                <UserCheck size={20} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" /> 
                 <span className="flex-1">{successMessage}</span>
               </div>
             )}
 
             <div className="max-w-md mx-auto space-y-6 w-full">
-              <div className="flex items-center gap-4 text-zinc-400 dark:text-zinc-800">
+              <div className="flex items-center gap-4 text-zinc-300 dark:text-zinc-800">
                  <div className="flex-1 h-px bg-current"></div>
-                 <span className="text-[12px] font-black uppercase tracking-widest whitespace-nowrap text-white">SIGNUP/LOGIN AS</span>
+                 <span className="text-[12px] font-black uppercase tracking-widest whitespace-nowrap text-zinc-900 dark:text-white">SIGNUP/LOGIN AS</span>
                  <div className="flex-1 h-px bg-current"></div>
               </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <button 
                     onClick={() => setRole(UserRole.TENANT)}
-                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.TENANT ? 'bg-white text-black border-white' : 'bg-transparent border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-500'}`}
+                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.TENANT ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xl' : 'bg-white dark:bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-zinc-500'}`}
                   >
                     Tenant
                   </button>
                   <button 
                     onClick={() => setRole(UserRole.AGENT)}
-                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.AGENT ? 'bg-white text-black border-white' : 'bg-transparent border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-500'}`}
+                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.AGENT ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xl' : 'bg-white dark:bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-zinc-500'}`}
                   >
                     Agent
                   </button>
@@ -313,65 +348,65 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               {/* Social Auth Card */}
-              <div className="space-y-3 bg-white dark:bg-zinc-950 p-6 md:p-6 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.4)] border border-zinc-100 dark:border-zinc-900 flex flex-col">
+              <div className="space-y-4 bg-white dark:bg-zinc-950 p-6 md:p-8 rounded-[3rem] shadow-xl border border-zinc-200 dark:border-zinc-800/80 flex flex-col">
                 <div className="text-center space-y-1">
                   <h3 className="text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">Social Verification</h3>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-zinc-500">Fast-Track Authorization</p>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Fast-Track Authorization</p>
                 </div>
                 
                 <div className="flex items-center justify-center py-2">
                   <button 
                     disabled={isLoading} 
                     onClick={signInWithGoogle} 
-                    className="w-full py-5 sm:py-5 px-6 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full text-[9px] sm:text-[11px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-3 sm:gap-6 hover:opacity-80 transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
+                    className="w-full py-5 sm:py-5 px-6 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full text-[9px] sm:text-[11px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-3 sm:gap-6 hover:opacity-85 transition-all active:scale-95 disabled:opacity-50 shadow-xl"
                   >
                     <GoogleIcon /> {isLoading ? 'Verifying...' : 'Login via Google'}
                   </button>
                 </div>
 
                 <div className="text-center">
-                  <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400">Zero-Knowledge Proof Enabled</p>
+                  <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Zero-Knowledge Proof Enabled</p>
                 </div>
               </div>
 
               {/* Manual Auth Card */}
-              <div className="space-y-3 bg-white dark:bg-zinc-950 p-6 md:p-6 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.4)] border border-zinc-100 dark:border-zinc-900">
+              <div className="space-y-4 bg-white dark:bg-zinc-950 p-6 md:p-8 rounded-[3rem] shadow-xl border border-zinc-200 dark:border-zinc-800/80">
                 <div className="text-center space-y-1">
                   <h3 className="text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">Manual Credentials</h3>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-zinc-500">Traditional Protocol Entry</p>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Traditional Protocol Entry</p>
                 </div>
 
                 <form onSubmit={handleManualAuth} className="space-y-3">
                   {isRegistering && (
                     <div className="relative">
-                      <UserCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                      <UserCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" size={18} />
                       <input 
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="FULL NAME"
-                        className="w-full pl-14 pr-6 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-black dark:text-white"
+                        className="w-full pl-14 pr-6 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                       />
                     </div>
                   )}
                   <div className="relative">
-                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" size={18} />
                     <input 
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="EMAIL ADDRESS"
-                      className="w-full pl-14 pr-6 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-black dark:text-white"
+                      className="w-full pl-14 pr-6 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" size={18} />
                     <input 
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Password"
-                      className="w-full pl-14 pr-16 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-black dark:text-white"
+                      className="w-full pl-14 pr-16 py-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                     />
                     <button 
                       type="button" 
@@ -387,7 +422,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       <button 
                         type="button"
                         onClick={handleForgotPassword}
-                        className="text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
+                        className="text-[9px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
                       >
                         Reset Password?
                       </button>
@@ -397,7 +432,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-6 bg-black dark:bg-white text-white dark:text-black rounded-full text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:opacity-80 transition-all active:scale-95 disabled:opacity-50 shadow-xl"
+                    className="w-full py-6 bg-black dark:bg-white text-white dark:text-black rounded-full text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:opacity-85 transition-all active:scale-95 disabled:opacity-50 shadow-xl"
                   >
                     {isLoading ? <Loader2 size={18} className="animate-spin" /> : isRegistering ? 'Register' : 'Login'}
                   </button>
@@ -409,7 +444,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setIsRegistering(!isRegistering);
                         setError('');
                       }}
-                      className="text-[10px] font-black uppercase tracking-widest text-white hover:text-red-500 transition-colors"
+                      className="text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors"
                     >
                       {isRegistering ? 'Already have an account? Login here.' : "Don't have an Account? Register Here."}
                     </button>

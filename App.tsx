@@ -71,7 +71,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, Building2, Wrench, CreditCard, LogOut, Menu, X, Shield, 
   FileText, Bell, Table, Building, ClipboardCheck, UserPlus, 
-  User as UserIcon, ChevronLeft, ChevronRight, Cloud
+  User as UserIcon, ChevronLeft, ChevronRight, Cloud, Sun, Moon
 } from 'lucide-react';
 import { isConfigured, configurationError } from './firebaseConfig';
 import { requestNotificationPermission } from './lib/notifications';
@@ -238,6 +238,30 @@ const App: React.FC = () => {
   const [badges, setBadges] = useState({ notifications: 0, maintenance: 0, screenings: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [synced, setSynced] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme === 'dark';
+      }
+      return true; // Default dark
+    }
+    return true;
+  });
+
+  const toggleTheme = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
 
   const refreshBadges = () => {
     const store = getStore();
@@ -266,7 +290,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const store = getStore();
-    document.documentElement.classList.add('dark');
+    const savedTheme = localStorage.getItem('theme');
+    const shouldBeDark = savedTheme ? savedTheme === 'dark' : isDark;
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     
     // Check for Referral Link in URL
     const params = new URLSearchParams(window.location.search);
@@ -424,7 +454,7 @@ const App: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row h-screen w-full text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden"
+          className="flex flex-col md:flex-row h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden"
         >
           {/* Mobile Backdrop Overlay */}
           {isMobileMenuOpen && (
@@ -435,12 +465,20 @@ const App: React.FC = () => {
           )}
 
           {/* Mobile Header */}
-          <div className="md:hidden flex items-center justify-between bg-white dark:bg-black p-4 shadow-sm shrink-0 z-[60] border-b border-black dark:border-white">
+          <div className="md:hidden flex items-center justify-between bg-white dark:bg-black p-4 shadow-sm shrink-0 z-[60] border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-2">
                <Logo size={24} className="text-black dark:text-white" />
                <h1 className="font-bold text-lg tracking-tighter">SPACEYA</h1>
             </div>
             <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleTheme}
+                aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white active:scale-95 transition-transform"
+              >
+                {isDark ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-indigo-500" />}
+              </button>
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
                 className="p-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black active:scale-95 transition-transform"
@@ -455,8 +493,8 @@ const App: React.FC = () => {
             ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
             fixed inset-y-0 left-0 z-[100] w-[85%] sm:w-72 md:w-auto text-zinc-900 dark:text-zinc-100 transition-all duration-300 ease-out 
             md:translate-x-0 md:static md:inset-auto print:hidden flex flex-col shrink-0
-            border-none
-            bg-zinc-50 dark:bg-black
+            border-r border-zinc-200 dark:border-zinc-900
+            bg-white dark:bg-black
             ${!isSidebarCollapsed ? 'md:w-80' : 'md:w-20'}
             h-full overflow-y-auto custom-scrollbar
           `}>
@@ -512,6 +550,39 @@ const App: React.FC = () => {
               </nav>
 
               <div className={`pt-4 border-t border-zinc-200 dark:border-white/10 mt-4 space-y-1.5 shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+                 {/* Dedicated Theme Toggle Button */}
+                 <button 
+                   onClick={toggleTheme} 
+                   title={isSidebarCollapsed ? (isDark ? "Switch to Light Mode" : "Switch to Dark Mode") : undefined}
+                   aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                   className={`
+                     w-full flex items-center font-bold rounded-2xl transition-all group
+                     text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white
+                     hover:bg-zinc-200/60 dark:hover:bg-zinc-900 active:scale-95
+                     ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3 text-xs justify-between'}
+                   `}
+                 >
+                   <div className="flex items-center">
+                     {isDark ? (
+                       <Sun className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5 text-amber-400 group-hover:rotate-45 transition-transform duration-300 shrink-0`} />
+                     ) : (
+                       <Moon className={`${isSidebarCollapsed ? '' : 'mr-4'} h-5 w-5 text-indigo-500 group-hover:-rotate-12 transition-transform duration-300 shrink-0`} />
+                     )}
+                     {!isSidebarCollapsed && (
+                       <span className="truncate">{isDark ? "Light Mode" : "Dark Mode"}</span>
+                     )}
+                   </div>
+                   {!isSidebarCollapsed && (
+                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 transition-colors ${
+                       isDark 
+                         ? 'bg-zinc-800 text-zinc-300 border-zinc-700 group-hover:border-zinc-600' 
+                         : 'bg-zinc-200 text-zinc-800 border-zinc-300 group-hover:border-zinc-400'
+                     }`}>
+                       {isDark ? 'DARK' : 'LIGHT'}
+                     </span>
+                   )}
+                 </button>
+
                  <button 
                    onClick={handleLogout} 
                    title={isSidebarCollapsed ? "Sign Out" : ""}

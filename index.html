@@ -7,6 +7,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>SPACEYA</title>
     <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          if (saved === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            document.documentElement.classList.add('dark');
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <script>
       // Load standard firebase config for AI studio preview environment
       fetch('/firebase-applet-config.json')
         .then(response => response.json())
@@ -90,14 +102,17 @@
 
       body {
         font-family: 'Inter', sans-serif;
-        background: #f0f2f5;
+        background: #fafafa;
+        color: #09090b;
         overscroll-behavior-y: none;
         overflow: hidden;
         height: 100%;
         width: 100%;
       }
+      html.dark body,
       .dark body {
-        background: #0a0a0c;
+        background: #000000;
+        color: #ffffff;
       }
 
       /* Global Icon Interaction Engine */
@@ -162,13 +177,31 @@
       
       .glass-input {
         background: #f8fafc;
+        color: #09090b;
         border: 1px solid rgba(0,0,0,0.1);
         transition: all 0.3s ease;
         border-radius: 0.75rem;
       }
       .dark .glass-input {
         background: #000000;
+        color: #f4f4f5;
         border: 1px solid rgba(255,255,255,0.1);
+      }
+
+      /* Global select and option menu visibility rules */
+      select {
+        color: #09090b;
+      }
+      .dark select {
+        color: #f4f4f5;
+      }
+      option {
+        background-color: #ffffff !important;
+        color: #09090b !important;
+      }
+      .dark option {
+        background-color: #18181b !important;
+        color: #f4f4f5 !important;
       }
 
       .glass-input:focus {

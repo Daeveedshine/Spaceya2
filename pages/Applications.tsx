@@ -552,12 +552,12 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                         ) : field.type === 'select' ? (
                            <div className="relative">
                               <select 
-                                 className="w-full p-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-[2rem] text-sm font-bold text-black dark:text-white appearance-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                                 className="w-full p-6 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-[2rem] text-sm font-bold text-zinc-900 dark:text-white appearance-none outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all cursor-pointer"
                                  value={formData[field.key] || ''}
                                  onChange={(e) => handleInputChange(field.key, e.target.value)}
                               >
-                                 <option value="">Select Option...</option>
-                                 {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                 <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="">Select Option...</option>
+                                 {field.options?.map(opt => <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={opt} value={opt}>{opt}</option>)}
                               </select>
                               <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                            </div>

@@ -163,11 +163,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                 <select
                   value={leaseFilter}
                   onChange={(e) => setLeaseFilter(e.target.value as 'nearest' | 'furthest' | 'expiring_30_days')}
-                  className="bg-transparent border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 px-3 py-1.5 rounded-lg outline-none cursor-pointer"
+                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100 px-3 py-1.5 rounded-lg outline-none cursor-pointer shadow-sm"
                 >
-                  <option value="nearest">Nearest Expiry</option>
-                  <option value="furthest">Furthest Expiry</option>
-                  <option value="expiring_30_days">Expiring &lt; 30 Days</option>
+                  <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="nearest">Nearest Expiry</option>
+                  <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="furthest">Furthest Expiry</option>
+                  <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="expiring_30_days">Expiring &lt; 30 Days</option>
                 </select>
               </div>
               <div className="space-y-4">

@@ -173,13 +173,13 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Unit ID</p>
                    <div className="relative">
                       <select 
-                        className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border-none rounded-[2rem] px-8 py-6 text-xs font-black uppercase tracking-widest text-black dark:text-white outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5"
+                        className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] px-8 py-6 text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100 outline-none focus:ring-4 focus:ring-zinc-900/5 dark:focus:ring-white/5 cursor-pointer"
                         value={newPropertyId}
                         onChange={e => setNewPropertyId(e.target.value)}
                       >
-                         <option value="">Select Asset...</option>
+                         <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="">Select Asset...</option>
                          {myProperties.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
+                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={p.id} value={p.id}>{p.name}</option>
                          ))}
                       </select>
                       <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
@@ -273,15 +273,15 @@ const Maintenance: React.FC<MaintenanceProps> = ({ user, onUpdate }) => {
                    {(user.role === UserRole.AGENT || user.role === UserRole.ADMIN) && (
                       <div className="relative">
                          <select 
-                           className="appearance-none bg-none border-none text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 px-2 pr-6 py-2 text-[9px] font-black uppercase tracking-widest outline-none transition-colors cursor-pointer" 
+                           className="appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 px-3 pr-7 py-2 text-[9px] font-black uppercase tracking-widest outline-none transition-colors cursor-pointer shadow-sm" 
                            value={ticket.status} 
                            onChange={e => handleUpdateStatus(ticket.id, e.target.value as TicketStatus)}
                          >
-                           <option value={TicketStatus.OPEN}>Update Stage: OPEN</option>
-                           <option value={TicketStatus.IN_PROGRESS}>Update Stage: ACTIVE</option>
-                           <option value={TicketStatus.RESOLVED}>Update Stage: ARCHIVED</option>
+                           <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={TicketStatus.OPEN}>Update Stage: OPEN</option>
+                           <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={TicketStatus.IN_PROGRESS}>Update Stage: ACTIVE</option>
+                           <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={TicketStatus.RESOLVED}>Update Stage: ARCHIVED</option>
                          </select>
-                         <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-300 pointer-events-none" />
+                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
                       </div>
                    )}
                 </div>

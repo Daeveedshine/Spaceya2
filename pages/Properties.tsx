@@ -678,7 +678,7 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           <div className="relative">
             <button 
               onClick={() => { setIsFilterMenuOpen(!isFilterMenuOpen); setIsSortMenuOpen(false); }}
-              className={`w-full sm:w-auto px-6 py-4 rounded-2xl border border-black dark:border-white backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-xl ${isFilterMenuOpen ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/20'}`}
+              className={`w-full sm:w-auto px-6 py-4 rounded-2xl border backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-md ${isFilterMenuOpen ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
             >
               <div className="flex items-center gap-3">
                 <Filter size={16} />
@@ -690,17 +690,17 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
             </button>
 
             {isFilterMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 z-50 glass-card p-6 rounded-[2rem] shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 w-full sm:w-72 flex flex-col gap-4">
+              <div className="absolute top-full right-0 mt-2 z-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-6 rounded-[2rem] shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 w-full sm:w-72 flex flex-col gap-4">
                  <div className="space-y-2">
                     <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Status</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black outline-none appearance-none cursor-pointer"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
-                            <option value="ALL">All Statuses</option>
-                            {Object.values(PropertyStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="ALL">All Statuses</option>
+                            {Object.values(PropertyStatus).map(s => <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={s} value={s}>{s}</option>)}
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={14} />
                     </div>
@@ -709,12 +709,12 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Category</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black outline-none appearance-none cursor-pointer"
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
                         >
-                            <option value="ALL">All Categories</option>
-                            {Object.values(PropertyCategory).map(c => <option key={c} value={c}>{c}</option>)}
+                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="ALL">All Categories</option>
+                            {Object.values(PropertyCategory).map(c => <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={c} value={c}>{c}</option>)}
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={14} />
                     </div>
@@ -723,12 +723,12 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                     <label className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest ml-1">Type</label>
                     <div className="relative">
                         <select 
-                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-black dark:text-white outline-none appearance-none"
+                            className="glass-input w-full rounded-xl px-4 py-3 text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black outline-none appearance-none cursor-pointer"
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
                         >
-                            <option value="ALL">All Types</option>
-                            {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="ALL">All Types</option>
+                            {PROPERTY_TYPES.map(t => <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={t} value={t}>{t}</option>)}
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={14} />
                     </div>
@@ -746,22 +746,22 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
           <div className="relative">
             <button 
               onClick={() => { setIsSortMenuOpen(!isSortMenuOpen); setIsFilterMenuOpen(false); }}
-              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 border border-black dark:border-white backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-white/20 transition-all active:scale-95 shadow-xl"
+              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 backdrop-blur-md flex items-center justify-between gap-4 font-bold text-[11px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95 shadow-md"
             >
               <div className="flex items-center gap-3">
-                {React.createElement(sortOptions.find(o => o.id === sortBy)?.icon || ListFilter, { size: 16, className: "text-black dark:text-white" })}
+                {React.createElement(sortOptions.find(o => o.id === sortBy)?.icon || ListFilter, { size: 16, className: "text-zinc-900 dark:text-white" })}
                 <span>{sortOptions.find(o => o.id === sortBy)?.label}</span>
               </div>
-              <ChevronDown size={14} className={`transition-transform duration-300 ${isSortMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`transition-transform duration-300 text-zinc-500 ${isSortMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isSortMenuOpen && (
-              <div className="absolute top-full left-0 right-0 sm:right-auto sm:min-w-[240px] mt-2 z-50 glass-card rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 border border-black dark:border-white">
+              <div className="absolute top-full left-0 right-0 sm:right-auto sm:min-w-[240px] mt-2 z-50 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
                 {sortOptions.map((opt) => (
                   <button
                     key={opt.id}
                     onClick={() => { setSortBy(opt.id as SortOption); setIsSortMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-5 py-4 text-[10px] font-black uppercase tracking-widest transition-colors ${sortBy === opt.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white'}`}
+                    className={`w-full flex items-center gap-3 px-5 py-4 text-[10px] font-black uppercase tracking-widest transition-colors ${sortBy === opt.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white'}`}
                   >
                     <opt.icon size={16} />
                     {opt.label}
@@ -1242,56 +1242,56 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                             {isEditing ? (
                                 <>
                                     <InputWrapper label="Location">
-                                        <input className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.location} onChange={e => setEditFormData({...editFormData, location: e.target.value})} />
+                                        <input className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black" value={editFormData.location} onChange={e => setEditFormData({...editFormData, location: e.target.value})} />
                                     </InputWrapper>
                                     <InputWrapper label="Annual Rent (Base NGN)">
-                                        <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rent} onChange={e => setEditFormData({...editFormData, rent: parseInt(e.target.value) || 0})} />
+                                        <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black" value={editFormData.rent} onChange={e => setEditFormData({...editFormData, rent: parseInt(e.target.value) || 0})} />
                                     </InputWrapper>
                                     <InputWrapper label="Amount Paid (NGN)">
-                                        <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rentPaid || 0} onChange={e => setEditFormData({...editFormData, rentPaid: parseInt(e.target.value) || 0})} />
+                                        <input type="number" className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black" value={editFormData.rentPaid || 0} onChange={e => setEditFormData({...editFormData, rentPaid: parseInt(e.target.value) || 0})} />
                                     </InputWrapper>
                                     <InputWrapper label="Status">
-                                        <select className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" value={editFormData.status} onChange={e => setEditFormData({...editFormData, status: e.target.value as PropertyStatus})}>
-                                            <option value={PropertyStatus.DRAFT}>DRAFT</option>
-                                            <option value={PropertyStatus.LISTED}>LISTED</option>
-                                            <option value={PropertyStatus.VACANT}>VACANT</option>
-                                            <option value={PropertyStatus.OCCUPIED}>OCCUPIED</option>
-                                            <option value={PropertyStatus.ARCHIVED}>ARCHIVED</option>
+                                        <select className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer" value={editFormData.status} onChange={e => setEditFormData({...editFormData, status: e.target.value as PropertyStatus})}>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyStatus.DRAFT}>DRAFT</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyStatus.LISTED}>LISTED</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyStatus.VACANT}>VACANT</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyStatus.OCCUPIED}>OCCUPIED</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyStatus.ARCHIVED}>ARCHIVED</option>
                                         </select>
                                     </InputWrapper>
                                     <InputWrapper label="Lifecycle Start">
-                                        <input type="date" className="glass-input w-full p-4 rounded-xl text-sm font-bold" value={editFormData.rentStartDate || ''} onChange={handleStartDateChange} />
+                                        <input type="date" className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black" value={editFormData.rentStartDate || ''} onChange={handleStartDateChange} />
                                     </InputWrapper>
 
                                     <InputWrapper label="Rent Reminder">
                                         <select 
-                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" 
+                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer" 
                                           value={editFormData.rentReminderPeriod || '1_MONTH'} 
                                           onChange={e => setEditFormData({...editFormData, rentReminderPeriod: e.target.value as '1_MONTH' | '2_WEEKS'})}
                                         >
-                                            <option value="1_MONTH">1 Month Before</option>
-                                            <option value="2_WEEKS">2 Weeks Before</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="1_MONTH">1 Month Before</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="2_WEEKS">2 Weeks Before</option>
                                         </select>
                                     </InputWrapper>
                                     
                                     <InputWrapper label="Property Category">
                                         <select 
-                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" 
+                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer" 
                                           value={editFormData.category} 
                                           onChange={e => setEditFormData({...editFormData, category: e.target.value as PropertyCategory})}
                                         >
-                                          <option value={PropertyCategory.RESIDENTIAL}>RESIDENTIAL</option>
-                                          <option value={PropertyCategory.COMMERCIAL}>COMMERCIAL</option>
+                                          <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyCategory.RESIDENTIAL}>RESIDENTIAL</option>
+                                          <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value={PropertyCategory.COMMERCIAL}>COMMERCIAL</option>
                                         </select>
                                     </InputWrapper>
                                     <InputWrapper label="Property Type">
                                         <select 
-                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold appearance-none" 
+                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer" 
                                           value={editFormData.type} 
                                           onChange={e => setEditFormData({...editFormData, type: e.target.value as PropertyType})}
                                         >
                                           {PROPERTY_TYPES.map(type => (
-                                            <option key={type} value={type}>{type.toUpperCase()}</option>
+                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" key={type} value={type}>{type.toUpperCase()}</option>
                                           ))}
                                         </select>
                                     </InputWrapper>

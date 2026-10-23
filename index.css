@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-offwhite: #FFFFFF;
   --color-brandblue: #000000;
@@ -8,8 +10,25 @@
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
-    @apply antialiased text-black bg-white dark:bg-black dark:text-white transition-colors duration-500;
+    @apply antialiased text-zinc-900 bg-zinc-50 dark:bg-black dark:text-zinc-100 transition-colors duration-300;
+  }
+  select {
+    @apply text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900;
+  }
+  option {
+    background-color: #ffffff !important;
+    color: #09090b !important;
+  }
+  .dark option {
+    background-color: #18181b !important;
+    color: #f4f4f5 !important;
   }
 }
 
