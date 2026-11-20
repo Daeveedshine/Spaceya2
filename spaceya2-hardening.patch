@@ -1,0 +1,1300 @@
+From 3f48a638c38ea7737e1e1059d52cd353622a2822 Mon Sep 17 00:00:00 2001
+From: claude <noreply@anthropic.com>
+Date: Fri, 20 Nov 2026 13:59:10 +0100
+Subject: [PATCH] Move wallet writes server-side, verify Paystack payments,
+ tighten Firestore rules
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_019x43pf6AtfDSwaj2ijkH7C
+---
+ .env.example                 |   8 ++
+ README.md                    |  15 ++-
+ api/_lib/firebase.ts         |  20 +++
+ api/_lib/http.ts             |  60 +++++++++
+ api/_lib/paystack.ts         |  40 ++++++
+ api/_lib/wallet.ts           | 110 ++++++++++++++++
+ api/paystack-webhook.ts      |  30 +++++
+ api/wallet/assignment-fee.ts |  14 ++
+ api/wallet/dev-fund.ts       |  16 +++
+ api/wallet/verify.ts         |  14 ++
+ api/wallet/withdraw.ts       |  12 ++
+ firestore.rules              |  98 ++++++++------
+ package.json                 |   8 +-
+ pages/AdminDashboard.tsx     |   5 -
+ pages/Login.tsx              |   4 +-
+ pages/Payments.tsx           |  38 +++---
+ pages/Properties.tsx         |  14 +-
+ server.ts                    |  14 ++
+ services/simulationEngine.ts | 239 -----------------------------------
+ services/walletApi.ts        |  41 ++++++
+ store.ts                     |   7 -
+ test/firestore.rules.test.ts |  81 ++++++++++++
+ 22 files changed, 567 insertions(+), 321 deletions(-)
+ create mode 100644 api/_lib/firebase.ts
+ create mode 100644 api/_lib/http.ts
+ create mode 100644 api/_lib/paystack.ts
+ create mode 100644 api/_lib/wallet.ts
+ create mode 100644 api/paystack-webhook.ts
+ create mode 100644 api/wallet/assignment-fee.ts
+ create mode 100644 api/wallet/dev-fund.ts
+ create mode 100644 api/wallet/verify.ts
+ create mode 100644 api/wallet/withdraw.ts
+ delete mode 100644 services/simulationEngine.ts
+ create mode 100644 services/walletApi.ts
+ create mode 100644 test/firestore.rules.test.ts
+
+diff --git a/.env.example b/.env.example
+index feb4c78..e3e8d3d 100644
+--- a/.env.example
++++ b/.env.example
+@@ -7,3 +7,11 @@ VITE_FIREBASE_APP_ID=
+ VITE_FIREBASE_MEASUREMENT_ID=
+ VITE_FIRESTORE_DATABASE_ID=
+ VITE_PAYSTACK_PUBLIC_KEY=
++
++# --- Server-only secrets (NEVER prefix with VITE_; set these in Vercel / your server env) ---
++# Service-account JSON for the Firebase project, as one line
++FIREBASE_SERVICE_ACCOUNT=
++# Paystack SECRET key (sk_...). Used to verify payments and webhook signatures
++PAYSTACK_SECRET_KEY=
++# Local testing only: lets the wallet "dev-fund" endpoint work. Ignored when NODE_ENV=production
++ALLOW_SIMULATED_FUNDING=false
+diff --git a/README.md b/README.md
+index 7e1c93b..01646bb 100644
+--- a/README.md
++++ b/README.md
+@@ -46,11 +46,24 @@ You need to connect this app to a Firebase project. Make sure you set up exactly
+ 2. Configure the necessary Firebase environment variables (or rely on the `firebase-applet-config.json` generated in the AI Studio platform).
+ 3. Deploy the provided `firestore.rules` to secure your collections.
+ 
++### Payments and wallet (server-side)
++
++Wallet balances and transactions are written **only by the server** (`api/wallet/*`, `api/paystack-webhook.ts`); `firestore.rules` denies all client writes to `wallets`, `transactions`, `payments` and `bank_accounts`.
++
++1. Set the server-only env vars from `.env.example`: `FIREBASE_SERVICE_ACCOUNT` and `PAYSTACK_SECRET_KEY` (and `VITE_PAYSTACK_PUBLIC_KEY` for the browser).
++2. In the Paystack dashboard, set the webhook URL to `https://<your-domain>/api/paystack-webhook`.
++3. For local testing without Paystack, set `ALLOW_SIMULATED_FUNDING=true`. It is ignored in production.
++4. Admin accounts can no longer be self-registered; set `role: "ADMIN"` on a user document with the Firebase console or Admin SDK.
++5. Test the rules with `npm run test:rules` (needs the Firestore emulator).
++
++Withdrawals are recorded as `pending` and held from the balance; actual payouts are manual until Paystack Transfers is integrated.
++
+ ### Project Structure
+ 
+ - `pages/`: Contains the main application views (e.g., Dashboard, Properties, Maintenance, Login, Profile).
+ - `store.ts`: Global application state manager (syncs securely with Firestore in real time).
+-- `services/`: Specialized services, such as the `simulationEngine` used to mock payment processing logic.
++- `services/walletApi.ts`: client wrapper for the server wallet endpoints.
++- `api/`: server functions (Vercel functions; also mounted by `server.ts` for local dev).
+ - `lib/`: Helper libraries such as notification push system or loggers.
+ - `App.tsx`: Main router handling authorization rendering for different pages.
+ 
+diff --git a/api/_lib/firebase.ts b/api/_lib/firebase.ts
+new file mode 100644
+index 0000000..02bf798
+--- /dev/null
++++ b/api/_lib/firebase.ts
+@@ -0,0 +1,20 @@
++import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
++import { Firestore, getFirestore } from 'firebase-admin/firestore';
++
++/**
++ * Server credentials. Set FIREBASE_SERVICE_ACCOUNT to the service-account JSON
++ * (as a single-line string) in Vercel / your server env. Never prefix it with VITE_.
++ */
++export const getAdminApp = (): App => {
++  const existing = getApps()[0];
++  if (existing) return existing;
++  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
++  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set');
++  return initializeApp({ credential: cert(JSON.parse(raw)) });
++};
++
++export const getDb = (): Firestore => {
++  const databaseId = process.env.VITE_FIRESTORE_DATABASE_ID || process.env.FIRESTORE_DATABASE_ID;
++  const app = getAdminApp();
++  return databaseId && databaseId !== '(default)' ? getFirestore(app, databaseId) : getFirestore(app);
++};
+diff --git a/api/_lib/http.ts b/api/_lib/http.ts
+new file mode 100644
+index 0000000..ee88ad9
+--- /dev/null
++++ b/api/_lib/http.ts
+@@ -0,0 +1,60 @@
++import type { IncomingMessage } from 'http';
++import { getAuth } from 'firebase-admin/auth';
++import { getAdminApp } from './firebase';
++
++/** Minimal request/response shapes shared by Vercel functions and Express. */
++export interface Req extends IncomingMessage {
++  body?: any;
++  method?: string;
++}
++export interface Res {
++  status(code: number): Res;
++  json(body: unknown): void;
++  setHeader(name: string, value: string): void;
++}
++
++export class HttpError extends Error {
++  constructor(public status: number, message: string) {
++    super(message);
++  }
++}
++
++/** Reads the unparsed request body (needed for webhook signature checks). */
++export const readRawBody = async (req: Req): Promise<Buffer> => {
++  if (Buffer.isBuffer(req.body)) return req.body; // express.raw()
++  const chunks: Buffer[] = [];
++  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
++  return Buffer.concat(chunks);
++};
++
++/** Verifies the Firebase ID token in `Authorization: Bearer <token>`. */
++export const requireUser = async (req: Req): Promise<{ uid: string }> => {
++  const header = String(req.headers['authorization'] || '');
++  const match = header.match(/^Bearer (.+)$/);
++  if (!match) throw new HttpError(401, 'Missing auth token');
++  try {
++    const decoded = await getAuth(getAdminApp()).verifyIdToken(match[1]);
++    return { uid: decoded.uid };
++  } catch {
++    throw new HttpError(401, 'Invalid auth token');
++  }
++};
++
++/** Wraps a handler: POST only, JSON errors, no stack traces or internals leaked. */
++export const route =
++  (handler: (req: Req) => Promise<unknown>) =>
++  async (req: Req, res: Res) => {
++    res.setHeader('Cache-Control', 'no-store');
++    if (req.method !== 'POST') {
++      res.setHeader('Allow', 'POST');
++      return res.status(405).json({ error: 'Method not allowed' });
++    }
++    try {
++      const result = await handler(req);
++      return res.status(200).json(result ?? { ok: true });
++    } catch (err) {
++      if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
++      console.error('Unhandled API error:', err);
++      return res.status(500).json({ error: 'Internal error' });
++    }
++  };
+diff --git a/api/_lib/paystack.ts b/api/_lib/paystack.ts
+new file mode 100644
+index 0000000..1a672db
+--- /dev/null
++++ b/api/_lib/paystack.ts
+@@ -0,0 +1,40 @@
++import crypto from 'crypto';
++import { HttpError } from './http';
++
++export interface PaystackVerifyData {
++  status: string;
++  reference: string;
++  amount: number; // kobo
++  currency: string;
++  metadata?: { uid?: string } | null;
++}
++
++/** Asks Paystack (server-to-server, with the secret key) what really happened to a reference. */
++export const verifyReference = async (reference: string): Promise<PaystackVerifyData> => {
++  const secret = process.env.PAYSTACK_SECRET_KEY;
++  if (!secret) throw new Error('PAYSTACK_SECRET_KEY is not set');
++  const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
++    headers: { Authorization: `Bearer ${secret}` },
++  });
++  if (res.status === 404) throw new HttpError(404, 'Payment not found');
++  const body: any = await res.json().catch(() => null);
++  if (!res.ok || !body?.status || !body.data) throw new HttpError(502, 'Could not verify payment');
++  return body.data as PaystackVerifyData;
++};
++
++export const isValidSignature = (rawBody: Buffer, signature: string | undefined): boolean => {
++  const secret = process.env.PAYSTACK_SECRET_KEY;
++  if (!secret || !signature) return false;
++  const expected = crypto.createHmac('sha512', secret).update(rawBody).digest('hex');
++  const a = Buffer.from(expected);
++  const b = Buffer.from(signature);
++  return a.length === b.length && crypto.timingSafeEqual(a, b);
++};
++
++/** Shared by the verify endpoint and the webhook: only a confirmed NGN payment for this uid counts. */
++export const assertConfirmedPayment = (data: PaystackVerifyData, uid: string) => {
++  if (data.status !== 'success') throw new HttpError(402, 'Payment not successful');
++  if (data.currency !== 'NGN') throw new HttpError(400, 'Unsupported currency');
++  if (data.metadata?.uid !== uid) throw new HttpError(403, 'Payment does not belong to this account');
++  return data.amount / 100;
++};
+diff --git a/api/_lib/wallet.ts b/api/_lib/wallet.ts
+new file mode 100644
+index 0000000..519e6d3
+--- /dev/null
++++ b/api/_lib/wallet.ts
+@@ -0,0 +1,110 @@
++import { FieldValue, Timestamp } from 'firebase-admin/firestore';
++import { getDb } from './firebase';
++import { HttpError } from './http';
++
++export const COMPANY_WALLET_ID = 'COMPANY_WALLET_0';
++export const ASSIGNMENT_FEE = 1000; // NGN, same value the client used to hardcode
++export const MIN_DEPOSIT = 100; // NGN
++export const MAX_DEPOSIT = 5_000_000; // NGN
++
++const ref = (prefix: string) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 900000) + 100000}`;
++
++/**
++ * Credits a wallet for a confirmed Paystack payment.
++ * Idempotent: the transaction document id is derived from the Paystack reference,
++ * so a replayed verify call or a webhook retry cannot credit twice.
++ */
++export const creditDeposit = async (uid: string, amountNaira: number, reference: string, description: string) => {
++  const db = getDb();
++  const txRef = db.collection('transactions').doc(`deposit_${reference}`);
++  const walletRef = db.collection('wallets').doc(uid);
++  const userRef = db.collection('users').doc(uid);
++
++  return db.runTransaction(async (t) => {
++    const [txSnap, walletSnap, userSnap] = await Promise.all([t.get(txRef), t.get(walletRef), t.get(userRef)]);
++    if (!userSnap.exists) throw new HttpError(404, 'User not found');
++    if (txSnap.exists) {
++      return { credited: false, balance: walletSnap.exists ? (walletSnap.data()!.balance as number) : 0, reference };
++    }
++    const balance = (walletSnap.exists ? (walletSnap.data()!.balance as number) || 0 : 0) + amountNaira;
++    if (walletSnap.exists) t.update(walletRef, { balance });
++    else t.set(walletRef, { user_id: uid, balance, status: 'active', created_at: Timestamp.now() });
++    t.update(userRef, { walletBalance: balance });
++    t.set(txRef, {
++      user_id: uid,
++      type: 'deposit',
++      amount: amountNaira,
++      status: 'success',
++      reference,
++      description,
++      created_at: Timestamp.now(),
++    });
++    return { credited: true, balance, reference };
++  });
++};
++
++/** Charges the agent the tenant-assignment fee and credits the company wallet. */
++export const chargeAssignmentFee = async (agentId: string, tenantId: string, propertyId: string) => {
++  const db = getDb();
++  const propRef = db.collection('properties').doc(propertyId);
++  const tenantRef = db.collection('users').doc(tenantId);
++  const agentWalletRef = db.collection('wallets').doc(agentId);
++  const agentUserRef = db.collection('users').doc(agentId);
++  const companyRef = db.collection('wallets').doc(COMPANY_WALLET_ID);
++
++  return db.runTransaction(async (t) => {
++    const [prop, tenant, wallet, company] = await Promise.all([
++      t.get(propRef), t.get(tenantRef), t.get(agentWalletRef), t.get(companyRef),
++    ]);
++    if (!prop.exists || prop.data()!.agentId !== agentId) throw new HttpError(403, 'Property not found');
++    if (prop.data()!.tenantId) throw new HttpError(409, 'Property already has a tenant');
++    if (!tenant.exists || tenant.data()!.role !== 'TENANT') throw new HttpError(404, 'Tenant not found');
++
++    const balance = wallet.exists ? (wallet.data()!.balance as number) || 0 : 0;
++    if (balance < ASSIGNMENT_FEE) throw new HttpError(402, 'Insufficient wallet balance');
++
++    const newBalance = balance - ASSIGNMENT_FEE;
++    t.update(agentWalletRef, { balance: newBalance });
++    t.update(agentUserRef, { walletBalance: newBalance });
++    if (company.exists) t.update(companyRef, { balance: FieldValue.increment(ASSIGNMENT_FEE) });
++    else t.set(companyRef, { user_id: 0, balance: ASSIGNMENT_FEE, status: 'active', created_at: Timestamp.now() });
++
++    const reference = ref('ASSIGN');
++    t.set(db.collection('transactions').doc(), {
++      user_id: agentId, type: 'deduction', amount: ASSIGNMENT_FEE, status: 'success',
++      reference: `${reference}-A`, description: `Tenant assignment fee: Property ${propertyId}`, created_at: Timestamp.now(),
++    });
++    t.set(db.collection('transactions').doc(), {
++      user_id: 0, type: 'credit', amount: ASSIGNMENT_FEE, status: 'success',
++      reference: `${reference}-C`, description: `Earnings from tenant assignment: Property ${propertyId}`, created_at: Timestamp.now(),
++    });
++    return { balance: newBalance, reference: `${reference}-A` };
++  });
++};
++
++/**
++ * Records a withdrawal request and holds the funds. This does NOT move money:
++ * payouts are 'pending' until someone pays them out (or Paystack Transfers is wired in).
++ */
++export const requestWithdrawal = async (uid: string, amountNaira: number) => {
++  const db = getDb();
++  const walletRef = db.collection('wallets').doc(uid);
++  const userRef = db.collection('users').doc(uid);
++  return db.runTransaction(async (t) => {
++    const wallet = await t.get(walletRef);
++    const balance = wallet.exists ? (wallet.data()!.balance as number) || 0 : 0;
++    if (balance < amountNaira) throw new HttpError(402, 'Insufficient balance');
++    const newBalance = balance - amountNaira;
++    const reference = ref('WDR');
++    t.update(walletRef, { balance: newBalance });
++    t.update(userRef, { walletBalance: newBalance });
++    t.set(db.collection('transactions').doc(), {
++      user_id: uid, type: 'withdrawal', amount: amountNaira, status: 'pending',
++      reference, description: 'Withdrawal request (pending manual payout)', created_at: Timestamp.now(),
++    });
++    return { balance: newBalance, reference };
++  });
++};
++
++export const isValidAmount = (n: unknown, min = 1, max = MAX_DEPOSIT): n is number =>
++  typeof n === 'number' && Number.isFinite(n) && Number.isInteger(n) && n >= min && n <= max;
+diff --git a/api/paystack-webhook.ts b/api/paystack-webhook.ts
+new file mode 100644
+index 0000000..4b3c4bc
+--- /dev/null
++++ b/api/paystack-webhook.ts
+@@ -0,0 +1,30 @@
++import { readRawBody, Req, Res } from './_lib/http';
++import { isValidSignature, verifyReference } from './_lib/paystack';
++import { creditDeposit } from './_lib/wallet';
++
++// Vercel: we need the raw bytes to check Paystack's HMAC signature.
++export const config = { api: { bodyParser: false } };
++
++/** Paystack calls this when a charge succeeds, even if the user closed the tab before the client could verify. */
++export default async function handler(req: Req, res: Res) {
++  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
++  try {
++    const raw = await readRawBody(req);
++    if (!isValidSignature(raw, req.headers['x-paystack-signature'] as string | undefined)) {
++      return res.status(401).json({ error: 'Bad signature' });
++    }
++    const event = JSON.parse(raw.toString('utf8'));
++    if (event?.event !== 'charge.success') return res.status(200).json({ ok: true });
++
++    // Don't trust the event payload for money: re-ask Paystack.
++    const data = await verifyReference(String(event.data?.reference || ''));
++    const uid = data.metadata?.uid;
++    if (data.status === 'success' && data.currency === 'NGN' && typeof uid === 'string') {
++      await creditDeposit(uid, data.amount / 100, data.reference, 'Wallet funding via Paystack');
++    }
++    return res.status(200).json({ ok: true });
++  } catch (err) {
++    console.error('Paystack webhook failed:', err);
++    return res.status(500).json({ error: 'Webhook error' }); // non-2xx makes Paystack retry
++  }
++}
+diff --git a/api/wallet/assignment-fee.ts b/api/wallet/assignment-fee.ts
+new file mode 100644
+index 0000000..3431136
+--- /dev/null
++++ b/api/wallet/assignment-fee.ts
+@@ -0,0 +1,14 @@
++import { HttpError, requireUser, route } from '../_lib/http';
++import { getDb } from '../_lib/firebase';
++import { chargeAssignmentFee } from '../_lib/wallet';
++
++export default route(async (req) => {
++  const { uid } = await requireUser(req);
++  const { tenantId, propertyId } = req.body || {};
++  if (typeof tenantId !== 'string' || typeof propertyId !== 'string' || !tenantId || !propertyId) {
++    throw new HttpError(400, 'tenantId and propertyId are required');
++  }
++  const caller = await getDb().collection('users').doc(uid).get();
++  if (caller.data()?.role !== 'AGENT') throw new HttpError(403, 'Only agents can assign tenants');
++  return chargeAssignmentFee(uid, tenantId, propertyId);
++});
+diff --git a/api/wallet/dev-fund.ts b/api/wallet/dev-fund.ts
+new file mode 100644
+index 0000000..9b075ad
+--- /dev/null
++++ b/api/wallet/dev-fund.ts
+@@ -0,0 +1,16 @@
++import { HttpError, requireUser, route } from '../_lib/http';
++import { creditDeposit, isValidAmount } from '../_lib/wallet';
++
++/**
++ * Local/testing top-up so you can try the app without Paystack.
++ * Disabled unless ALLOW_SIMULATED_FUNDING=true AND NODE_ENV is not production.
++ */
++export default route(async (req) => {
++  if (process.env.ALLOW_SIMULATED_FUNDING !== 'true' || process.env.NODE_ENV === 'production') {
++    throw new HttpError(404, 'Not found');
++  }
++  const { uid } = await requireUser(req);
++  const amount = req.body?.amount;
++  if (!isValidAmount(amount, 1, 100_000)) throw new HttpError(400, 'Invalid amount');
++  return creditDeposit(uid, amount, `DEV-${Date.now()}-${Math.floor(Math.random() * 1e6)}`, 'Simulated wallet funding (dev)');
++});
+diff --git a/api/wallet/verify.ts b/api/wallet/verify.ts
+new file mode 100644
+index 0000000..c0adb85
+--- /dev/null
++++ b/api/wallet/verify.ts
+@@ -0,0 +1,14 @@
++import { HttpError, requireUser, route } from '../_lib/http';
++import { assertConfirmedPayment, verifyReference } from '../_lib/paystack';
++import { creditDeposit } from '../_lib/wallet';
++
++export default route(async (req) => {
++  const { uid } = await requireUser(req);
++  const reference = req.body?.reference;
++  if (typeof reference !== 'string' || !/^[A-Za-z0-9_\-]{6,100}$/.test(reference)) {
++    throw new HttpError(400, 'Invalid reference');
++  }
++  const data = await verifyReference(reference);
++  const amount = assertConfirmedPayment(data, uid);
++  return creditDeposit(uid, amount, reference, 'Wallet funding via Paystack');
++});
+diff --git a/api/wallet/withdraw.ts b/api/wallet/withdraw.ts
+new file mode 100644
+index 0000000..850594a
+--- /dev/null
++++ b/api/wallet/withdraw.ts
+@@ -0,0 +1,12 @@
++import { HttpError, requireUser, route } from '../_lib/http';
++import { getDb } from '../_lib/firebase';
++import { isValidAmount, requestWithdrawal } from '../_lib/wallet';
++
++export default route(async (req) => {
++  const { uid } = await requireUser(req);
++  const amount = req.body?.amount;
++  if (!isValidAmount(amount)) throw new HttpError(400, 'Invalid amount');
++  const caller = await getDb().collection('users').doc(uid).get();
++  if (!['AGENT', 'ADMIN'].includes(caller.data()?.role)) throw new HttpError(403, 'Not allowed');
++  return requestWithdrawal(uid, amount);
++});
+diff --git a/firestore.rules b/firestore.rules
+index e48132f..df008af 100644
+--- a/firestore.rules
++++ b/firestore.rules
+@@ -63,26 +63,36 @@ service cloud.firestore {
+           && (!('suiteId' in data) || (data.suiteId is string && data.suiteId.size() <= 128));
+       }
+ 
+-      allow create: if (isSignedIn() || isVerified()) 
++      // Self-registration can only create AGENT or TENANT accounts, with an empty wallet.
++      // ADMIN accounts must be created/promoted with the Admin SDK or the console.
++      allow create: if isSignedIn()
+                     && isValidId(userId)
+                     && isValidUser(incoming())
+                     && incoming().id == userId
+-                    && userId == request.auth.uid;
++                    && userId == request.auth.uid
++                    && incoming().role in ['AGENT', 'TENANT']
++                    && incoming().get('walletBalance', 0) == 0;
+ 
+-      allow get: if isSignedIn();
+-      allow list: if isSignedIn();
++      // Admins and agents can see user profiles; everyone else only sees themselves and agents.
++      allow get, list: if isSignedIn() && (
++        isAdmin() ||
++        isRole('AGENT') ||
++        resource.data.id == request.auth.uid ||
++        resource.data.role == 'AGENT'
++      );
+ 
+       allow update: if isVerified() 
+                     && isValidUser(incoming())
+                     && incoming().id == existing().id // Entity remains same
+                     && incoming().role == existing().role // Role is immutable
+                     && incoming().email == existing().email // Email is immutable
++                    && incoming().get('walletBalance', null) == existing().get('walletBalance', null) // Balance is server-written only
+                     && (
+                       isAdmin() ||
+                       // Action: User update profile
+-                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl', 'walletBalance', 'assignedPropertyIds'])) ||
++                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl', 'assignedPropertyIds'])) ||
+                       // Action: Agent or internal system update balance/assignments for TENANTS
+-                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds', 'walletBalance']) && existing().role == 'TENANT')
++                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds']) && existing().role == 'TENANT')
+                     );
+     }
+ 
+@@ -104,7 +114,12 @@ service cloud.firestore {
+           && (!('rentReminderPeriod' in data) || (data.rentReminderPeriod is string && data.rentReminderPeriod in ['1_MONTH', '2_WEEKS']));
+       }
+ 
+-      allow read: if isSignedIn();
++      allow read: if isSignedIn() && (
++        isAdmin() ||
++        resource.data.agentId == request.auth.uid ||
++        resource.data.tenantId == request.auth.uid ||
++        resource.data.status in ['LISTED', 'VACANT']
++      );
+       
+       allow create: if isVerified() 
+                     && (isRole('AGENT') || isAdmin())
+@@ -143,8 +158,12 @@ service cloud.firestore {
+                     && incoming().userId == request.auth.uid
+                     && incoming().status == 'PENDING';
+ 
+-      allow get: if isSignedIn();
+-      allow list: if isSignedIn();
++      // Applications hold IDs, DOB and landlord details: only the applicant, their agent, or an admin.
++      allow get, list: if isSignedIn() && (
++        isAdmin() ||
++        resource.data.userId == request.auth.uid ||
++        resource.data.agentId == request.auth.uid
++      );
+ 
+       allow update: if isVerified()
+                     && isValidApplication(incoming())
+@@ -156,7 +175,7 @@ service cloud.firestore {
+                       // Action: Agent review and route property
+                       (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'propertyId', 'riskScore', 'aiRecommendation', 'customResponses'])) ||
+                       // Action: Tenant edit
+-                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED') && !incoming().diff(existing()).affectedKeys().hasAny(['status', 'agentId', 'propertyId', 'riskScore']))
++                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED') && !incoming().diff(existing()).affectedKeys().hasAny(['status', 'agentId', 'propertyId', 'riskScore', 'aiRecommendation']))
+                     );
+     }
+ 
+@@ -172,8 +191,12 @@ service cloud.firestore {
+           && data.status in ['active', 'expired', 'terminated'];
+       }
+ 
+-      // Secure Read: only participants can see the agreement
+-      allow read, list: if isSignedIn();
++      // Secure Read: only participants (or an admin) can see the agreement
++      allow read, list: if isSignedIn() && (
++        isAdmin() ||
++        resource.data.tenantId == request.auth.uid ||
++        resource.data.agentId == request.auth.uid
++      );
+       
+       allow create: if isVerified() 
+                     && isValidAgreement(incoming())
+@@ -193,7 +216,11 @@ service cloud.firestore {
+ 
+     // 5. MAINTENANCE TICKETS
+     match /tickets/{ticketId} {
+-      allow read, list: if isSignedIn();
++      allow read, list: if isSignedIn() && (
++        isAdmin() ||
++        resource.data.tenantId == request.auth.uid ||
++        resource.data.agentId == request.auth.uid
++      );
+       
+       allow create: if isVerified() 
+                     && incoming().id == ticketId
+@@ -209,42 +236,31 @@ service cloud.firestore {
+                     );
+     }
+ 
+-    // 6. PAYMENTS & TRANSACTIONS
++    // 6. PAYMENTS, WALLETS & TRANSACTIONS
++    // Money is written ONLY by the server (Admin SDK bypasses these rules): see api/wallet/* and
++    // api/paystack-webhook.ts. Clients may read their own records and never write.
+     match /payments/{paymentId} {
+-      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('AGENT') || isAdmin());
+-      allow write: if isVerified(); // Simulation
++      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
++      allow write: if false;
+     }
+ 
+     match /wallets/{walletId} {
+-      allow read, list: if isSignedIn();
+-      allow write: if isVerified(); // Simulation
++      allow read: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid);
++      allow write: if false;
+     }
+ 
+     match /bank_accounts/{accountId} {
+-      allow read, list: if isSignedIn();
+-      allow write: if isVerified(); // Simulation
++      allow read: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid);
++      allow write: if false;
+     }
+ 
+     match /transactions/{transactionId} {
+-       function isValidTransaction(data) {
+-        return data.keys().hasAll(['user_id', 'amount', 'type', 'description', 'created_at', 'status', 'reference'])
+-          && data.size() >= 7 && data.size() <= 12
+-          && (data.user_id is string || data.user_id is number || data.userId is string)
+-          && data.type in ['deposit', 'deduction', 'withdrawal', 'credit'];
+-      }
+-      allow read, list: if isSignedIn();
+-      allow create: if isVerified() && isValidTransaction(incoming()) && (
+-        incoming().user_id == request.auth.uid || 
+-        incoming().userId == request.auth.uid ||
+-        incoming().user_id == 0 || 
+-        isAdmin()
+-      );
+-      allow update: if isVerified() && (
+-        existing().user_id == request.auth.uid || 
+-        existing().userId == request.auth.uid ||
+-        existing().user_id == 0 ||
+-        isAdmin()
++      allow read: if isSignedIn() && (
++        isAdmin() ||
++        resource.data.user_id == request.auth.uid ||
++        resource.data.get('userId', null) == request.auth.uid
+       );
++      allow write: if false;
+     }
+ 
+     // 7. NOTIFICATIONS
+@@ -255,12 +271,12 @@ service cloud.firestore {
+           && data.id is string
+           && data.userId is string;
+       }
+-      allow read, list: if isSignedIn();
++      allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+       allow update: if isSignedIn() && (
+         (resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
+-        isRole('AGENT') || isAdmin()
++        isAdmin()
+       );
+-      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isRole('AGENT'));
++      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+       allow create: if isVerified() && isValidNotification(incoming()) && (
+         incoming().userId == request.auth.uid || 
+         isRole('AGENT') || 
+diff --git a/package.json b/package.json
+index 18f9534..059197e 100644
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,8 @@
+     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+     "start": "node dist/server.cjs",
+     "preview": "vite preview",
+-    "lint": "tsc --noEmit"
++    "lint": "tsc --noEmit",
++    "test:rules": "firebase emulators:exec --only firestore \"vitest run test/firestore.rules.test.ts\""
+   },
+   "dependencies": {
+     "@google/genai": "^1.35.0",
+@@ -16,6 +17,7 @@
+     "@tailwindcss/vite": "^4.2.4",
+     "express": "^5.2.1",
+     "firebase": "^12.8.0",
++    "firebase-admin": "^14.5.1",
+     "html-to-image": "^1.11.13",
+     "html2canvas": "^1.4.1",
+     "jspdf": "^4.2.1",
+@@ -31,6 +33,7 @@
+   },
+   "devDependencies": {
+     "@firebase/eslint-plugin-security-rules": "^0.0.1",
++    "@firebase/rules-unit-testing": "^5.0.2",
+     "@types/express": "^5.0.6",
+     "@types/node": "^22.14.0",
+     "@types/react": "^19.2.14",
+@@ -40,6 +43,7 @@
+     "eslint": "^10.2.1",
+     "tsx": "^4.22.4",
+     "typescript": "~5.8.2",
+-    "vite": "^6.2.0"
++    "vite": "^6.2.0",
++    "vitest": "^5.1.1"
+   }
+ }
+diff --git a/pages/AdminDashboard.tsx b/pages/AdminDashboard.tsx
+index f117858..aa8b61e 100644
+--- a/pages/AdminDashboard.tsx
++++ b/pages/AdminDashboard.tsx
+@@ -3,7 +3,6 @@ import React, { useMemo, useEffect, Suspense } from 'react';
+ import { User, UserRole } from '../types';
+ import { getStore, useAppStore, formatCurrency } from '../store';
+ import { Building, Users, AlertCircle, DollarSign, UserCheck, Activity, ArrowRight, ClipboardCheck, ChevronDown, Loader2 } from 'lucide-react';
+-import { initializeCompanyWallet } from '../services/simulationEngine';
+ import { LazyScrollWrapper } from '../components/LazyScrollWrapper';
+ import { usePaginatedCollection } from '../lib/usePaginatedCollection';
+ import { orderBy, where } from 'firebase/firestore';
+@@ -26,10 +25,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) =>
+ 
+   const { data: paginatedTransactions, loading, loadingMore, hasMore, loadMore } = usePaginatedCollection<any>('transactions', transactionsQuery, 15);
+ 
+-  useEffect(() => {
+-    initializeCompanyWallet().catch(console.error);
+-  }, []);
+-
+   const metrics = useMemo(() => {
+     const totalProperties = store.properties.length;
+     const totalAgents = store.users.filter(u => u.role === UserRole.AGENT).length;
+diff --git a/pages/Login.tsx b/pages/Login.tsx
+index fc3b848..9e18cf2 100644
+--- a/pages/Login.tsx
++++ b/pages/Login.tsx
+@@ -156,7 +156,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
+           role: role,
+           phone: '',
+           profilePictureUrl: '',
+-          walletBalance: role === UserRole.AGENT ? 5000 : 0,
++          walletBalance: 0,
+           assignedPropertyIds: []
+         };
+         try {
+@@ -239,7 +239,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
+           role: role,
+           phone: result.user.phoneNumber || '',
+           profilePictureUrl: photoUrl.length > 500 ? '' : photoUrl,
+-          walletBalance: role === UserRole.AGENT ? 5000 : 0,
++          walletBalance: 0,
+           assignedPropertyIds: []
+         };
+         try {
+diff --git a/pages/Payments.tsx b/pages/Payments.tsx
+index 9b4b371..2848f92 100644
+--- a/pages/Payments.tsx
++++ b/pages/Payments.tsx
+@@ -38,19 +38,19 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
+ 
+   const { data: transactions, loading, loadingMore, hasMore, loadMore, refetch } = usePaginatedCollection<Transaction>('transactions', transactionsQuery, 10);
+ 
+-  const onSuccessPaystack = async (reference: any) => {
+-      const amountVal = parseFloat(amount);
+-      const { simulateFundWallet } = await import('../services/simulationEngine');
+-      const result = await simulateFundWallet(user.id, amountVal);
+-      
++  const onSuccessPaystack = async (transaction: any) => {
++      // The server re-checks the payment with Paystack and credits the wallet. We never credit from the browser.
++      const { verifyDeposit } = await import('../services/walletApi');
++      const result = await verifyDeposit(transaction.reference);
++
+       if (result.status === 'success') {
+          setIsProcessing(false);
+          setShowDepositModal(false);
+          setAmount('5000');
+-         alert(`Deposit successful via Paystack! Reference: ${reference.reference}`);
++         alert(`Deposit successful via Paystack! Reference: ${transaction.reference}`);
+          refetch();
+       } else {
+-         alert('Error updating DB: ' + result.message);
++         alert('Payment received but wallet update failed: ' + result.message + '. If you were charged, your wallet will be credited automatically shortly.');
+          setIsProcessing(false);
+       }
+   };
+@@ -62,26 +62,30 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
+ 
+   const handleDeposit = async () => {
+     const amountVal = parseFloat(amount);
+-    if (isNaN(amountVal) || amountVal <= 0) return;
++    if (isNaN(amountVal) || amountVal <= 0 || !Number.isInteger(amountVal)) {
++      alert('Enter a whole-naira amount.');
++      return;
++    }
+ 
+     setIsProcessing(true);
+-    
++
+     if (import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
+         const paystack = new PaystackPop();
+         paystack.newTransaction({
+             key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+             email: currentUser.email || 'user@spaceya.com',
+             amount: amountVal * 100,
+-            reference: new Date().getTime().toString(),
++            reference: `spy_${crypto.randomUUID().replace(/-/g, '')}`,
+             currency: 'NGN',
++            metadata: { uid: user.id }, // server checks this matches the signed-in user
+             onSuccess: (transaction: any) => onSuccessPaystack(transaction),
+             onCancel: () => onClosePaystack()
+         });
+     } else {
+-        // Attempt funding wallet via simulation engine immediately if no public key
+-        const { simulateFundWallet } = await import('../services/simulationEngine');
+-        const result = await simulateFundWallet(user.id, amountVal);
+-        
++        // No Paystack key: dev-only top-up (the server refuses this in production).
++        const { devFundWallet } = await import('../services/walletApi');
++        const result = await devFundWallet(amountVal);
++
+         if (result.status === 'success') {
+            setIsProcessing(false);
+            setShowDepositModal(false);
+@@ -102,14 +106,14 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
+     }
+ 
+     setIsProcessing(true);
+-    const { simulateWithdrawal } = await import('../services/simulationEngine');
+-    const result = await simulateWithdrawal(user.id, amountVal);
++    const { requestWithdrawal } = await import('../services/walletApi');
++    const result = await requestWithdrawal(amountVal);
+     
+     if (result.status === 'success') {
+        setIsProcessing(false);
+        setShowWithdrawalModal(false);
+        setAmount('5000');
+-       alert('Withdrawal successful. Reference: ' + result.reference);
++       alert('Withdrawal requested. It will be paid out manually. Reference: ' + result.reference);
+        refetch();
+     } else {
+        alert('Error: ' + result.message);
+diff --git a/pages/Properties.tsx b/pages/Properties.tsx
+index d98d6c6..59b2ed2 100644
+--- a/pages/Properties.tsx
++++ b/pages/Properties.tsx
+@@ -215,15 +215,15 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
+ 
+   const handleTopUp = async () => {
+     setIsSaving(true);
+-    const toastId = toast.loading('Simulating fund transfer...');
+-    const { simulateFundWallet } = await import('../services/simulationEngine');
+-    const result = await simulateFundWallet(user.id, 5000);
++    const toastId = toast.loading('Adding test funds...');
++    const { devFundWallet } = await import('../services/walletApi');
++    const result = await devFundWallet(5000);
+     if (result.status === 'success' && result.balance !== undefined) {
+-      toast.success('Wallet funded via simulation.', { id: toastId });
++      toast.success('Test funds added.', { id: toastId });
+       // Update store so UI refreshes without reload
+       const updatedUsers = store.users.map(u => u.id === user.id ? { ...u, walletBalance: result.balance } : u);
+       setStore({ ...store, users: updatedUsers });
+-      // We don't call saveStore(store) here because simulateFundWallet handles it in Firestore directly.
++      // The server wrote the wallet; no saveStore here.
+       // And the global sync handles localstorage.
+     } else {
+       toast.error('Error: ' + result.message, { id: toastId });
+@@ -239,8 +239,8 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
+     const toastId = toast.loading('Processing payment & assignment...');
+ 
+     try {
+-      const { simulateTenantAssignment } = await import('../services/simulationEngine');
+-      const assignResult = await simulateTenantAssignment(user.id, pendingTenant.id, selectedProperty.id);
++      const { chargeAssignmentFee } = await import('../services/walletApi');
++      const assignResult = await chargeAssignmentFee(pendingTenant.id, selectedProperty.id);
+ 
+       if (assignResult.status !== 'success') {
+          toast.error('Payment Failed: ' + assignResult.message, { id: toastId });
+diff --git a/server.ts b/server.ts
+index ebcf729..04217a8 100644
+--- a/server.ts
++++ b/server.ts
+@@ -3,13 +3,27 @@ import path from "path";
+ import { createServer as createViteServer } from "vite";
+ import { z } from "zod";
+ import xss from "xss";
++import verifyDeposit from "./api/wallet/verify";
++import devFund from "./api/wallet/dev-fund";
++import assignmentFee from "./api/wallet/assignment-fee";
++import withdraw from "./api/wallet/withdraw";
++import paystackWebhook from "./api/paystack-webhook";
+ 
+ async function startServer() {
+   const app = express();
+   const PORT = 3000;
+ 
++  // Webhook needs the raw body for signature checks, so it is mounted before express.json().
++  app.post("/api/paystack-webhook", express.raw({ type: "*/*" }), (req, res) => paystackWebhook(req as any, res as any));
++
+   app.use(express.json());
+ 
++  // Wallet API (same handlers Vercel serves from /api/*)
++  app.post("/api/wallet/verify", (req, res) => verifyDeposit(req as any, res as any));
++  app.post("/api/wallet/dev-fund", (req, res) => devFund(req as any, res as any));
++  app.post("/api/wallet/assignment-fee", (req, res) => assignmentFee(req as any, res as any));
++  app.post("/api/wallet/withdraw", (req, res) => withdraw(req as any, res as any));
++
+   // Input Sanitization utility
+   const sanitizeInput = (input: string) => {
+     return xss(input, {
+diff --git a/services/simulationEngine.ts b/services/simulationEngine.ts
+deleted file mode 100644
+index 9a77f60..0000000
+--- a/services/simulationEngine.ts
++++ /dev/null
+@@ -1,239 +0,0 @@
+-import { db } from '../firebaseConfig';
+-import { doc, getDoc, setDoc, runTransaction, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+-
+-import { extractErrorMessage } from '../lib/firebaseErrors';
+-
+-const COMPANY_WALLET_ID = 'COMPANY_WALLET_0';
+-
+-export interface SimulationResult {
+-  status: 'success' | 'failed';
+-  message: string;
+-  balance?: number;
+-  reference?: string;
+-}
+-
+-// Ensure company wallet exists
+-export const initializeCompanyWallet = async () => {
+-  const walletRef = doc(db, 'wallets', COMPANY_WALLET_ID);
+-  const snap = await getDoc(walletRef);
+-  if (!snap.exists()) {
+-    await setDoc(walletRef, {
+-      user_id: 0,
+-      balance: 0,
+-      status: 'active',
+-      created_at: Timestamp.now()
+-    });
+-  }
+-};
+-
+-const generateReference = (prefix: string) => {
+-  return `${prefix}-${Math.floor(Math.random() * 900000) + 100000}`;
+-};
+-
+-export const simulateFundWallet = async (userId: string, amount: number): Promise<SimulationResult> => {
+-  try {
+-    const walletRef = doc(db, 'wallets', userId);
+-    
+-    const result = await runTransaction(db, async (transaction) => {
+-      const userRef = doc(db, 'users', userId);
+-      const walletDoc = await transaction.get(walletRef);
+-      if (!walletDoc.exists()) {
+-        // Create wallet if it doesn't exist
+-        transaction.set(walletRef, {
+-          user_id: userId,
+-          balance: amount,
+-          status: 'active',
+-          created_at: Timestamp.now()
+-        });
+-        transaction.update(userRef, { walletBalance: amount });
+-      } else {
+-        const currentBalance = walletDoc.data().balance || 0;
+-        transaction.update(walletRef, {
+-          balance: currentBalance + amount
+-        });
+-        transaction.update(userRef, { walletBalance: currentBalance + amount });
+-      }
+-
+-      const ref = generateReference('REF-TEST');
+-      const transactionRef = doc(collection(db, 'transactions'));
+-      transaction.set(transactionRef, {
+-        user_id: userId,
+-        type: 'deposit',
+-        amount: amount,
+-        status: 'success',
+-        reference: ref,
+-        description: 'Simulated wallet funding',
+-        created_at: Timestamp.now()
+-      });
+-
+-      return { balance: walletDoc.exists() ? walletDoc.data().balance + amount : amount, reference: ref };
+-    });
+-
+-    return {
+-      status: 'success',
+-      message: 'Wallet funded successfully',
+-      balance: result.balance,
+-      reference: result.reference
+-    };
+-  } catch (error: any) {
+-    return {
+-      status: 'failed',
+-      message: extractErrorMessage(error) || 'Error funding wallet'
+-    };
+-  }
+-};
+-
+-export const simulateTenantAssignment = async (agentId: string, tenantId: string, propertyId: string): Promise<SimulationResult> => {
+-  try {
+-    const FEE = 1000;
+-    const agentWalletRef = doc(db, 'wallets', agentId);
+-    const agentUserRef = doc(db, 'users', agentId);
+-    const companyWalletRef = doc(db, 'wallets', COMPANY_WALLET_ID);
+-
+-    const result = await runTransaction(db, async (transaction) => {
+-      const agentWalletDoc = await transaction.get(agentWalletRef);
+-      if (!agentWalletDoc.exists()) {
+-        throw new Error('Insufficient wallet balance');
+-      }
+-
+-      const currentBalance = agentWalletDoc.data().balance || 0;
+-      if (currentBalance < FEE) {
+-        throw new Error('Insufficient wallet balance');
+-      }
+-
+-      // Ensure company wallet is initialized
+-      const companyWalletDoc = await transaction.get(companyWalletRef);
+-      const companyBalance = companyWalletDoc.exists() ? companyWalletDoc.data().balance || 0 : 0;
+-
+-      if (!companyWalletDoc.exists()) {
+-         transaction.set(companyWalletRef, {
+-            user_id: 0,
+-            balance: FEE,
+-            status: 'active',
+-            created_at: Timestamp.now()
+-         });
+-      } else {
+-         transaction.update(companyWalletRef, {
+-            balance: companyBalance + FEE
+-         });
+-      }
+-
+-      transaction.update(agentWalletRef, {
+-        balance: currentBalance - FEE
+-      });
+-      transaction.update(agentUserRef, { walletBalance: currentBalance - FEE });
+-
+-      const ref = generateReference('ASSIGN');
+-      
+-      const agentTxRef = doc(collection(db, 'transactions'));
+-      transaction.set(agentTxRef, {
+-        user_id: agentId,
+-        type: 'deduction',
+-        amount: FEE,
+-        status: 'success',
+-        reference: ref + '-A',
+-        description: `Simulated tenant assignment fee: Property ${propertyId}`,
+-        created_at: Timestamp.now()
+-      });
+-
+-      const companyTxRef = doc(collection(db, 'transactions'));
+-      transaction.set(companyTxRef, {
+-        user_id: 0,
+-        type: 'credit',
+-        amount: FEE,
+-        status: 'success',
+-        reference: ref + '-C',
+-        description: `Earnings from tenant assignment: Property ${propertyId}`,
+-        created_at: Timestamp.now()
+-      });
+-
+-      return { balance: currentBalance - FEE, reference: ref + '-A' };
+-    });
+-
+-    return {
+-      status: 'success',
+-      message: 'Tenant assigned successfully',
+-      balance: result.balance,
+-      reference: result.reference
+-    };
+-  } catch (error: any) {
+-    return {
+-      status: 'failed',
+-      message: extractErrorMessage(error) || 'Error processing assignment'
+-    };
+-  }
+-};
+-
+-export const simulateWithdrawal = async (agentId: string, amount: number): Promise<SimulationResult> => {
+-  try {
+-    const walletRef = doc(db, 'wallets', agentId);
+-
+-    const result = await runTransaction(db, async (transaction) => {
+-      const walletDoc = await transaction.get(walletRef);
+-      if (!walletDoc.exists()) {
+-        throw new Error('Wallet not found');
+-      }
+-
+-      const currentBalance = walletDoc.data().balance || 0;
+-      if (currentBalance < amount) {
+-        throw new Error('Insufficient balance');
+-      }
+-
+-      transaction.update(walletRef, {
+-        balance: currentBalance - amount
+-      });
+-
+-      const ref = generateReference('TRF-TEST');
+-      const transactionRef = doc(collection(db, 'transactions'));
+-      transaction.set(transactionRef, {
+-        user_id: agentId,
+-        type: 'withdrawal',
+-        amount: amount,
+-        status: 'success',
+-        reference: ref,
+-        description: 'Simulated bank transfer',
+-        created_at: Timestamp.now()
+-      });
+-
+-      return { balance: currentBalance - amount, reference: ref };
+-    });
+-
+-    return {
+-      status: 'success',
+-      message: 'Withdrawal successful',
+-      balance: result.balance,
+-      reference: result.reference
+-    };
+-  } catch (error: any) {
+-    return {
+-      status: 'failed',
+-      message: extractErrorMessage(error) || 'Error withdrawing funds'
+-    };
+-  }
+-};
+-
+-export const registerBankAccount = async (userId: string, bankName: string, accountNumber: string) => {
+-  const accountRef = doc(collection(db, 'bank_accounts'));
+-  const fakeAccountNames = ['John Doe', 'Alice Smith', 'Bob Johnson', 'Mary Jane', 'Oluwaseun Adeyemi'];
+-  
+-  await setDoc(accountRef, {
+-    user_id: userId,
+-    bank_name: bankName,
+-    account_number: accountNumber,
+-    account_name: fakeAccountNames[Math.floor(Math.random() * fakeAccountNames.length)],
+-    recipient_code: generateReference('RCP-TEST'),
+-    created_at: Timestamp.now()
+-  });
+-};
+-
+-export const fetchWalletBalance = async (userId: string): Promise<number> => {
+-  const walletRef = doc(db, 'wallets', userId);
+-  const snap = await getDoc(walletRef);
+-  return snap.exists() ? snap.data().balance : 0;
+-};
+-
+-export const getCompanyWalletBalance = async (): Promise<number> => {
+-  const walletRef = doc(db, 'wallets', COMPANY_WALLET_ID);
+-  const snap = await getDoc(walletRef);
+-  return snap.exists() ? snap.data().balance : 0;
+-};
+diff --git a/services/walletApi.ts b/services/walletApi.ts
+new file mode 100644
+index 0000000..4e07884
+--- /dev/null
++++ b/services/walletApi.ts
+@@ -0,0 +1,41 @@
++import { auth } from '../firebaseConfig';
++import { extractErrorMessage } from '../lib/firebaseErrors';
++
++export interface WalletResult {
++  status: 'success' | 'failed';
++  message: string;
++  balance?: number;
++  reference?: string;
++}
++
++/**
++ * All wallet changes happen on the server (see /api/wallet/*). The browser can only
++ * ask; the server checks the Firebase ID token, verifies Paystack payments, and writes.
++ */
++const call = async (path: string, body: Record<string, unknown>): Promise<WalletResult> => {
++  try {
++    const token = await auth?.currentUser?.getIdToken();
++    if (!token) return { status: 'failed', message: 'Please sign in again.' };
++    const res = await fetch(path, {
++      method: 'POST',
++      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
++      body: JSON.stringify(body),
++    });
++    const data = await res.json().catch(() => ({}));
++    if (!res.ok) return { status: 'failed', message: data.error || 'Request failed' };
++    return { status: 'success', message: 'OK', balance: data.balance, reference: data.reference };
++  } catch (err) {
++    return { status: 'failed', message: extractErrorMessage(err) || 'Network error' };
++  }
++};
++
++/** Call after Paystack reports success. The server re-checks the payment with Paystack before crediting. */
++export const verifyDeposit = (reference: string) => call('/api/wallet/verify', { reference });
++
++/** Dev-only top-up; the server rejects it unless ALLOW_SIMULATED_FUNDING=true and not production. */
++export const devFundWallet = (amount: number) => call('/api/wallet/dev-fund', { amount });
++
++export const chargeAssignmentFee = (tenantId: string, propertyId: string) =>
++  call('/api/wallet/assignment-fee', { tenantId, propertyId });
++
++export const requestWithdrawal = (amount: number) => call('/api/wallet/withdraw', { amount });
+diff --git a/store.ts b/store.ts
+index 0fffb2b..27ef37b 100644
+--- a/store.ts
++++ b/store.ts
+@@ -145,9 +145,6 @@ export const getStore = (): AppState => {
+       if (u.assignedPropertyId && !u.assignedPropertyIds) {
+         u.assignedPropertyIds = [u.assignedPropertyId];
+       }
+-      if (u.role === UserRole.AGENT && u.walletBalance === undefined) {
+-        u.walletBalance = 5000; // Give every agent ₦5000 starter balance for this prototype
+-      }
+       return u;
+     });
+   }
+@@ -155,9 +152,6 @@ export const getStore = (): AppState => {
+     if (parsed.currentUser.assignedPropertyId && !parsed.currentUser.assignedPropertyIds) {
+       parsed.currentUser.assignedPropertyIds = [parsed.currentUser.assignedPropertyId];
+     }
+-    if (parsed.currentUser.role === UserRole.AGENT && parsed.currentUser.walletBalance === undefined) {
+-      parsed.currentUser.walletBalance = 5000;
+-    }
+   }
+ 
+   if (!parsed.transactions) parsed.transactions = [];
+@@ -229,7 +223,6 @@ export const saveStore = async (state: AppState) => {
+       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
+       syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
+       syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid)),
+-      syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
+       syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
+     ]);
+   }
+diff --git a/test/firestore.rules.test.ts b/test/firestore.rules.test.ts
+new file mode 100644
+index 0000000..ac4b7ed
+--- /dev/null
++++ b/test/firestore.rules.test.ts
+@@ -0,0 +1,81 @@
++/**
++ * Run with the Firestore emulator:
++ *   npm i -D @firebase/rules-unit-testing vitest
++ *   npx firebase emulators:exec --only firestore "npx vitest run test/firestore.rules.test.ts"
++ */
++import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
++import { readFileSync } from 'fs';
++import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
++
++let env: RulesTestEnvironment;
++const user = (id: string, role: string, extra = {}) => ({ id, name: id, email: `${id}@x.com`, role, ...extra });
++
++beforeAll(async () => {
++  env = await initializeTestEnvironment({
++    projectId: 'demo-spaceya',
++    firestore: { rules: readFileSync('firestore.rules', 'utf8') },
++  });
++});
++afterAll(() => env.cleanup());
++beforeEach(async () => {
++  await env.clearFirestore();
++  await env.withSecurityRulesDisabled(async (ctx) => {
++    const db = ctx.firestore();
++    await db.doc('users/agent1').set(user('agent1', 'AGENT'));
++    await db.doc('users/agent2').set(user('agent2', 'AGENT'));
++    await db.doc('users/tenant1').set(user('tenant1', 'TENANT'));
++    await db.doc('users/tenant2').set(user('tenant2', 'TENANT'));
++    await db.doc('users/admin1').set(user('admin1', 'ADMIN'));
++    await db.doc('wallets/agent1').set({ user_id: 'agent1', balance: 5000, status: 'active' });
++    await db.doc('wallets/agent2').set({ user_id: 'agent2', balance: 5000, status: 'active' });
++    await db.doc('transactions/t1').set({ user_id: 'agent1', amount: 1, type: 'deposit', status: 'success', reference: 'r', description: 'd', created_at: 'x' });
++    await db.doc('applications/app1').set({ id: 'app1', userId: 'tenant1', propertyId: 'p1', agentId: 'agent1', status: 'PENDING', submissionDate: 'x' });
++  });
++});
++
++const as = (uid: string) => env.authenticatedContext(uid).firestore();
++
++describe('money is server-only', () => {
++  it('blocks client wallet writes', async () => {
++    await assertFails(as('agent1').doc('wallets/agent1').update({ balance: 999999 }));
++    await assertFails(as('agent1').doc('wallets/agent2').update({ balance: 0 }));
++    await assertFails(as('agent1').doc('wallets/new').set({ user_id: 'agent1', balance: 1 }));
++  });
++  it('blocks client transaction writes', async () => {
++    await assertFails(as('agent1').doc('transactions/x').set({ user_id: 'agent1', amount: 1 }));
++    await assertFails(as('agent1').doc('transactions/t1').update({ status: 'failed' }));
++  });
++  it('lets users read only their own wallet/transactions', async () => {
++    await assertSucceeds(as('agent1').doc('wallets/agent1').get());
++    await assertFails(as('agent1').doc('wallets/agent2').get());
++    await assertSucceeds(as('agent1').doc('transactions/t1').get());
++    await assertFails(as('agent2').doc('transactions/t1').get());
++    await assertSucceeds(as('admin1').doc('wallets/agent2').get());
++  });
++});
++
++describe('users', () => {
++  it('cannot self-register as ADMIN or with a balance', async () => {
++    await assertFails(as('new1').doc('users/new1').set(user('new1', 'ADMIN')));
++    await assertFails(as('new1').doc('users/new1').set(user('new1', 'AGENT', { walletBalance: 5000 })));
++    await assertSucceeds(as('new1').doc('users/new1').set(user('new1', 'AGENT', { walletBalance: 0 })));
++  });
++  it('cannot change own role or walletBalance', async () => {
++    await assertFails(as('tenant1').doc('users/tenant1').update({ role: 'ADMIN' }));
++    await assertFails(as('tenant1').doc('users/tenant1').update({ walletBalance: 1e9 }));
++    await assertSucceeds(as('tenant1').doc('users/tenant1').update({ name: 'New Name' }));
++  });
++  it('agent cannot top up a tenant balance', async () => {
++    await assertFails(as('agent1').doc('users/tenant1').update({ walletBalance: 100 }));
++  });
++});
++
++describe('reads are scoped', () => {
++  it('applications visible only to applicant, agent, admin', async () => {
++    await assertSucceeds(as('tenant1').doc('applications/app1').get());
++    await assertSucceeds(as('agent1').doc('applications/app1').get());
++    await assertSucceeds(as('admin1').doc('applications/app1').get());
++    await assertFails(as('tenant2').doc('applications/app1').get());
++    await assertFails(as('agent2').doc('applications/app1').get());
++  });
++});
+-- 
+2.43.0
+
