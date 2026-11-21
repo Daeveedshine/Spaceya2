@@ -10,6 +10,7 @@ import {
   updateProfile 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { recordConsent, openLegal } from '../lib/consent';
 import { handleFirestoreError, extractErrorMessage } from '../lib/firebaseErrors';
 import { logger } from '../lib/logger';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [useEmail, setUseEmail] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -107,6 +109,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       return;
     }
 
+    if (isRegistering && !agreed) {
+      setError('Please accept the Terms of Service and Privacy Policy to register.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Server-side validation
@@ -161,6 +168,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         };
         try {
           await setDoc(userRef, currentUserProfile);
+          if (agreed) { try { await recordConsent(user.uid); } catch (e) { console.warn('consent not recorded', e); } }
         } catch (err: any) {
           handleFirestoreError(err, 'create', `/users/${user.uid}`, user);
         }
@@ -244,6 +252,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         };
         try {
           await setDoc(userRef, currentUserProfile);
+          if (agreed) { try { await recordConsent(result.user.uid); } catch (e) { console.warn('consent not recorded', e); } }
         } catch (err: any) {
           handleFirestoreError(err, 'create', `/users/${result.user.uid}`, result.user);
         }
@@ -363,6 +372,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <GoogleIcon /> {isLoading ? 'Verifying...' : 'Login via Google'}
                   </button>
                 </div>
+                <p className="text-center text-[9px] font-bold text-zinc-500 leading-relaxed">New accounts are asked to accept the <button type="button" onClick={() => openLegal('terms')} className="underline">Terms</button> and <button type="button" onClick={() => openLegal('privacy')} className="underline">Privacy Policy</button> after sign-in.</p>
 
                 <div className="text-center">
                   <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Zero-Knowledge Proof Enabled</p>
@@ -429,6 +439,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </div>
                   )}
 
+                  {isRegistering && (
+                    <label className="flex items-start gap-3 px-2 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 cursor-pointer leading-relaxed">
+                      <input type="checkbox" className="mt-0.5" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+                      <span>I agree to the <button type="button" onClick={() => openLegal('terms')} className="underline font-black">Terms of Service</button> and <button type="button" onClick={() => openLegal('privacy')} className="underline font-black">Privacy Policy</button>.</span>
+                    </label>
+                  )}
+
                   <button 
                     type="submit"
                     disabled={isLoading}
@@ -456,6 +473,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <footer className="pt-12 text-center pb-12">
             <p className="text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-500">Secured via Quantum Infrastructure</p>
+            <p className="mt-4 text-[9px] font-black uppercase tracking-widest text-zinc-500">
+              <button onClick={() => openLegal('terms')} className="underline hover:text-black dark:hover:text-white">Terms</button> · <button onClick={() => openLegal('privacy')} className="underline hover:text-black dark:hover:text-white">Privacy</button> · <button onClick={() => openLegal('cookies')} className="underline hover:text-black dark:hover:text-white">Cookies</button>
+            </p>
           </footer>
         </div>
       </div>

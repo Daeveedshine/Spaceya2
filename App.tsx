@@ -75,6 +75,10 @@ import {
 } from 'lucide-react';
 import { isConfigured, configurationError } from './firebaseConfig';
 import { requestNotificationPermission } from './lib/notifications';
+import LegalViewer from './components/LegalViewer';
+import CookieBanner from './components/CookieBanner';
+import ConsentGate from './components/ConsentGate';
+import { openLegal, getCookiePrefs } from './lib/consent';
 
 const ConfigurationErrorScreen: React.FC<{ error: string }> = ({ error }) => {
   const isVercel = window.location.hostname.includes('vercel.app');
@@ -252,12 +256,13 @@ const App: React.FC = () => {
   const toggleTheme = () => {
     setIsDark(prev => {
       const next = !prev;
+      const remember = getCookiePrefs()?.preferences !== false;
       if (next) {
         document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+        if (remember) localStorage.setItem('theme', 'dark');
       } else {
         document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
+        if (remember) localStorage.setItem('theme', 'light');
       }
       return next;
     });
@@ -425,6 +430,10 @@ const App: React.FC = () => {
   }
 
   return (
+    <>
+    <LegalViewer />
+    <CookieBanner />
+    {user && <ConsentGate user={user} onDecline={handleLogout} />}
     <AnimatePresence mode="wait">
       {isLoading ? (
         <motion.div
@@ -600,6 +609,14 @@ const App: React.FC = () => {
                    {isSidebarCollapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-[10px] uppercase font-black tracking-widest">Collapse Menu</span></div>}
                  </button>
                  
+                 {!isSidebarCollapsed && (
+                    <div className="flex items-center justify-center gap-3 pt-2 text-[8px] font-black uppercase tracking-widest text-zinc-500">
+                      <button onClick={() => openLegal('terms')} className="hover:text-black dark:hover:text-white">Terms</button>
+                      <button onClick={() => openLegal('privacy')} className="hover:text-black dark:hover:text-white">Privacy</button>
+                      <button onClick={() => window.dispatchEvent(new Event('open-cookie-settings'))} className="hover:text-black dark:hover:text-white">Cookies</button>
+                    </div>
+                 )}
+
                  {!isSidebarCollapsed && isConfigured && (
                     <div className="flex items-center justify-center gap-2 pt-2 text-[9px] font-black text-black dark:text-white uppercase tracking-widest opacity-60">
                         <Cloud size={10} /> Cloud Sync Active
@@ -629,6 +646,7 @@ const App: React.FC = () => {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 };
 

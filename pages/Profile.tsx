@@ -4,6 +4,7 @@ import { User, UserRole, FormTemplate, FormSection, FormField, FieldType } from 
 import { getStore, saveStore, UserSettings } from '../store';
 import { compressImage } from '../lib/imageUtils';
 import { OptimizedImage } from '../components/OptimizedImage';
+import PrivacyDataPanel from '../components/PrivacyDataPanel';
 import { 
   User as UserIcon, Mail, Phone, Shield, Save, CheckCircle2, 
   AlertCircle, Copy, Check, Link as LinkIcon, FileText, 
@@ -603,6 +604,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUserUpdate }) => {
            </div>
         </div>
       )}
+
+      <PrivacyDataPanel user={user} />
     </div>
   );
 };

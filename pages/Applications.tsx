@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { OptimizedImage } from '../components/OptimizedImage';
 import { toast } from 'sonner';
+import { openLegal } from '../lib/consent';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="space-y-6">
@@ -121,6 +122,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
   const [isSearchingAgent, setIsSearchingAgent] = useState(false);
   const [viewingApp, setViewingApp] = useState<TenantApplication | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [dataConsent, setDataConsent] = useState(false);
 
   // Check for referral on mount
   useEffect(() => {
@@ -317,7 +319,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
         
         riskScore: score,
         aiRecommendation: recommendation,
-        customResponses: formData
+        customResponses: { ...formData, dataConsentGivenAt: new Date().toISOString() }
       };
 
       const notification = {
@@ -348,6 +350,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
       setIsSubmitting(false);
       setViewMode('history');
       setFormData({});
+      setDataConsent(false);
       setCurrentStepIndex(0);
       if (onUpdate) onUpdate();
     }, 1500);
@@ -497,7 +500,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
   if (viewMode === 'form' && activeTemplate) {
     const currentSection = activeTemplate.sections[currentStepIndex];
     const isLastStep = currentStepIndex === activeTemplate.sections.length - 1;
-    const canProceed = currentSection.fields.every(f => {
+    const canProceedFields = currentSection.fields.every(f => {
       if (!f.required) return true;
       const val = formData[f.key];
       if (val === undefined || val === null) return false;
@@ -505,6 +508,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
       if (typeof val === 'number') return !isNaN(val);
       return true;
     });
+    const canProceed = canProceedFields && (!isLastStep || dataConsent);
 
     return (
       <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
@@ -594,6 +598,13 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
                      </div>
                   ))}
                </div>
+
+               {isLastStep && (
+                  <label className="flex items-start gap-3 p-5 rounded-3xl bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-xs font-bold leading-relaxed cursor-pointer">
+                     <input type="checkbox" className="mt-1" checked={dataConsent} onChange={(e) => setDataConsent(e.target.checked)} />
+                     <span>I confirm the information is true and I consent to {targetAgent?.name || 'the agent'} and the SPACEYA platform processing my personal data, including my ID document and photo, to screen this application and manage any resulting tenancy, as described in the <button type="button" onClick={() => openLegal('privacy')} className="underline font-black">Privacy Policy</button>.</span>
+                  </label>
+               )}
 
                <div className="flex gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                   {currentStepIndex > 0 && (

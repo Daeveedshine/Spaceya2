@@ -285,6 +285,37 @@ service cloud.firestore {
       ); 
     }
 
+    // 9. CONSENT RECORDS (terms/privacy acceptance). Owner writes their own; admins read.
+    match /consents/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isVerified()
+                    && request.auth.uid == userId
+                    && incoming().userId == userId
+                    && incoming().keys().hasOnly(['userId', 'termsVersion', 'privacyVersion', 'acceptedAt', 'userAgent'])
+                    && incoming().termsVersion is string && incoming().termsVersion.size() <= 32
+                    && incoming().privacyVersion is string && incoming().privacyVersion.size() <= 32
+                    && incoming().acceptedAt is string && incoming().acceptedAt.size() <= 40
+                    && incoming().userAgent is string && incoming().userAgent.size() <= 300;
+      allow delete: if false;
+    }
+
+    // 10. DATA SUBJECT REQUESTS (export / correction / deletion). Owner creates; admins manage.
+    match /dataRequests/{requestId} {
+      allow create: if isVerified()
+                    && incoming().userId == request.auth.uid
+                    && incoming().keys().hasOnly(['userId', 'email', 'name', 'type', 'note', 'status', 'createdAt'])
+                    && incoming().type in ['DELETE_ACCOUNT', 'EXPORT_DATA', 'CORRECTION']
+                    && incoming().status == 'OPEN'
+                    && incoming().note is string && incoming().note.size() <= 1000
+                    && incoming().email is string && incoming().email.size() <= 150
+                    && incoming().name is string && incoming().name.size() <= 150
+                    && incoming().createdAt is string && incoming().createdAt.size() <= 40;
+      allow get, list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
     // 8. FORM TEMPLATES
     match /formTemplates/{templateId} {
       allow read, list: if isSignedIn();
