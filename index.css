@@ -53,4 +53,27 @@
     transition: none !important;
     animation: none !important;
   }
+
+  /* The app shell is a fixed-height, overflow-hidden flex layout. Without this reset the
+     browser prints only one screen-height of it and long dossiers get cut off. */
+  html, body, #root {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .app-shell {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .app-shell aside {
+    display: none !important;
+  }
+  .app-shell > main {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
 }

@@ -539,7 +539,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
           }
           
           /* Hide all non-dossier UI */
-          aside, nav, header, footer, .print\\:hidden, button, .custom-scrollbar {
+          aside, nav, header, footer, .print\\:hidden, button {
             display: none !important;
           }
           

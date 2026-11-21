@@ -454,7 +454,7 @@ const App: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden"
+          className="app-shell flex flex-col md:flex-row h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors duration-300 relative overflow-hidden"
         >
           {/* Mobile Backdrop Overlay */}
           {isMobileMenuOpen && (

@@ -864,7 +864,7 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          aside, nav, header, footer, .print\\:hidden, button, .custom-scrollbar {
+          aside, nav, header, footer, .print\\:hidden, button {
             display: none !important;
           }
           #root, main, .app-container, .max-w-7xl, .min-h-full {
