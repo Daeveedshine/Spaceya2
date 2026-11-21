@@ -1,6 +1,6 @@
-import { HttpError, requireUser, route } from '../_lib/http';
-import { getDb } from '../_lib/firebase';
-import { chargeAssignmentFee } from '../_lib/wallet';
+import { HttpError, requireUser, route } from '../_lib/http.js';
+import { getDb } from '../_lib/firebase.js';
+import { chargeAssignmentFee } from '../_lib/wallet.js';
 
 export default route(async (req) => {
   const { uid } = await requireUser(req);

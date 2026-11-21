@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { HttpError } from './http';
+import { HttpError } from './http.js';
 
 export interface PaystackVerifyData {
   status: string;

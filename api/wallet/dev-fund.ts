@@ -1,5 +1,5 @@
-import { HttpError, requireUser, route } from '../_lib/http';
-import { creditDeposit, isValidAmount } from '../_lib/wallet';
+import { HttpError, requireUser, route } from '../_lib/http.js';
+import { creditDeposit, isValidAmount } from '../_lib/wallet.js';
 
 /**
  * Local/testing top-up so you can try the app without Paystack.

@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { getDb } from './firebase';
-import { HttpError } from './http';
+import { getDb } from './firebase.js';
+import { HttpError } from './http.js';
 
 export const COMPANY_WALLET_ID = 'COMPANY_WALLET_0';
 export const ASSIGNMENT_FEE = 1000; // NGN, same value the client used to hardcode

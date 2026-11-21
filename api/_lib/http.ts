@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'http';
 import { getAuth } from 'firebase-admin/auth';
-import { getAdminApp } from './firebase';
+import { getAdminApp } from './firebase.js';
 
 /** Minimal request/response shapes shared by Vercel functions and Express. */
 export interface Req extends IncomingMessage {

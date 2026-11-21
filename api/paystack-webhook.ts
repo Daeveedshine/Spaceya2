@@ -1,6 +1,6 @@
-import { readRawBody, Req, Res } from './_lib/http';
-import { isValidSignature, verifyReference } from './_lib/paystack';
-import { creditDeposit } from './_lib/wallet';
+import { readRawBody, Req, Res } from './_lib/http.js';
+import { isValidSignature, verifyReference } from './_lib/paystack.js';
+import { creditDeposit } from './_lib/wallet.js';
 
 // Vercel: we need the raw bytes to check Paystack's HMAC signature.
 export const config = { api: { bodyParser: false } };

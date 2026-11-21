@@ -1,6 +1,6 @@
-import { HttpError, requireUser, route } from '../_lib/http';
-import { assertConfirmedPayment, verifyReference } from '../_lib/paystack';
-import { creditDeposit } from '../_lib/wallet';
+import { HttpError, requireUser, route } from '../_lib/http.js';
+import { assertConfirmedPayment, verifyReference } from '../_lib/paystack.js';
+import { creditDeposit } from '../_lib/wallet.js';
 
 export default route(async (req) => {
   const { uid } = await requireUser(req);
