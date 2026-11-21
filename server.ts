@@ -3,12 +3,26 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { z } from "zod";
 import xss from "xss";
+import verifyDeposit from "./api/wallet/verify";
+import devFund from "./api/wallet/dev-fund";
+import assignmentFee from "./api/wallet/assignment-fee";
+import withdraw from "./api/wallet/withdraw";
+import paystackWebhook from "./api/paystack-webhook";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Webhook needs the raw body for signature checks, so it is mounted before express.json().
+  app.post("/api/paystack-webhook", express.raw({ type: "*/*" }), (req, res) => paystackWebhook(req as any, res as any));
+
   app.use(express.json());
+
+  // Wallet API (same handlers Vercel serves from /api/*)
+  app.post("/api/wallet/verify", (req, res) => verifyDeposit(req as any, res as any));
+  app.post("/api/wallet/dev-fund", (req, res) => devFund(req as any, res as any));
+  app.post("/api/wallet/assignment-fee", (req, res) => assignmentFee(req as any, res as any));
+  app.post("/api/wallet/withdraw", (req, res) => withdraw(req as any, res as any));
 
   // Input Sanitization utility
   const sanitizeInput = (input: string) => {

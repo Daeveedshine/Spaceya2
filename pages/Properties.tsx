@@ -215,15 +215,15 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
 
   const handleTopUp = async () => {
     setIsSaving(true);
-    const toastId = toast.loading('Simulating fund transfer...');
-    const { simulateFundWallet } = await import('../services/simulationEngine');
-    const result = await simulateFundWallet(user.id, 5000);
+    const toastId = toast.loading('Adding test funds...');
+    const { devFundWallet } = await import('../services/walletApi');
+    const result = await devFundWallet(5000);
     if (result.status === 'success' && result.balance !== undefined) {
-      toast.success('Wallet funded via simulation.', { id: toastId });
+      toast.success('Test funds added.', { id: toastId });
       // Update store so UI refreshes without reload
       const updatedUsers = store.users.map(u => u.id === user.id ? { ...u, walletBalance: result.balance } : u);
       setStore({ ...store, users: updatedUsers });
-      // We don't call saveStore(store) here because simulateFundWallet handles it in Firestore directly.
+      // The server wrote the wallet; no saveStore here.
       // And the global sync handles localstorage.
     } else {
       toast.error('Error: ' + result.message, { id: toastId });
@@ -239,8 +239,8 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     const toastId = toast.loading('Processing payment & assignment...');
 
     try {
-      const { simulateTenantAssignment } = await import('../services/simulationEngine');
-      const assignResult = await simulateTenantAssignment(user.id, pendingTenant.id, selectedProperty.id);
+      const { chargeAssignmentFee } = await import('../services/walletApi');
+      const assignResult = await chargeAssignmentFee(pendingTenant.id, selectedProperty.id);
 
       if (assignResult.status !== 'success') {
          toast.error('Payment Failed: ' + assignResult.message, { id: toastId });

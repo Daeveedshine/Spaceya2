@@ -3,7 +3,6 @@ import React, { useMemo, useEffect, Suspense } from 'react';
 import { User, UserRole } from '../types';
 import { getStore, useAppStore, formatCurrency } from '../store';
 import { Building, Users, AlertCircle, DollarSign, UserCheck, Activity, ArrowRight, ClipboardCheck, ChevronDown, Loader2 } from 'lucide-react';
-import { initializeCompanyWallet } from '../services/simulationEngine';
 import { LazyScrollWrapper } from '../components/LazyScrollWrapper';
 import { usePaginatedCollection } from '../lib/usePaginatedCollection';
 import { orderBy, where } from 'firebase/firestore';
@@ -25,10 +24,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onNavigate }) => 
   ], []);
 
   const { data: paginatedTransactions, loading, loadingMore, hasMore, loadMore } = usePaginatedCollection<any>('transactions', transactionsQuery, 15);
-
-  useEffect(() => {
-    initializeCompanyWallet().catch(console.error);
-  }, []);
 
   const metrics = useMemo(() => {
     const totalProperties = store.properties.length;

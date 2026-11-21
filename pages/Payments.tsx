@@ -38,19 +38,19 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
 
   const { data: transactions, loading, loadingMore, hasMore, loadMore, refetch } = usePaginatedCollection<Transaction>('transactions', transactionsQuery, 10);
 
-  const onSuccessPaystack = async (reference: any) => {
-      const amountVal = parseFloat(amount);
-      const { simulateFundWallet } = await import('../services/simulationEngine');
-      const result = await simulateFundWallet(user.id, amountVal);
-      
+  const onSuccessPaystack = async (transaction: any) => {
+      // The server re-checks the payment with Paystack and credits the wallet. We never credit from the browser.
+      const { verifyDeposit } = await import('../services/walletApi');
+      const result = await verifyDeposit(transaction.reference);
+
       if (result.status === 'success') {
          setIsProcessing(false);
          setShowDepositModal(false);
          setAmount('5000');
-         alert(`Deposit successful via Paystack! Reference: ${reference.reference}`);
+         alert(`Deposit successful via Paystack! Reference: ${transaction.reference}`);
          refetch();
       } else {
-         alert('Error updating DB: ' + result.message);
+         alert('Payment received but wallet update failed: ' + result.message + '. If you were charged, your wallet will be credited automatically shortly.');
          setIsProcessing(false);
       }
   };
@@ -62,26 +62,30 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
 
   const handleDeposit = async () => {
     const amountVal = parseFloat(amount);
-    if (isNaN(amountVal) || amountVal <= 0) return;
+    if (isNaN(amountVal) || amountVal <= 0 || !Number.isInteger(amountVal)) {
+      alert('Enter a whole-naira amount.');
+      return;
+    }
 
     setIsProcessing(true);
-    
+
     if (import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
         const paystack = new PaystackPop();
         paystack.newTransaction({
             key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
             email: currentUser.email || 'user@spaceya.com',
             amount: amountVal * 100,
-            reference: new Date().getTime().toString(),
+            reference: `spy_${crypto.randomUUID().replace(/-/g, '')}`,
             currency: 'NGN',
+            metadata: { uid: user.id }, // server checks this matches the signed-in user
             onSuccess: (transaction: any) => onSuccessPaystack(transaction),
             onCancel: () => onClosePaystack()
         });
     } else {
-        // Attempt funding wallet via simulation engine immediately if no public key
-        const { simulateFundWallet } = await import('../services/simulationEngine');
-        const result = await simulateFundWallet(user.id, amountVal);
-        
+        // No Paystack key: dev-only top-up (the server refuses this in production).
+        const { devFundWallet } = await import('../services/walletApi');
+        const result = await devFundWallet(amountVal);
+
         if (result.status === 'success') {
            setIsProcessing(false);
            setShowDepositModal(false);
@@ -102,14 +106,14 @@ const Payments: React.FC<PaymentsProps> = ({ user }) => {
     }
 
     setIsProcessing(true);
-    const { simulateWithdrawal } = await import('../services/simulationEngine');
-    const result = await simulateWithdrawal(user.id, amountVal);
+    const { requestWithdrawal } = await import('../services/walletApi');
+    const result = await requestWithdrawal(amountVal);
     
     if (result.status === 'success') {
        setIsProcessing(false);
        setShowWithdrawalModal(false);
        setAmount('5000');
-       alert('Withdrawal successful. Reference: ' + result.reference);
+       alert('Withdrawal requested. It will be paid out manually. Reference: ' + result.reference);
        refetch();
     } else {
        alert('Error: ' + result.message);

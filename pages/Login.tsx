@@ -156,7 +156,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           role: role,
           phone: '',
           profilePictureUrl: '',
-          walletBalance: role === UserRole.AGENT ? 5000 : 0,
+          walletBalance: 0,
           assignedPropertyIds: []
         };
         try {
@@ -239,7 +239,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           role: role,
           phone: result.user.phoneNumber || '',
           profilePictureUrl: photoUrl.length > 500 ? '' : photoUrl,
-          walletBalance: role === UserRole.AGENT ? 5000 : 0,
+          walletBalance: 0,
           assignedPropertyIds: []
         };
         try {

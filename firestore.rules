@@ -63,26 +63,36 @@ service cloud.firestore {
           && (!('suiteId' in data) || (data.suiteId is string && data.suiteId.size() <= 128));
       }
 
-      allow create: if (isSignedIn() || isVerified()) 
+      // Self-registration can only create AGENT or TENANT accounts, with an empty wallet.
+      // ADMIN accounts must be created/promoted with the Admin SDK or the console.
+      allow create: if isSignedIn()
                     && isValidId(userId)
                     && isValidUser(incoming())
                     && incoming().id == userId
-                    && userId == request.auth.uid;
+                    && userId == request.auth.uid
+                    && incoming().role in ['AGENT', 'TENANT']
+                    && incoming().get('walletBalance', 0) == 0;
 
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      // Admins and agents can see user profiles; everyone else only sees themselves and agents.
+      allow get, list: if isSignedIn() && (
+        isAdmin() ||
+        isRole('AGENT') ||
+        resource.data.id == request.auth.uid ||
+        resource.data.role == 'AGENT'
+      );
 
       allow update: if isVerified() 
                     && isValidUser(incoming())
                     && incoming().id == existing().id // Entity remains same
                     && incoming().role == existing().role // Role is immutable
                     && incoming().email == existing().email // Email is immutable
+                    && incoming().get('walletBalance', null) == existing().get('walletBalance', null) // Balance is server-written only
                     && (
                       isAdmin() ||
                       // Action: User update profile
-                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl', 'walletBalance', 'assignedPropertyIds'])) ||
+                      (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'profilePictureUrl', 'assignedPropertyIds'])) ||
                       // Action: Agent or internal system update balance/assignments for TENANTS
-                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds', 'walletBalance']) && existing().role == 'TENANT')
+                      (isRole('AGENT') && incoming().diff(existing()).affectedKeys().hasOnly(['assignedPropertyIds']) && existing().role == 'TENANT')
                     );
     }
 
@@ -104,7 +114,12 @@ service cloud.firestore {
           && (!('rentReminderPeriod' in data) || (data.rentReminderPeriod is string && data.rentReminderPeriod in ['1_MONTH', '2_WEEKS']));
       }
 
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.agentId == request.auth.uid ||
+        resource.data.tenantId == request.auth.uid ||
+        resource.data.status in ['LISTED', 'VACANT']
+      );
       
       allow create: if isVerified() 
                     && (isRole('AGENT') || isAdmin())
@@ -143,8 +158,12 @@ service cloud.firestore {
                     && incoming().userId == request.auth.uid
                     && incoming().status == 'PENDING';
 
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      // Applications hold IDs, DOB and landlord details: only the applicant, their agent, or an admin.
+      allow get, list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid ||
+        resource.data.agentId == request.auth.uid
+      );
 
       allow update: if isVerified()
                     && isValidApplication(incoming())
@@ -156,7 +175,7 @@ service cloud.firestore {
                       // Action: Agent review and route property
                       (request.auth.uid == existing().agentId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'propertyId', 'riskScore', 'aiRecommendation', 'customResponses'])) ||
                       // Action: Tenant edit
-                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED') && !incoming().diff(existing()).affectedKeys().hasAny(['status', 'agentId', 'propertyId', 'riskScore']))
+                      (request.auth.uid == existing().userId && (existing().status == 'PENDING' || existing().status == 'MORE_INFO_REQUIRED') && !incoming().diff(existing()).affectedKeys().hasAny(['status', 'agentId', 'propertyId', 'riskScore', 'aiRecommendation']))
                     );
     }
 
@@ -172,8 +191,12 @@ service cloud.firestore {
           && data.status in ['active', 'expired', 'terminated'];
       }
 
-      // Secure Read: only participants can see the agreement
-      allow read, list: if isSignedIn();
+      // Secure Read: only participants (or an admin) can see the agreement
+      allow read, list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.tenantId == request.auth.uid ||
+        resource.data.agentId == request.auth.uid
+      );
       
       allow create: if isVerified() 
                     && isValidAgreement(incoming())
@@ -193,7 +216,11 @@ service cloud.firestore {
 
     // 5. MAINTENANCE TICKETS
     match /tickets/{ticketId} {
-      allow read, list: if isSignedIn();
+      allow read, list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.tenantId == request.auth.uid ||
+        resource.data.agentId == request.auth.uid
+      );
       
       allow create: if isVerified() 
                     && incoming().id == ticketId
@@ -209,42 +236,31 @@ service cloud.firestore {
                     );
     }
 
-    // 6. PAYMENTS & TRANSACTIONS
+    // 6. PAYMENTS, WALLETS & TRANSACTIONS
+    // Money is written ONLY by the server (Admin SDK bypasses these rules): see api/wallet/* and
+    // api/paystack-webhook.ts. Clients may read their own records and never write.
     match /payments/{paymentId} {
-      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isRole('AGENT') || isAdmin());
-      allow write: if isVerified(); // Simulation
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if false;
     }
 
     match /wallets/{walletId} {
-      allow read, list: if isSignedIn();
-      allow write: if isVerified(); // Simulation
+      allow read: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid);
+      allow write: if false;
     }
 
     match /bank_accounts/{accountId} {
-      allow read, list: if isSignedIn();
-      allow write: if isVerified(); // Simulation
+      allow read: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid);
+      allow write: if false;
     }
 
     match /transactions/{transactionId} {
-       function isValidTransaction(data) {
-        return data.keys().hasAll(['user_id', 'amount', 'type', 'description', 'created_at', 'status', 'reference'])
-          && data.size() >= 7 && data.size() <= 12
-          && (data.user_id is string || data.user_id is number || data.userId is string)
-          && data.type in ['deposit', 'deduction', 'withdrawal', 'credit'];
-      }
-      allow read, list: if isSignedIn();
-      allow create: if isVerified() && isValidTransaction(incoming()) && (
-        incoming().user_id == request.auth.uid || 
-        incoming().userId == request.auth.uid ||
-        incoming().user_id == 0 || 
-        isAdmin()
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.user_id == request.auth.uid ||
+        resource.data.get('userId', null) == request.auth.uid
       );
-      allow update: if isVerified() && (
-        existing().user_id == request.auth.uid || 
-        existing().userId == request.auth.uid ||
-        existing().user_id == 0 ||
-        isAdmin()
-      );
+      allow write: if false;
     }
 
     // 7. NOTIFICATIONS
@@ -255,12 +271,12 @@ service cloud.firestore {
           && data.id is string
           && data.userId is string;
       }
-      allow read, list: if isSignedIn();
+      allow read, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isSignedIn() && (
         (resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
-        isRole('AGENT') || isAdmin()
+        isAdmin()
       );
-      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isRole('AGENT'));
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isVerified() && isValidNotification(incoming()) && (
         incoming().userId == request.auth.uid || 
         isRole('AGENT') || 

@@ -145,18 +145,12 @@ export const getStore = (): AppState => {
       if (u.assignedPropertyId && !u.assignedPropertyIds) {
         u.assignedPropertyIds = [u.assignedPropertyId];
       }
-      if (u.role === UserRole.AGENT && u.walletBalance === undefined) {
-        u.walletBalance = 5000; // Give every agent ₦5000 starter balance for this prototype
-      }
       return u;
     });
   }
   if (parsed.currentUser) {
     if (parsed.currentUser.assignedPropertyId && !parsed.currentUser.assignedPropertyIds) {
       parsed.currentUser.assignedPropertyIds = [parsed.currentUser.assignedPropertyId];
-    }
-    if (parsed.currentUser.role === UserRole.AGENT && parsed.currentUser.walletBalance === undefined) {
-      parsed.currentUser.walletBalance = 5000;
     }
   }
 
@@ -229,7 +223,6 @@ export const saveStore = async (state: AppState) => {
       syncCollection('agreements', sanitizedState.agreements.filter(a => a.agentId === user.uid)),
       syncCollection('tickets', sanitizedState.tickets.filter(t => t.tenantId === user.uid || t.agentId === user.uid)),
       syncCollection('notifications', sanitizedState.notifications.filter(n => n.userId === user.uid)),
-      syncCollection('transactions', sanitizedState.transactions.filter(t => t.userId === user.uid || (t as any).user_id === user.uid)),
       syncCollection('formTemplates', sanitizedState.formTemplates.filter(f => f.agentId === user.uid))
     ]);
   }

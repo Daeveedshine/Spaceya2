@@ -46,11 +46,24 @@ You need to connect this app to a Firebase project. Make sure you set up exactly
 2. Configure the necessary Firebase environment variables (or rely on the `firebase-applet-config.json` generated in the AI Studio platform).
 3. Deploy the provided `firestore.rules` to secure your collections.
 
+### Payments and wallet (server-side)
+
+Wallet balances and transactions are written **only by the server** (`api/wallet/*`, `api/paystack-webhook.ts`); `firestore.rules` denies all client writes to `wallets`, `transactions`, `payments` and `bank_accounts`.
+
+1. Set the server-only env vars from `.env.example`: `FIREBASE_SERVICE_ACCOUNT` and `PAYSTACK_SECRET_KEY` (and `VITE_PAYSTACK_PUBLIC_KEY` for the browser).
+2. In the Paystack dashboard, set the webhook URL to `https://<your-domain>/api/paystack-webhook`.
+3. For local testing without Paystack, set `ALLOW_SIMULATED_FUNDING=true`. It is ignored in production.
+4. Admin accounts can no longer be self-registered; set `role: "ADMIN"` on a user document with the Firebase console or Admin SDK.
+5. Test the rules with `npm run test:rules` (needs the Firestore emulator).
+
+Withdrawals are recorded as `pending` and held from the balance; actual payouts are manual until Paystack Transfers is integrated.
+
 ### Project Structure
 
 - `pages/`: Contains the main application views (e.g., Dashboard, Properties, Maintenance, Login, Profile).
 - `store.ts`: Global application state manager (syncs securely with Firestore in real time).
-- `services/`: Specialized services, such as the `simulationEngine` used to mock payment processing logic.
+- `services/walletApi.ts`: client wrapper for the server wallet endpoints.
+- `api/`: server functions (Vercel functions; also mounted by `server.ts` for local dev).
 - `lib/`: Helper libraries such as notification push system or loggers.
 - `App.tsx`: Main router handling authorization rendering for different pages.
 
