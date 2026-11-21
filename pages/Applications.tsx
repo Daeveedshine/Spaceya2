@@ -16,7 +16,7 @@ import { OptimizedImage } from '../components/OptimizedImage';
 import { toast } from 'sonner';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="space-y-6 break-inside-avoid">
+  <div className="space-y-6">
      <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] border-b border-zinc-100 dark:border-zinc-800 pb-2">{title}</h3>
      {children}
   </div>
@@ -903,10 +903,14 @@ const Applications: React.FC<ApplicationsProps> = ({ user, onNavigate, onUpdate 
           #printable-content .grid {
             display: grid !important;
           }
-          .break-inside-avoid, section {
+          section {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+            margin-bottom: 20px !important;
+          }
+          .break-inside-avoid {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 20px !important;
           }
           img {
             max-width: 100% !important;

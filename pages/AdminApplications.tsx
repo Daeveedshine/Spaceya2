@@ -238,7 +238,7 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
 
                {/* 04: Additional Information */}
                {selectedApp.customResponses && Object.keys(selectedApp.customResponses).length > 0 && (
-                 <section className="space-y-10 break-inside-avoid">
+                 <section className="space-y-10">
                     <h3 className="text-xs font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.4em] border-b-2 border-zinc-100 dark:border-zinc-900 pb-4 print:text-black print:border-black">04: Additional Information</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
                        {Object.entries(selectedApp.customResponses).map(([key, value]) => {
@@ -310,10 +310,14 @@ const AdminApplications: React.FC<AdminApplicationsProps> = ({ user, onBack }) =
           }
           .bg-zinc-900, .bg-zinc-950, .bg-black { background-color: white !important; color: black !important; }
           .text-white { color: black !important; }
-          section, .break-inside-avoid {
+          section {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+            margin-bottom: 20px !important;
+          }
+          .break-inside-avoid {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 20px !important;
           }
           img {
             max-width: 100% !important;

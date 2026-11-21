@@ -369,7 +369,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   )}
 
                   {/* Section 1: Identity */}
-                  <section className="space-y-6 break-inside-avoid">
+                  <section className="space-y-6">
                     <h3 className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-200 dark:border-zinc-800 pb-3 flex items-center gap-3 print:text-black print:border-black">
                        <UserIcon size={16} className="text-black dark:text-white print:hidden" /> 01: Profile & Personal Credentials
                     </h3>
@@ -387,7 +387,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   </section>
 
                   {/* Section 2: Residential History */}
-                  <section className="space-y-6 break-inside-avoid">
+                  <section className="space-y-6">
                     <h3 className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-200 dark:border-zinc-800 pb-3 flex items-center gap-3 print:text-black print:border-black">
                        <MapPin size={16} className="text-black dark:text-white print:hidden" /> 02: Residential History & Background
                     </h3>
@@ -402,7 +402,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
                   </section>
 
                   {/* Section 3: Verification Evidence */}
-                  <section className="space-y-6 break-inside-avoid">
+                  <section className="space-y-6">
                     <h3 className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-200 dark:border-zinc-800 pb-3 flex items-center gap-3 print:text-black print:border-black">
                        <ShieldCheck size={16} className="text-black dark:text-white print:hidden" /> 03: Identity Verification & Authentication
                     </h3>
@@ -444,7 +444,7 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
 
                   {/* Section 4: Additional / Custom Responses */}
                   {selectedApp.customResponses && Object.keys(selectedApp.customResponses).length > 0 && (
-                    <section className="space-y-6 break-inside-avoid">
+                    <section className="space-y-6">
                        <h3 className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.4em] border-b-2 border-zinc-200 dark:border-zinc-800 pb-3 flex items-center gap-3 print:text-black print:border-black">
                           <List size={16} className="text-black dark:text-white print:hidden" /> 04: Additional Information & Custom Fields
                        </h3>
@@ -605,10 +605,14 @@ const Screenings: React.FC<ScreeningsProps> = ({ user, onNavigate, onUpdate }) =
           }
 
           /* Page break handling */
-          section, .break-inside-avoid {
+          section {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+            margin-bottom: 24px !important;
+          }
+          .break-inside-avoid {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 24px !important;
           }
           
           h1, h2, h3, h4 {
