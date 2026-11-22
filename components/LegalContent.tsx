@@ -13,11 +13,6 @@ const L: React.FC<{ items: React.ReactNode[] }> = ({ items }) => (
   </ul>
 );
 
-const Draft: React.FC = () => (
-  <div className="mb-6 p-4 rounded-2xl border border-amber-400/50 bg-amber-50 dark:bg-amber-500/10 text-[11px] font-bold text-amber-800 dark:text-amber-300">
-    DRAFT: this document must be reviewed by a qualified Nigerian lawyer, and the placeholders in square brackets completed, before it is relied on.
-  </div>
-);
 
 export const Terms: React.FC = () => (
   <div>
