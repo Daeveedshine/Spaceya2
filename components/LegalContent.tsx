@@ -16,7 +16,7 @@ const L: React.FC<{ items: React.ReactNode[] }> = ({ items }) => (
 
 export const Terms: React.FC = () => (
   <div>
-    <Draft />
+   
     <P>Effective {LEGAL.effectiveDate} · Version {LEGAL.version}</P>
     <P>These Terms of Service ("Terms") govern your use of the {LEGAL.brandName} platform (the "Platform"), operated by {LEGAL.businessName} ("we", "us"). By creating an account or using the Platform you agree to these Terms and to our Privacy Policy. If you do not agree, do not use the Platform.</P>
 
@@ -86,7 +86,7 @@ export const Terms: React.FC = () => (
 
 export const Privacy: React.FC = () => (
   <div>
-    <Draft />
+    
     <P>Effective {LEGAL.effectiveDate} · Version {LEGAL.version}</P>
     <P>This Privacy Policy explains how {LEGAL.businessName} ("we", "us") collects and uses personal data through the {LEGAL.brandName} platform, in line with the Nigeria Data Protection Act 2023 (NDPA). We are the data controller for account and platform data. Agents who collect applicant information through their forms are also responsible for how they use that information.</P>
 
@@ -145,7 +145,7 @@ export const Privacy: React.FC = () => (
 
 export const Cookies: React.FC = () => (
   <div>
-    <Draft />
+   
     <P>Effective {LEGAL.effectiveDate} · Version {LEGAL.version}</P>
     <P>{LEGAL.brandName} uses cookies and similar browser storage (such as localStorage). This page explains what each is for. You can change your choice at any time using "Cookie settings" in the footer or sidebar.</P>
 
