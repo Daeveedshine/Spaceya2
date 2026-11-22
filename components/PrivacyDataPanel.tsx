@@ -41,7 +41,7 @@ const PrivacyDataPanel: React.FC<{ user: User }> = ({ user }) => {
       await submitDataRequest(user, type, note);
       toast.success('Request submitted. We will respond within 30 days.');
     } catch {
-      toast.error(`Could not submit. Please email ${LEGAL.dpoEmail}.`);
+      toast.error(`Could not submit. Please email ${LEGAL.contactEmail}.`);
     } finally { setBusy(false); }
   };
 

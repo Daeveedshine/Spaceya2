@@ -23,7 +23,7 @@ export const Terms: React.FC = () => (
   <div>
     <Draft />
     <P>Effective {LEGAL.effectiveDate} · Version {LEGAL.version}</P>
-    <P>These Terms of Service ("Terms") govern your use of the {LEGAL.brandName} platform (the "Platform"), operated by {LEGAL.businessName} ("we", "us"), {LEGAL.address}. By creating an account or using the Platform you agree to these Terms and to our Privacy Policy. If you do not agree, do not use the Platform.</P>
+    <P>These Terms of Service ("Terms") govern your use of the {LEGAL.brandName} platform (the "Platform"), operated by {LEGAL.businessName} ("we", "us"). By creating an account or using the Platform you agree to these Terms and to our Privacy Policy. If you do not agree, do not use the Platform.</P>
 
     <H>1. What the Platform is</H>
     <P>{LEGAL.brandName} is a software tool that helps property agents, tenants and administrators manage listings, tenancy applications, maintenance requests, agreements and payments. We are a technology provider. We are not a landlord, estate agent, tenant, guarantor or party to any tenancy or lease concluded between users, and we do not own, inspect or verify the properties listed.</P>
@@ -85,7 +85,7 @@ export const Terms: React.FC = () => (
     <P>These Terms are governed by the laws of {LEGAL.jurisdiction}. We encourage you to contact us first at {LEGAL.contactEmail} so we can try to resolve any concern informally. Unresolved disputes are subject to the courts of {LEGAL.governingCity}, unless mandatory law gives you another right.</P>
 
     <H>14. Contact</H>
-    <P>{LEGAL.businessName}, {LEGAL.address}. Email: {LEGAL.contactEmail}.</P>
+    <P>{LEGAL.businessName}. Email: {LEGAL.contactEmail}.</P>
   </div>
 );
 
@@ -129,7 +129,7 @@ export const Privacy: React.FC = () => (
     <P>We keep data only as long as needed for the purposes above. Application records are kept while the application or tenancy is active and for a limited period afterwards for dispute and legal purposes; financial records are kept for the period required by Nigerian law. When data is no longer needed we delete or anonymise it. [Lawyer to confirm exact retention periods.]</P>
 
     <H>5. Your rights</H>
-    <P>Subject to the NDPA you may ask to: access your data, receive a copy, correct inaccurate data, delete data, restrict or object to processing, withdraw consent, and not be subject to solely automated decisions with significant effects. Use "Privacy & Data" in your Profile to download your data or request deletion or correction, or email {LEGAL.dpoEmail}. We aim to respond within 30 days. Some data (for example financial records) may need to be kept for legal reasons. You may also complain to the Nigeria Data Protection Commission (NDPC).</P>
+    <P>Subject to the NDPA you may ask to: access your data, receive a copy, correct inaccurate data, delete data, restrict or object to processing, withdraw consent, and not be subject to solely automated decisions with significant effects. Use "Privacy & Data" in your Profile to download your data or request deletion or correction, or email {LEGAL.contactEmail}. We aim to respond within 30 days. Some data (for example financial records) may need to be kept for legal reasons. You may also complain to the Nigeria Data Protection Commission (NDPC).</P>
 
     <H>6. Security</H>
     <P>We use access controls, encrypted connections, server-side verification of payments, and role-based database rules. No system is perfectly secure. If a personal data breach occurs that is likely to risk your rights and freedoms, we will notify the NDPC within the period required by law and tell affected users without undue delay.</P>
@@ -144,7 +144,7 @@ export const Privacy: React.FC = () => (
     <P>We may update this policy. If a change is material we will ask you to review and accept it.</P>
 
     <H>10. Contact</H>
-    <P>{LEGAL.businessName}, {LEGAL.address}. Privacy contact: {LEGAL.dpoEmail}.</P>
+    <P>{LEGAL.businessName}. Privacy contact: {LEGAL.contactEmail}.</P>
   </div>
 );
 
