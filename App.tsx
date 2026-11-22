@@ -56,6 +56,7 @@ import { User, UserRole, TicketStatus, ApplicationStatus } from './types';
 import { getStore, saveStore, initFirebaseSync } from './store';
 import { ErrorBoundary } from './components/ErrorBoundary';
 const Login = React.lazy(() => import('./pages/Login'));
+const RoleChoice = React.lazy(() => import('./pages/RoleChoice'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const Properties = React.lazy(() => import('./pages/Properties'));
@@ -236,6 +237,7 @@ const SkeletonLoadingScreen: React.FC = () => {
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [authRole, setAuthRole] = useState<UserRole | null>(null);
   const [view, setView] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -455,7 +457,15 @@ const App: React.FC = () => {
            transition={{ duration: 0.5, ease: "easeOut" }}
            className="w-full h-full"
         >
-          <Login onLogin={handleLogin} />
+          {authRole === null ? (
+            <Suspense fallback={null}>
+              <RoleChoice onChoose={(r) => setAuthRole(r === 'AGENT' ? UserRole.AGENT : UserRole.TENANT)} />
+            </Suspense>
+          ) : (
+            <Suspense fallback={null}>
+              <Login onLogin={handleLogin} role={authRole} onChangeRole={() => setAuthRole(null)} />
+            </Suspense>
+          )}
         </motion.div>
       ) : (
         <motion.div 

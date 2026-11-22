@@ -32,9 +32,11 @@ const GoogleIcon = () => (
 
 interface LoginProps {
   onLogin: (user: User) => void;
+  role: UserRole;
+  onChangeRole: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, role, onChangeRole }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [useEmail, setUseEmail] = useState(false);
@@ -42,7 +44,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>(UserRole.TENANT);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -154,6 +155,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       if (userSnap && userSnap.exists()) {
         currentUserProfile = userSnap.data() as User;
+        if (currentUserProfile.role !== role) {
+          await auth.signOut();
+          setError(currentUserProfile.role === UserRole.AGENT
+            ? 'This account is registered as a Property Agent. Go back and choose "Property Agent" to log in.'
+            : 'This account is registered as a Tenant. Go back and choose "Tenant" to log in.');
+          setIsLoading(false);
+          return;
+        }
       } else {
         currentUserProfile = {
           id: user.uid,
@@ -237,6 +246,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       if (userSnap && userSnap.exists()) {
         currentUserProfile = userSnap.data() as User;
+        if (currentUserProfile.role !== role) {
+          await auth.signOut();
+          setError(currentUserProfile.role === UserRole.AGENT
+            ? 'This Google account is registered as a Property Agent. Go back and choose "Property Agent" to log in.'
+            : 'This Google account is registered as a Tenant. Go back and choose "Tenant" to log in.');
+          setIsLoading(false);
+          return;
+        }
       } else {
         const photoUrl = result.user.photoURL || '';
         currentUserProfile = {
@@ -332,27 +349,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <div className="max-w-md mx-auto space-y-6 w-full">
-              <div className="flex items-center gap-4 text-zinc-300 dark:text-zinc-800">
-                 <div className="flex-1 h-px bg-current"></div>
-                 <span className="text-[12px] font-black uppercase tracking-widest whitespace-nowrap text-zinc-900 dark:text-white">SIGNUP/LOGIN AS</span>
-                 <div className="flex-1 h-px bg-current"></div>
+            <div className="max-w-md mx-auto w-full flex items-center justify-between gap-4 p-4 rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">{isRegistering ? 'Signing up as' : 'Logging in as'}</p>
+                <p className="text-sm font-black uppercase tracking-tight">{role === UserRole.AGENT ? 'Property Agent' : 'Tenant'}</p>
               </div>
-
-               <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    onClick={() => setRole(UserRole.TENANT)}
-                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.TENANT ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xl' : 'bg-white dark:bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-zinc-500'}`}
-                  >
-                    Tenant
-                  </button>
-                  <button 
-                    onClick={() => setRole(UserRole.AGENT)}
-                    className={`py-5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest transition-all border-2 ${role === UserRole.AGENT ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xl' : 'bg-white dark:bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-zinc-500'}`}
-                  >
-                    Agent
-                  </button>
-               </div>
+              <button
+                type="button"
+                onClick={onChangeRole}
+                className="shrink-0 text-[10px] font-black uppercase tracking-widest underline text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white"
+              >
+                Change
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
