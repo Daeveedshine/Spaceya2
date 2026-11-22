@@ -25,10 +25,10 @@ const OPTIONS: {
   },
   {
     role: 'TENANT',
-    title: "I'm looking for a home",
+    title: "I'm a Tenant",
     icon: <KeyRound size={28} />,
     summary: 'I want to rent a property and apply through an agent.',
-    points: ['Browse and apply for properties', 'Track your application status', 'View your agreement, payments and requests'],
+    points: ['Browse and apply for properties', 'Track your application status', 'View your agreement, and requests'],
     cta: 'Continue as a tenant',
   },
 ];
