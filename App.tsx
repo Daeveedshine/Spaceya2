@@ -386,7 +386,7 @@ const App: React.FC = () => {
     switch (view) {
       case 'admin_dashboard': content = <AdminDashboard user={user} onNavigate={setView} />; break;
       case 'dashboard': content = <Dashboard user={user} onNavigate={setView} />; break;
-      case 'properties': content = <Properties user={user} />; break;
+      case 'properties': content = <Properties user={user} onNavigate={setView} />; break;
       case 'maintenance': content = <Maintenance user={user} onUpdate={refreshBadges} />; break;
       case 'payments': content = <Payments user={user} />; break;
       case 'notifications': content = <Notifications user={user} onRefreshCount={refreshBadges} onNavigate={setView} />; break;

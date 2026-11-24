@@ -19,6 +19,7 @@ import { OptimizedImage } from '../components/OptimizedImage';
 
 interface PropertiesProps {
   user: User;
+  onNavigate?: (view: string) => void;
 }
 
 type SortOption = 'none' | 'rent_asc' | 'rent_desc' | 'location' | 'expiry';
@@ -33,7 +34,7 @@ const PROPERTY_TYPES: PropertyType[] = [
   'Factory', 'Warehouse', 'land'
 ];
 
-const Properties: React.FC<PropertiesProps> = ({ user }) => {
+const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
   const [store, setStore] = useAppStore();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -211,24 +212,6 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
     setPendingTenant(tenant);
     setShowTenantPicker(false);
     setShowPaymentModal(true);
-  };
-
-  const handleTopUp = async () => {
-    setIsSaving(true);
-    const toastId = toast.loading('Adding test funds...');
-    const { devFundWallet } = await import('../services/walletApi');
-    const result = await devFundWallet(5000);
-    if (result.status === 'success' && result.balance !== undefined) {
-      toast.success('Test funds added.', { id: toastId });
-      // Update store so UI refreshes without reload
-      const updatedUsers = store.users.map(u => u.id === user.id ? { ...u, walletBalance: result.balance } : u);
-      setStore({ ...store, users: updatedUsers });
-      // The server wrote the wallet; no saveStore here.
-      // And the global sync handles localstorage.
-    } else {
-      toast.error('Error: ' + result.message, { id: toastId });
-    }
-    setIsSaving(false);
   };
 
   const confirmAssignmentWithPayment = async () => {
@@ -1603,13 +1586,17 @@ const Properties: React.FC<PropertiesProps> = ({ user }) => {
                             {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Confirm Payment'}
                         </button>
                     ) : (
-                        <button 
-                            onClick={handleTopUp}
-                            disabled={isSaving}
-                            className="w-full py-4 bg-white dark:bg-zinc-900 text-black dark:text-white border border-zinc-950 dark:border-white font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add Funds (₦5,000)'}
-                        </button>
+                        <div className="space-y-4">
+                            <p className="text-center text-[10px] font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                Your wallet doesn't have enough to cover the ₦1,000 service fee. Fund your wallet, then come back here to assign this tenant.
+                            </p>
+                            <button 
+                                onClick={() => { setShowPaymentModal(false); setPendingTenant(null); onNavigate?.('payments'); }}
+                                className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-[9px] rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                Go to Wallet
+                            </button>
+                        </div>
                     )}
                     <button 
                         onClick={() => { setShowPaymentModal(false); setPendingTenant(null); }}
