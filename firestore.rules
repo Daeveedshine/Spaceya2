@@ -111,7 +111,8 @@ service cloud.firestore {
           && data.type is string && data.type.size() <= 100
           && (!('images' in data) || (data.images is list && data.images.size() <= 20))
           && (!('rentPaid' in data) || (data.rentPaid is number && data.rentPaid >= 0))
-          && (!('rentReminderPeriod' in data) || (data.rentReminderPeriod is string && data.rentReminderPeriod in ['1_MONTH', '2_WEEKS']));
+          && (!('rentReminderPeriod' in data) || (data.rentReminderPeriod is string && data.rentReminderPeriod in ['1_MONTH', '2_WEEKS']))
+          && (!('rentReminders' in data) || (data.rentReminders is list && data.rentReminders.size() <= 10));
       }
 
       allow read: if isSignedIn() && (

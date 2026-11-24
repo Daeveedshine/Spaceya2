@@ -97,6 +97,14 @@ export interface Transaction {
   created_at: string;
 }
 
+export type ReminderUnit = 'DAYS' | 'WEEKS' | 'MONTHS';
+
+export interface RentReminder {
+  id: string;
+  value: number;
+  unit: ReminderUnit;
+}
+
 export interface Property {
   id: string;
   name: string;
@@ -111,6 +119,7 @@ export interface Property {
   rentStartDate?: string;
   rentExpiryDate?: string;
   rentReminderPeriod?: '1_MONTH' | '2_WEEKS';
+  rentReminders?: RentReminder[];
   rentPaid?: number;
   images?: string[];
 }

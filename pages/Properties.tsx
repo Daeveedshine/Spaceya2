@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, UserRole, Property, PropertyStatus, PropertyCategory, PropertyType, ApplicationStatus, Agreement, NotificationType, MaintenanceTicket, TicketStatus, TicketPriority, Notification, Transaction } from '../types';
+import { User, UserRole, Property, PropertyStatus, PropertyCategory, PropertyType, ApplicationStatus, Agreement, NotificationType, MaintenanceTicket, TicketStatus, TicketPriority, Notification, Transaction, RentReminder, ReminderUnit } from '../types';
 import { getStore, saveStore, formatCurrency, formatDate, useAppStore } from '../store';
 import { logger } from '../lib/logger';
 import { compressImage } from '../lib/imageUtils';
@@ -33,6 +33,24 @@ const PROPERTY_TYPES: PropertyType[] = [
   'Shop', 'Plaza Shop', 'Office Space', 'Co-working Space', 
   'Factory', 'Warehouse', 'land'
 ];
+
+const UNIT_DAYS: Record<ReminderUnit, number> = { DAYS: 1, WEEKS: 7, MONTHS: 30 };
+const UNIT_LABEL: Record<ReminderUnit, string> = { DAYS: 'Day', WEEKS: 'Week', MONTHS: 'Month' };
+
+const reminderToDays = (r: RentReminder) => r.value * UNIT_DAYS[r.unit];
+
+const reminderLabel = (r: RentReminder) =>
+  `${r.value} ${UNIT_LABEL[r.unit]}${r.value === 1 ? '' : 's'} Before`;
+
+/** Reminders for a property. Falls back to the legacy single setting for older records. */
+const getReminders = (p: Partial<Property>): RentReminder[] => {
+  if (p.rentReminders && p.rentReminders.length > 0) return p.rentReminders;
+  if (p.rentReminderPeriod === '2_WEEKS') return [{ id: 'legacy-2w', value: 2, unit: 'WEEKS' }];
+  if (p.rentReminderPeriod === '1_MONTH') return [{ id: 'legacy-1m', value: 1, unit: 'MONTHS' }];
+  return [{ id: 'legacy-default', value: 1, unit: 'MONTHS' }];
+};
+
+const newReminderId = () => `rem_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
   const [store, setStore] = useAppStore();
@@ -117,20 +135,22 @@ const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
   useEffect(() => {
     if (user.role !== UserRole.AGENT && user.role !== UserRole.ADMIN) return;
 
-    const expiringProps = store.properties.filter(p => {
-        if (p.status !== PropertyStatus.OCCUPIED || !p.rentExpiryDate) return false;
+    // For each occupied property, find the tightest reminder that has been reached
+    // (the smallest threshold still covering the days left). Notify once per threshold.
+    const dueReminders = store.properties.flatMap(p => {
+        if (p.status !== PropertyStatus.OCCUPIED || !p.rentExpiryDate) return [];
         const days = getDaysRemaining(p.rentExpiryDate);
-        if (days === null || days <= 0) return false;
-
-        const reminderDays = p.rentReminderPeriod === '2_WEEKS' ? 14 : 30; // Default to 1 month (30 days)
-        return days <= reminderDays;
+        if (days === null || days <= 0) return [];
+        const reached = getReminders(p).map(reminderToDays).filter(d => days <= d);
+        if (reached.length === 0) return [];
+        return [{ p, days, threshold: Math.min(...reached) }];
     });
 
     const newNotifications: Notification[] = [];
     let stateChanged = false;
 
-    expiringProps.forEach(p => {
-        const notifId = `n_exp_${p.id}_${p.rentExpiryDate}`;
+    dueReminders.forEach(({ p, threshold }) => {
+        const notifId = `n_exp_${p.id}_${p.rentExpiryDate}_${threshold}`;
         const exists = store.notifications.find(n => n.id === notifId);
         
         if (!exists) {
@@ -562,13 +582,18 @@ const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
     setIsSaving(true);
     const toastId = toast.loading('Saving property...');
     try {
+      const cleanedReminders = (editFormData.rentReminders || [])
+        .filter(r => Number.isFinite(r.value) && r.value >= 1 && r.value <= 365)
+        .map(r => ({ ...r, value: Math.floor(r.value) }));
+      const toSave = { ...editFormData, rentReminders: cleanedReminders };
+      setEditFormData(toSave);
       const updatedProperties = store.properties.map(p => 
-        p.id === selectedProperty.id ? { ...p, ...editFormData } as Property : p
+        p.id === selectedProperty.id ? { ...p, ...toSave } as Property : p
       );
       const updatedStore = { ...store, properties: updatedProperties };
       await saveStore(updatedStore);
       setStore(updatedStore);
-      setSelectedProperty({ ...selectedProperty, ...editFormData } as Property);
+      setSelectedProperty({ ...selectedProperty, ...toSave } as Property);
       logger.action('property_updated', { propertyId: selectedProperty.id });
       setIsEditing(false);
       toast.success('Property saved', { id: toastId });
@@ -1246,15 +1271,57 @@ const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
                                         <input type="date" className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black" value={editFormData.rentStartDate || ''} onChange={handleStartDateChange} />
                                     </InputWrapper>
 
-                                    <InputWrapper label="Rent Reminder">
-                                        <select 
-                                          className="glass-input w-full p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer" 
-                                          value={editFormData.rentReminderPeriod || '1_MONTH'} 
-                                          onChange={e => setEditFormData({...editFormData, rentReminderPeriod: e.target.value as '1_MONTH' | '2_WEEKS'})}
-                                        >
-                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="1_MONTH">1 Month Before</option>
-                                            <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="2_WEEKS">2 Weeks Before</option>
-                                        </select>
+                                    <InputWrapper label="Rent Reminders">
+                                        <div className="space-y-3">
+                                            {(editFormData.rentReminders ?? getReminders(editFormData)).map((r, idx, arr) => (
+                                                <div key={r.id} className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={365}
+                                                        className="glass-input w-24 p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black"
+                                                        value={r.value}
+                                                        onChange={e => {
+                                                            const v = parseInt(e.target.value, 10);
+                                                            const next = arr.map(x => x.id === r.id ? { ...x, value: Number.isNaN(v) ? 0 : v } : x);
+                                                            setEditFormData({ ...editFormData, rentReminders: next });
+                                                        }}
+                                                    />
+                                                    <select
+                                                        className="glass-input flex-1 p-4 rounded-xl text-sm font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black appearance-none cursor-pointer"
+                                                        value={r.unit}
+                                                        onChange={e => {
+                                                            const next = arr.map(x => x.id === r.id ? { ...x, unit: e.target.value as ReminderUnit } : x);
+                                                            setEditFormData({ ...editFormData, rentReminders: next });
+                                                        }}
+                                                    >
+                                                        <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="DAYS">Days</option>
+                                                        <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="WEEKS">Weeks</option>
+                                                        <option className="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100" value="MONTHS">Months</option>
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="Remove reminder"
+                                                        onClick={() => setEditFormData({ ...editFormData, rentReminders: arr.filter(x => x.id !== r.id) })}
+                                                        className="p-3 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                disabled={(editFormData.rentReminders ?? getReminders(editFormData)).length >= 10}
+                                                onClick={() => {
+                                                    const current = editFormData.rentReminders ?? getReminders(editFormData);
+                                                    setEditFormData({ ...editFormData, rentReminders: [...current, { id: newReminderId(), value: 1, unit: 'WEEKS' }] });
+                                                }}
+                                                className="w-full py-3 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={14} /> Add reminder
+                                            </button>
+                                            <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">Alerts fire before lease expiry, up to 10 reminders.</p>
+                                        </div>
                                     </InputWrapper>
                                     
                                     <InputWrapper label="Property Category">
@@ -1392,7 +1459,7 @@ const Properties: React.FC<PropertiesProps> = ({ user, onNavigate }) => {
                                     <DetailCard icon={DollarSign} label="Rent Balance" value={formatCurrency(selectedProperty.rent - (selectedProperty.rentPaid ?? (selectedProperty.status === PropertyStatus.OCCUPIED ? selectedProperty.rent : 0)), settings)} valueClassName="text-rose-600 dark:text-rose-400" />
                                     <DetailCard icon={Layout} label="Type" value={selectedProperty.type} />
                                     <DetailCard icon={Building} label="Category" value={selectedProperty.category} />
-                                    <DetailCard icon={Clock} label="Rent Reminder" value={selectedProperty.rentReminderPeriod === '2_WEEKS' ? '2 Weeks Before' : '1 Month Before'} />
+                                    <DetailCard icon={Clock} label="Rent Reminders" value={[...getReminders(selectedProperty)].sort((a, b) => reminderToDays(b) - reminderToDays(a)).map(reminderLabel).join(' · ')} />
                                     {selectedProperty.rentStartDate && <DetailCard icon={CalendarDays} label="Start" value={formatDate(selectedProperty.rentStartDate, settings)} />}
                                     {selectedProperty.rentExpiryDate && (
                                         <div className={`p-6 bg-zinc-50/50 dark:bg-white/5 rounded-lg border group hover:border-black dark:hover:border-white transition-colors shadow-sm ${
