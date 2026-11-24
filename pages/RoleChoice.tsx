@@ -25,16 +25,18 @@ const OPTIONS: {
   },
   {
     role: 'TENANT',
-    title: "I'm a Tenant",
+    title: "I'm looking for a home",
     icon: <KeyRound size={28} />,
     summary: 'I want to rent a property and apply through an agent.',
-    points: ['Browse and apply for properties', 'Track your application status', 'View your agreement, and requests'],
+    points: ['Browse and apply for properties', 'Track your application status', 'View your agreement, payments and requests'],
     cta: 'Continue as a tenant',
   },
 ];
 
 const RoleChoice: React.FC<RoleChoiceProps> = ({ onChoose }) => (
-  <div className="min-h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white flex items-center justify-center p-6">
+  <div className="h-[100dvh] w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white relative overflow-hidden">
+    <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+    <div className="min-h-full w-full flex items-center justify-center p-6 py-16">
     <div className="w-full max-w-4xl space-y-10 animate-in fade-in duration-700">
       <header className="text-center space-y-4">
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Welcome to SPACEYA</p>
@@ -78,6 +80,8 @@ const RoleChoice: React.FC<RoleChoiceProps> = ({ onChoose }) => (
         <ShieldCheck size={14} className="shrink-0" />
         Your account type can't be changed after you sign up, so pick the one that matches you.
       </p>
+    </div>
+    </div>
     </div>
   </div>
 );
